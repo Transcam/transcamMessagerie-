@@ -1,0 +1,216 @@
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Save, ArrowLeft, Loader2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useCreateDeparture } from "@/hooks/use-departures";
+
+const routes = [
+  "Yaoundé → Douala",
+  "Douala → Yaoundé",
+  "Douala → Bafoussam",
+  "Yaoundé → Kribi",
+  "Bafoussam → Douala",
+];
+
+// Form validation schema
+const departureSchema = z.object({
+  route: z.string().min(1, "Route is required"),
+  vehicle: z.string().min(1, "Vehicle is required"),
+  driver_name: z.string().min(1, "Driver name is required"),
+  notes: z.string().optional(),
+});
+
+type DepartureFormValues = z.infer<typeof departureSchema>;
+
+export default function NewDeparturePage() {
+  const navigate = useNavigate();
+  const { language } = useLanguage();
+  const createDeparture = useCreateDeparture();
+
+  const form = useForm<DepartureFormValues>({
+    resolver: zodResolver(departureSchema),
+    defaultValues: {
+      route: "",
+      vehicle: "",
+      driver_name: "",
+      notes: "",
+    },
+  });
+
+  const onSubmit = async (data: DepartureFormValues) => {
+    try {
+      const departure = await createDeparture.mutateAsync(data);
+      // Navigate to departure detail page
+      navigate(`/departures/${departure.id}`);
+    } catch (error) {
+      // Error handling is done in the hook
+    }
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/departures")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold">
+            {language === "fr" ? "Nouveau départ" : "New Departure"}
+          </h1>
+        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {language === "fr" ? "Informations du départ" : "Departure Information"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="route"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {language === "fr" ? "Route" : "Route"} *
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                language === "fr" ? "Sélectionner une route" : "Select a route"
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {routes.map((route) => (
+                            <SelectItem key={route} value={route}>
+                              {route}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="vehicle"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {language === "fr" ? "Véhicule" : "Vehicle"} *
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={language === "fr" ? "Bus-001" : "Bus-001"}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="driver_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {language === "fr" ? "Nom du chauffeur" : "Driver Name"} *
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={language === "fr" ? "Jean Dupont" : "Jean Dupont"}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {language === "fr" ? "Remarques" : "Notes"} (optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder={language === "fr" ? "Notes supplémentaires..." : "Additional notes..."}
+                          rows={4}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/departures")}
+              >
+                {language === "fr" ? "Annuler" : "Cancel"}
+              </Button>
+              <Button type="submit" disabled={createDeparture.isPending}>
+                {createDeparture.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {language === "fr" ? "Création..." : "Creating..."}
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    {language === "fr" ? "Créer le départ" : "Create Departure"}
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    </DashboardLayout>
+  );
+}
+

@@ -8,6 +8,12 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import NewShipmentPage from "./pages/NewShipmentPage";
+import EditShipmentPage from "./pages/EditShipmentPage";
+import ShipmentListPage from "./pages/ShipmentListPage";
+import ShipmentDetailPage from "./pages/ShipmentDetailPage";
+import DepartureListPage from "./pages/DepartureListPage";
+import DepartureDetailPage from "./pages/DepartureDetailPage";
+import NewDeparturePage from "./pages/NewDeparturePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,8 +33,12 @@ function AppRoutes() {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/shipments/new" element={<ProtectedRoute><NewShipmentPage /></ProtectedRoute>} />
-      <Route path="/shipments" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/departures" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/shipments/:id/edit" element={<ProtectedRoute><EditShipmentPage /></ProtectedRoute>} />
+      <Route path="/shipments" element={<ProtectedRoute><ShipmentListPage /></ProtectedRoute>} />
+      <Route path="/shipments/:id" element={<ProtectedRoute><ShipmentDetailPage /></ProtectedRoute>} />
+      <Route path="/departures/new" element={<ProtectedRoute><NewDeparturePage /></ProtectedRoute>} />
+      <Route path="/departures" element={<ProtectedRoute><DepartureListPage /></ProtectedRoute>} />
+      <Route path="/departures/:id" element={<ProtectedRoute><DepartureDetailPage /></ProtectedRoute>} />
       <Route path="/waybills" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/finance" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/distribution" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />

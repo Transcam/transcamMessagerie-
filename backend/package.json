@@ -10,15 +10,19 @@
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:generate": "npm run typeorm -- migration:generate -d ./data-source.ts",
     "migration:run": "npm run typeorm -- migration:run -d ./data-source.ts",
-    "migration:revert": "npm run typeorm -- migration:revert -d ./data-source.ts"
+    "migration:revert": "npm run typeorm -- migration:revert -d ./data-source.ts",
+    "seed:shipments": "ts-node scripts/insert-test-shipments.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@types/cors": "^2.8.19",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "pdfkit": "^0.15.0",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.28"
@@ -26,6 +30,7 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.3",
+    "@types/pdfkit": "^0.13.3",
     "@types/pg": "^8.16.0",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",

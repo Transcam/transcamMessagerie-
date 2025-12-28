@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -6,7 +7,6 @@ import { Save, ArrowLeft, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -25,7 +25,8 @@ import {
 } from "@/components/ui/form";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useCreateShipment } from "@/hooks/use-shipments";
+import { useShipment, useUpdateShipment } from "@/hooks/use-shipments";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const routes = [
   "Yaoundé → Douala",
@@ -50,10 +51,13 @@ const shipmentSchema = z.object({
 
 type ShipmentFormValues = z.infer<typeof shipmentSchema>;
 
-export default function NewShipmentPage() {
+export default function EditShipmentPage() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const { t, language } = useLanguage();
-  const createShipment = useCreateShipment();
+  const shipmentId = id ? parseInt(id, 10) : 0;
+  const { data: shipment, isLoading: isLoadingShipment } = useShipment(shipmentId);
+  const updateShipment = useUpdateShipment();
 
   const form = useForm<ShipmentFormValues>({
     resolver: zodResolver(shipmentSchema),
@@ -70,18 +74,94 @@ export default function NewShipmentPage() {
     },
   });
 
+  // Update form when shipment data loads
+  useEffect(() => {
+    if (shipment) {
+      form.reset({
+        sender_name: shipment.sender_name,
+        sender_phone: shipment.sender_phone,
+        receiver_name: shipment.receiver_name,
+        receiver_phone: shipment.receiver_phone,
+        description: shipment.description || "",
+        weight: shipment.weight,
+        declared_value: shipment.declared_value || 0,
+        price: shipment.price,
+        route: shipment.route,
+      });
+    }
+  }, [shipment, form]);
+
   const onSubmit = async (data: ShipmentFormValues) => {
+    if (!shipmentId) return;
+    
     try {
-      const shipment = await createShipment.mutateAsync({
-        ...data,
-        declared_value: data.declared_value || 0,
+      await updateShipment.mutateAsync({
+        id: shipmentId,
+        data: {
+          ...data,
+          declared_value: data.declared_value || 0,
+        },
       });
       // Navigate to shipment detail page
-      navigate(`/shipments/${shipment.id}`);
+      navigate(`/shipments/${shipmentId}`);
     } catch (error) {
       // Error handling is done in the hook
     }
   };
+
+  if (isLoadingShipment) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-3xl mx-auto space-y-6">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!shipment) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-3xl mx-auto space-y-6">
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-destructive">
+                {language === "fr"
+                  ? "Expédition non trouvée"
+                  : "Shipment not found"}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (shipment.is_confirmed) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-3xl mx-auto space-y-6">
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-destructive">
+                {language === "fr"
+                  ? "Cette expédition est confirmée et ne peut pas être modifiée"
+                  : "This shipment is confirmed and cannot be edited"}
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => navigate(`/shipments/${shipmentId}`)}
+              >
+                {language === "fr" ? "Retour" : "Back"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -90,7 +170,9 @@ export default function NewShipmentPage() {
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-bold">{t("shipment.new")}</h1>
+          <h1 className="text-2xl font-bold">
+            {language === "fr" ? "Modifier l'expédition" : "Edit Shipment"}
+          </h1>
         </div>
 
         <Form {...form}>
@@ -179,7 +261,7 @@ export default function NewShipmentPage() {
                       <FormLabel>{t("shipment.route")}</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -314,19 +396,27 @@ export default function NewShipmentPage() {
             {/* Actions */}
             <div className="flex gap-4 justify-end">
               <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => navigate(-1)}
+              >
+                {language === "fr" ? "Annuler" : "Cancel"}
+              </Button>
+              <Button
                 type="submit"
                 size="lg"
-                disabled={createShipment.isPending}
+                disabled={updateShipment.isPending}
               >
-                {createShipment.isPending ? (
+                {updateShipment.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {language === "fr" ? "Création..." : "Creating..."}
+                    {language === "fr" ? "Mise à jour..." : "Updating..."}
                   </>
                 ) : (
                   <>
                     <Save className="mr-2 h-4 w-4" />
-                    {t("shipment.confirm")}
+                    {language === "fr" ? "Enregistrer" : "Save"}
                   </>
                 )}
               </Button>
@@ -337,3 +427,4 @@ export default function NewShipmentPage() {
     </DashboardLayout>
   );
 }
+

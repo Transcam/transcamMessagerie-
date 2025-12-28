@@ -12,8 +12,9 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "typeRoots": ["./node_modules/@types", "./src/types"]
   },
-  "include": ["src/**/*", "*.ts", "../frontend/src/services"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "*.ts"],
   "exclude": ["node_modules", "dist"]
 }

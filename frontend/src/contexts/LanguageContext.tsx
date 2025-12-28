@@ -50,6 +50,7 @@ const translations: Translations = {
   'shipment.receiverPhone': { fr: 'Téléphone du destinataire', en: 'Receiver Phone' },
   'shipment.parcel': { fr: 'Colis', en: 'Parcel' },
   'shipment.description': { fr: 'Description', en: 'Description' },
+  'shipment.weight': { fr: 'Poids', en: 'Weight' },
   'shipment.declaredValue': { fr: 'Valeur déclarée', en: 'Declared Value' },
   'shipment.price': { fr: 'Prix', en: 'Price' },
   'shipment.route': { fr: 'Itinéraire', en: 'Route' },
@@ -60,6 +61,7 @@ const translations: Translations = {
   'shipment.confirmed': { fr: 'Confirmé', en: 'Confirmed' },
   'shipment.pending': { fr: 'En attente', en: 'Pending' },
   'shipment.assigned': { fr: 'Assigné', en: 'Assigned' },
+  'shipment.cancelled': { fr: 'Annulé', en: 'Cancelled' },
 
   // Departures
   'departure.new': { fr: 'Nouveau départ', en: 'New Departure' },
