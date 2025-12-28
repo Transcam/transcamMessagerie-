@@ -1,8 +1,10 @@
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 import { UserRole } from "../types/roles";
+import { User } from "../entities/user.entity";
+import { AppDataSource } from "../../db";
 
-export const authenticate = (
+export const authenticate = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -18,11 +20,22 @@ export const authenticate = (
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET as string) as {
       userId: number;
-      role: string;
+      role: UserRole;
     };
-    req.user = { userId: payload.userId, role: payload.role as UserRole };
+
+    // Fetch the full user entity from database since services need it
+    const userRepo = AppDataSource.getRepository(User);
+    const user = await userRepo.findOne({ where: { id: payload.userId } });
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    req.user = user;
     next();
-  } catch {
+  } catch (error) {
+    // Handle JWT verification errors or database errors
+    console.error("Authentication error:", error);
     return res.status(401).json({ message: "Invalid token" });
   }
 };
