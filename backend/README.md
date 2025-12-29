@@ -578,6 +578,7 @@ npm start
 - `npm run seed:shipments` : Insère des expéditions de test
 - `npm run seed:expenses` : Insère des dépenses de test
 - `npm run seed:vehicles` : Insère des véhicules de test
+- `npm run seed:drivers` : Insère des chauffeurs de test
 
 ## 📂 Stockage des Fichiers
 
