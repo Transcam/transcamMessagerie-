@@ -636,6 +636,16 @@ PATCH  /vehicles/:id
 DELETE /vehicles/:id
 ```
 
+### Chauffeurs
+```
+GET    /drivers
+GET    /drivers/available
+GET    /drivers/:id
+POST   /drivers
+PATCH  /drivers/:id
+DELETE /drivers/:id
+```
+
 ### Dépenses
 ```
 GET    /expenses
