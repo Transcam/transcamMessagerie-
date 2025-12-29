@@ -1,10 +1,15 @@
 import { Repository } from "typeorm";
 import { AppDataSource } from "../../db";
-import { Shipment, ShipmentStatus } from "../entities/shipment.entity";
+import {
+  Shipment,
+  ShipmentStatus,
+  ShipmentNature,
+} from "../entities/shipment.entity";
 import { User } from "../entities/user.entity";
 import { AuditLog } from "../entities/audit-log.entity";
 import { WaybillService } from "./waybill.service";
 import { IndividualWaybillService } from "./individual-waybill.service";
+import { UserRole } from "../types/roles";
 
 export interface CreateShipmentDTO {
   sender_name: string;
@@ -16,6 +21,7 @@ export interface CreateShipmentDTO {
   declared_value?: number;
   price: number;
   route: string;
+  nature?: ShipmentNature;
 }
 
 export interface UpdateShipmentDTO {
@@ -28,6 +34,7 @@ export interface UpdateShipmentDTO {
   declared_value?: number;
   price?: number;
   route?: string;
+  nature?: ShipmentNature;
 }
 
 export interface ShipmentFiltersDTO {
@@ -36,6 +43,7 @@ export interface ShipmentFiltersDTO {
   dateFrom?: Date;
   dateTo?: Date;
   waybillNumber?: string;
+  nature?: ShipmentNature;
   includeCancelled?: boolean;
   page?: number;
   limit?: number;
@@ -60,8 +68,12 @@ export class ShipmentService {
     const shipment = this.shipmentRepo.create({
       ...data,
       waybill_number: waybillNumber,
-      status: ShipmentStatus.PENDING,
-      is_confirmed: false,
+      nature: data.nature || ShipmentNature.COLS,
+      status: ShipmentStatus.CONFIRMED,
+      is_confirmed: true,
+      confirmed_at: new Date(),
+      confirmed_by: user,
+      confirmed_by_id: user.id,
       created_by: user,
       created_by_id: user.id,
     });
@@ -112,11 +124,9 @@ export class ShipmentService {
       throw new Error("Shipment not found");
     }
 
-    const isAdmin = (user as any).role === "agency_admin";
-
-    if (shipment.is_confirmed && !isAdmin) {
-      throw new Error("Cannot edit confirmed shipment. Only Admin can modify.");
-    }
+    // Authorization is handled at route level with authorize("edit_shipment")
+    // Since shipments are now created directly as CONFIRMED, users with edit_shipment permission can modify them
+    // No additional restriction needed here - the route-level authorization is sufficient
 
     const oldValues = { ...shipment };
     Object.assign(shipment, data);
@@ -127,17 +137,15 @@ export class ShipmentService {
     return saved;
   }
 
+  /**
+   * Cancel shipment
+   * Authorization is handled at route level with authorize("delete_shipment")
+   */
   async cancel(
     shipmentId: number,
     reason: string,
     user: User
   ): Promise<Shipment> {
-    const isAdmin = (user as any).role === "agency_admin";
-
-    if (!isAdmin) {
-      throw new Error("Only Agency Admin can cancel shipments");
-    }
-
     const shipment = await this.shipmentRepo.findOne({
       where: { id: shipmentId },
     });
@@ -180,6 +188,10 @@ export class ShipmentService {
       query.andWhere("shipment.route = :route", { route: filters.route });
     }
 
+    if (filters.nature) {
+      query.andWhere("shipment.nature = :nature", { nature: filters.nature });
+    }
+
     if (filters.dateFrom) {
       query.andWhere("shipment.created_at >= :dateFrom", {
         dateFrom: filters.dateFrom,
@@ -208,6 +220,94 @@ export class ShipmentService {
     query.orderBy("shipment.created_at", "DESC");
 
     return query.getManyAndCount();
+  }
+
+  async getStatistics(filters?: { nature?: ShipmentNature }): Promise<{
+    total: number;
+    totalPrice: number;
+    totalWeight: number;
+    byStatus: { [key: string]: number };
+    byNature?: { colis: number; courrier: number };
+    todayCount: number;
+    monthCount: number;
+    monthRevenue: number;
+  }> {
+    const query = this.shipmentRepo
+      .createQueryBuilder("shipment")
+      .where("shipment.is_cancelled = :isCancelled", { isCancelled: false });
+
+    // Apply nature filter if provided
+    if (filters?.nature) {
+      query.andWhere("shipment.nature = :nature", { nature: filters.nature });
+    }
+
+    // Get all shipments matching the filter
+    const shipments = await query.getMany();
+
+    // Calculate statistics
+    const total = shipments.length;
+    const totalPrice = shipments.reduce(
+      (sum, s) => sum + parseFloat(s.price.toString()),
+      0
+    );
+    const totalWeight = shipments.reduce(
+      (sum, s) => sum + parseFloat(s.weight.toString()),
+      0
+    );
+
+    // Group by status
+    const byStatus: { [key: string]: number } = {};
+    shipments.forEach((s) => {
+      const status = s.status;
+      byStatus[status] = (byStatus[status] || 0) + 1;
+    });
+
+    // Group by nature (only if nature filter is not applied)
+    let byNature: { colis: number; courrier: number } | undefined;
+    if (!filters?.nature) {
+      byNature = {
+        colis: shipments.filter((s) => s.nature === ShipmentNature.COLS).length,
+        courrier: shipments.filter((s) => s.nature === ShipmentNature.COURRIER)
+          .length,
+      };
+    }
+
+    // Calculate today's statistics
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayShipments = shipments.filter((s) => {
+      const createdDate = new Date(s.created_at);
+      createdDate.setHours(0, 0, 0, 0);
+      return createdDate.getTime() === today.getTime();
+    });
+    const todayCount = todayShipments.length;
+    const todayRevenue = todayShipments.reduce(
+      (sum, s) => sum + parseFloat(s.price.toString()),
+      0
+    );
+
+    // Calculate month's statistics
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthShipments = shipments.filter((s) => {
+      const createdDate = new Date(s.created_at);
+      return createdDate >= monthStart;
+    });
+    const monthCount = monthShipments.length;
+    const monthRevenue = monthShipments.reduce(
+      (sum, s) => sum + parseFloat(s.price.toString()),
+      0
+    );
+
+    return {
+      total,
+      totalPrice,
+      totalWeight,
+      byStatus,
+      byNature,
+      todayCount,
+      monthCount,
+      monthRevenue,
+    };
   }
 
   async getOne(id: number): Promise<Shipment> {

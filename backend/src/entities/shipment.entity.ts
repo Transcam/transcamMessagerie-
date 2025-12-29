@@ -18,6 +18,11 @@ export enum ShipmentStatus {
   CANCELLED = "cancelled",
 }
 
+export enum ShipmentNature {
+  COLS = "colis",
+  COURRIER = "courrier",
+}
+
 @Entity("shipments")
 @Index(["waybill_number"], { unique: true })
 @Index(["status"])
@@ -59,6 +64,13 @@ export class Shipment {
 
   @Column({ type: "varchar", length: 255 })
   route!: string;
+
+  @Column({
+    type: "enum",
+    enum: ShipmentNature,
+    default: ShipmentNature.COLS,
+  })
+  nature!: ShipmentNature;
 
   // Status & Locking
   @Column({

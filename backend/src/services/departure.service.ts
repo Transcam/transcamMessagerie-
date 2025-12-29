@@ -43,15 +43,6 @@ export class DepartureService {
     this.generalWaybillService = new GeneralWaybillService();
   }
 
-  /**
-   * Check if user is Agency Admin
-   */
-  private isAgencyAdmin(user: User): boolean {
-    // TODO: When roles are implemented, uncomment the line below
-    // return (user as any).role === "agency_admin";
-    // For now, allow all authenticated users to seal/close (roles not yet implemented)
-    return true;
-  }
 
   /**
    * Create a new departure
@@ -267,15 +258,15 @@ export class DepartureService {
   /**
    * Seal departure and generate General Waybill
    */
+  /**
+   * Seal departure - generates General Waybill and locks shipments
+   * Authorization is handled at route level with authorize("validate_departure")
+   */
   async seal(departureId: number, user: User): Promise<{
     departure: Departure;
     general_waybill_number: string;
     pdf_path: string;
   }> {
-    if (!this.isAgencyAdmin(user)) {
-      throw new Error("Only Agency Admin can seal departures");
-    }
-
     const departure = await this.departureRepo.findOne({
       where: { id: departureId },
       relations: ["shipments"],
@@ -340,12 +331,9 @@ export class DepartureService {
 
   /**
    * Close departure
+   * Authorization is handled at route level with authorize("validate_departure")
    */
   async close(departureId: number, user: User): Promise<Departure> {
-    if (!this.isAgencyAdmin(user)) {
-      throw new Error("Only Agency Admin can close departures");
-    }
-
     const departure = await this.departureRepo.findOne({
       where: { id: departureId },
     });
