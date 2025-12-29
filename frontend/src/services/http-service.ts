@@ -8,24 +8,22 @@ const axiosInstance = axios.create({
   baseURL: getBaseURL(),
 });
 
-// Request interceptor - Add auth token when colleague implements auth
-// TODO: Uncomment and configure when auth is ready
-// axiosInstance.interceptors.request.use((config) => {
-//   const token = localStorage.getItem("auth_token"); // or from auth context
-//   if (token) {
-//     config.headers.Authorization = `Bearer ${token}`;
-//   }
-//   return config;
-// });
+axiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem("auth_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-// Response interceptor - Handle errors globally
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle 401 (Unauthorized) - redirect to login
     if (error.response?.status === 401) {
-      // TODO: Redirect to login when auth is implemented
-      // window.location.href = "/login";
+      localStorage.removeItem("auth_token");
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }

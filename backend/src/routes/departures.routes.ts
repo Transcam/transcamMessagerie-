@@ -1,26 +1,65 @@
 import { Router } from "express";
 import { DeparturesController } from "../controllers/departures.controller";
 import { authorize } from "../helpers/authorize";
-import { UserRole } from "../types/roles";
 import { authenticate } from "../middlewares/auth";
 
 const router = Router();
 const controller = new DeparturesController();
 
-router.get("/", controller.list);
-router.get("/:id", controller.getOne);
-router.post("/", controller.create);
-router.patch("/:id", controller.update);
-router.post("/:id/shipments", controller.assignShipments);
-router.delete("/:id/shipments/:shipmentId", controller.removeShipment);
+router.get("/", authenticate, authorize("view_shipments"), controller.list);
+router.get(
+  "/:id",
+  authenticate,
+  authorize("view_shipments"),
+  controller.getOne
+);
+router.post(
+  "/",
+  authenticate,
+  authorize("create_departure"),
+  controller.create
+);
+router.patch(
+  "/:id",
+  authenticate,
+  authorize("create_departure"),
+  controller.update
+);
+router.post(
+  "/:id/shipments",
+  authenticate,
+  authorize("create_departure"),
+  controller.assignShipments
+);
+router.delete(
+  "/:id/shipments/:shipmentId",
+  authenticate,
+  authorize("create_departure"),
+  controller.removeShipment
+);
 router.post(
   "/:id/seal",
   authenticate,
-  authorize(UserRole.STAFF),
+  authorize("validate_departure"),
   controller.seal
 );
-router.post("/:id/close", controller.close);
-router.get("/:id/general-waybill", controller.getGeneralWaybill);
-router.get("/:id/summary", controller.getSummary);
+router.post(
+  "/:id/close",
+  authenticate,
+  authorize("validate_departure"),
+  controller.close
+);
+router.get(
+  "/:id/general-waybill",
+  authenticate,
+  authorize("print_waybill"),
+  controller.getGeneralWaybill
+);
+router.get(
+  "/:id/summary",
+  authenticate,
+  authorize("view_shipments"),
+  controller.getSummary
+);
 
 export default router;

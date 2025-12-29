@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Globe,
   User,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,12 @@ const navItems: NavItem[] = [
     labelKey: "nav.dashboard",
     href: "/dashboard",
     permission: "view_dashboard",
+  },
+  {
+    icon: Users,
+    labelKey: "nav.users",
+    href: "/users",
+    permission: "manage_users",
   },
   {
     icon: Package,
@@ -141,7 +148,7 @@ export function AppSidebar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-sidebar-primary-foreground truncate">
-                {user.name}
+                {user.username}
               </p>
               <p className="text-xs text-sidebar-foreground/70 capitalize">
                 {user.role.replace("_", " ")}
@@ -185,22 +192,26 @@ export function AppSidebar() {
                   >
                     <Icon className="h-5 w-5 flex-shrink-0" />
                     {!isCollapsed && (
-                      <span className="text-sm font-medium">{t(item.labelKey)}</span>
+                      <span className="text-sm font-medium">
+                        {t(item.labelKey)}
+                      </span>
                     )}
                   </Link>
-                  {filteredChildren && filteredChildren.length > 0 && !isCollapsed && (
-                    <button
-                      onClick={() => toggleExpanded(item.href)}
-                      className="p-2 hover:bg-sidebar-accent/50 rounded-lg mr-1"
-                    >
-                      <ChevronDown
-                        className={cn(
-                          "h-4 w-4 transition-transform",
-                          isExpanded && "rotate-180"
-                        )}
-                      />
-                    </button>
-                  )}
+                  {filteredChildren &&
+                    filteredChildren.length > 0 &&
+                    !isCollapsed && (
+                      <button
+                        onClick={() => toggleExpanded(item.href)}
+                        className="p-2 hover:bg-sidebar-accent/50 rounded-lg mr-1"
+                      >
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 transition-transform",
+                            isExpanded && "rotate-180"
+                          )}
+                        />
+                      </button>
+                    )}
                 </div>
                 {filteredChildren &&
                   filteredChildren.length > 0 &&
@@ -245,7 +256,9 @@ export function AppSidebar() {
         >
           <Globe className="h-5 w-5" />
           {!isCollapsed && (
-            <span className="text-sm">{language === "fr" ? "English" : "Français"}</span>
+            <span className="text-sm">
+              {language === "fr" ? "English" : "Français"}
+            </span>
           )}
         </Button>
 
@@ -260,7 +273,9 @@ export function AppSidebar() {
             )}
           >
             <Settings className="h-5 w-5" />
-            {!isCollapsed && <span className="text-sm">{t("nav.settings")}</span>}
+            {!isCollapsed && (
+              <span className="text-sm">{t("nav.settings")}</span>
+            )}
           </Button>
         </Link>
 
@@ -290,7 +305,11 @@ export function AppSidebar() {
         className="fixed left-4 top-4 z-50 lg:hidden"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
       >
-        {isMobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        {isMobileOpen ? (
+          <X className="h-6 w-6" />
+        ) : (
+          <Menu className="h-6 w-6" />
+        )}
       </Button>
 
       {/* Mobile Overlay */}

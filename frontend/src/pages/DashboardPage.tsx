@@ -10,7 +10,13 @@ import {
   Printer,
   MoreHorizontal,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -151,7 +157,9 @@ export default function DashboardPage() {
   }, [shipmentsData]);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(amount);
+    return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(
+      amount
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -167,9 +175,11 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{t("dashboard.title")}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {t("dashboard.title")}
+            </h1>
             <p className="text-muted-foreground mt-1">
-              {t("dashboard.welcome")}, {user?.name}
+              {t("dashboard.welcome")}, {user?.username}
             </p>
           </div>
           {hasPermission("create_shipment") && (
@@ -293,7 +303,9 @@ export default function DashboardPage() {
                       <TableHead>{t("shipment.sender")}</TableHead>
                       <TableHead>{t("shipment.receiver")}</TableHead>
                       <TableHead>{t("shipment.route")}</TableHead>
-                      <TableHead className="text-right">{t("common.amount")}</TableHead>
+                      <TableHead className="text-right">
+                        {t("common.amount")}
+                      </TableHead>
                       <TableHead>{t("shipment.status")}</TableHead>
                       <TableHead>{t("common.date")}</TableHead>
                       <TableHead className="w-12"></TableHead>
@@ -338,7 +350,9 @@ export default function DashboardPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => navigate(`/shipments/${shipment.id}`)}
+                                onClick={() =>
+                                  navigate(`/shipments/${shipment.id}`)
+                                }
                               >
                                 <Eye className="mr-2 h-4 w-4" />
                                 {t("common.view")}
