@@ -3,14 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { Package, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,24 +30,37 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const success = await login(email, password);
+      const success = await login(username, password);
       if (success) {
         toast({
           title: language === "fr" ? "Connexion réussie" : "Login successful",
-          description: language === "fr" ? "Bienvenue sur Transcam" : "Welcome to Transcam",
+          description:
+            language === "fr"
+              ? "Bienvenue sur Transcam"
+              : "Welcome to Transcam",
         });
         navigate("/dashboard");
       } else {
         toast({
           title: language === "fr" ? "Erreur de connexion" : "Login error",
-          description: language === "fr" ? "Email ou mot de passe incorrect" : "Invalid email or password",
+          description:
+            language === "fr"
+              ? "Nom d'utilisateur ou mot de passe incorrect"
+              : "Invalid username or password",
           variant: "destructive",
         });
       }
-    } catch {
+    } catch (err) {
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      const errorMessage = error?.response?.data?.message || error?.message;
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: language === "fr" ? "Une erreur est survenue" : "An error occurred",
+        description:
+          errorMessage ||
+          (language === "fr" ? "Une erreur est survenue" : "An error occurred"),
         variant: "destructive",
       });
     } finally {
@@ -67,7 +86,10 @@ export default function LoginPage() {
         {language === "fr" ? "English" : "Français"}
       </Button>
 
-      <Card variant="elevated" className="w-full max-w-md relative z-10 animate-fade-in">
+      <Card
+        variant="elevated"
+        className="w-full max-w-md relative z-10 animate-fade-in"
+      >
         <CardHeader className="text-center space-y-4">
           {/* Logo */}
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl gradient-primary shadow-glow">
@@ -77,22 +99,26 @@ export default function LoginPage() {
             <CardTitle className="text-2xl">
               <span className="text-gradient">Transcam</span>
             </CardTitle>
-            <CardDescription className="mt-2">{t("login.subtitle")}</CardDescription>
+            <CardDescription className="mt-2">
+              {t("login.subtitle")}
+            </CardDescription>
           </div>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">{t("login.email")}</Label>
+              <Label htmlFor="username">
+                {language === "fr" ? "Nom d'utilisateur" : "Username"}
+              </Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="admin@transcam.cm"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                placeholder="admin"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
-                autoComplete="email"
+                autoComplete="username"
               />
             </div>
 
@@ -116,13 +142,21 @@ export default function LoginPage() {
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
 
             <div className="text-right">
-              <Button variant="link" type="button" className="text-sm p-0 h-auto">
+              <Button
+                variant="link"
+                type="button"
+                className="text-sm p-0 h-auto"
+              >
                 {t("login.forgotPassword")}
               </Button>
             </div>
@@ -147,13 +181,13 @@ export default function LoginPage() {
           {/* Demo Credentials */}
           <div className="mt-6 p-4 rounded-lg bg-muted/50 border border-border">
             <p className="text-xs text-muted-foreground text-center mb-2">
-              {language === "fr" ? "Comptes de démonstration:" : "Demo accounts:"}
+              {language === "fr" ? "Note:" : "Note:"}
             </p>
-            <div className="text-xs space-y-1 text-muted-foreground">
-              <p><strong>Admin:</strong> admin@transcam.cm / admin123</p>
-              <p><strong>Staff:</strong> staff@transcam.cm / staff123</p>
-              <p><strong>Comptable:</strong> comptable@transcam.cm / compta123</p>
-            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              {language === "fr"
+                ? "Utilisez votre nom d'utilisateur et mot de passe pour vous connecter"
+                : "Use your username and password to login"}
+            </p>
           </div>
         </CardContent>
       </Card>

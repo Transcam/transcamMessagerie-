@@ -1,22 +1,51 @@
 import { NextFunction, Request, Response } from "express";
-import { UserRole } from "../types/roles";
+import { Permission } from "../types/permissions";
+import { roleHasPermission, roleHasAnyPermission } from "./permissions";
 
-const ROLE_HIERARCHY: Record<UserRole, number> = {
-  [UserRole.STAFF]: 1,
-  [UserRole.ADMIN]: 2,
-  [UserRole.SUPERADMIN]: 3,
-};
-
-export const authorize = (minRole: UserRole) => {
+export const authorize = (requiredPermission: Permission) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({
+        message: "Authentication required",
+        error: "You must be logged in to access this resource",
+      });
     }
 
     const userRole = req.user.role;
 
-    if (ROLE_HIERARCHY[userRole] < ROLE_HIERARCHY[minRole]) {
-      return res.status(403).json({ message: "Forbidden" });
+    if (!roleHasPermission(userRole, requiredPermission)) {
+      return res.status(403).json({
+        message: "Permission denied",
+        error: `Your role (${userRole}) does not have permission to perform this action. Required permission: ${requiredPermission}`,
+        requiredPermission,
+        userRole,
+      });
+    }
+
+    next();
+  };
+};
+
+export const authorizeAny = (requiredPermissions: Permission[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Authentication required",
+        error: "You must be logged in to access this resource",
+      });
+    }
+
+    const userRole = req.user.role;
+
+    if (!roleHasAnyPermission(userRole, requiredPermissions)) {
+      return res.status(403).json({
+        message: "Permission denied",
+        error: `Your role (${userRole}) does not have permission to perform this action. Required permissions: ${requiredPermissions.join(
+          ", "
+        )}`,
+        requiredPermission: requiredPermissions,
+        userRole,
+      });
     }
 
     next();

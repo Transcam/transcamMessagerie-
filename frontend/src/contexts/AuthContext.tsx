@@ -1,118 +1,111 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-export type UserRole = 'admin' | 'staff' | 'operational_accountant' | 'supervisor';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
+import { UserRole } from "@/types/role";
+import { authService } from "@/services/auth.service";
 
 interface User {
-  id: string;
-  name: string;
-  email: string;
+  id: number;
+  username: string;
   role: UserRole;
-  avatar?: string;
+  created_at?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  isLoading: boolean;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
 }
 
 const rolePermissions: Record<UserRole, string[]> = {
-  admin: [
-    'view_dashboard',
-    'create_shipment',
-    'edit_shipment',
-    'delete_shipment',
-    'view_shipments',
-    'create_departure',
-    'validate_departure',
-    'view_finance',
-    'view_distribution',
-    'edit_distribution',
-    'view_reports',
-    'export_data',
-    'manage_users',
+  [UserRole.ADMIN]: [
+    "view_dashboard",
+    "create_shipment",
+    "edit_shipment",
+    "delete_shipment",
+    "view_shipments",
+    "create_departure",
+    "validate_departure",
+    "view_finance",
+    "view_distribution",
+    "edit_distribution",
+    "view_reports",
+    "export_data",
+    "manage_users",
   ],
-  staff: [
-    'view_dashboard',
-    'create_shipment',
-    'view_shipments',
-    'print_waybill',
-    'print_receipt',
+  [UserRole.STAFF]: [
+    "view_dashboard",
+    "create_shipment",
+    "view_shipments",
+    "print_waybill",
+    "print_receipt",
   ],
-  operational_accountant: [
-    'view_dashboard',
-    'view_shipments',
-    'view_finance',
-    'export_data',
+  [UserRole.OPERATIONAL_ACCOUNTANT]: [
+    "view_dashboard",
+    "view_shipments",
+    "view_finance",
+    "export_data",
   ],
-  supervisor: [
-    'view_dashboard',
-    'view_finance',
-    'view_distribution',
-    'view_reports',
+  [UserRole.SUPERVISOR]: [
+    "view_dashboard",
+    "view_finance",
+    "view_distribution",
+    "view_reports",
   ],
-};
-
-// Mock users for demo
-const mockUsers: Record<string, { password: string; user: User }> = {
-  'admin@transcam.cm': {
-    password: 'admin123',
-    user: {
-      id: '1',
-      name: 'Jean-Pierre Mbarga',
-      email: 'admin@transcam.cm',
-      role: 'admin',
-    },
-  },
-  'staff@transcam.cm': {
-    password: 'staff123',
-    user: {
-      id: '2',
-      name: 'Marie Essono',
-      email: 'staff@transcam.cm',
-      role: 'staff',
-    },
-  },
-  'comptable@transcam.cm': {
-    password: 'compta123',
-    user: {
-      id: '3',
-      name: 'Paul Nkomo',
-      email: 'comptable@transcam.cm',
-      role: 'operational_accountant',
-    },
-  },
-  'superviseur@transcam.cm': {
-    password: 'super123',
-    user: {
-      id: '4',
-      name: 'Claire Atangana',
-      email: 'superviseur@transcam.cm',
-      role: 'supervisor',
-    },
-  },
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+  useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    const savedUser = localStorage.getItem("auth_user");
 
-    const mockUser = mockUsers[email.toLowerCase()];
-    if (mockUser && mockUser.password === password) {
-      setUser(mockUser.user);
-      return true;
+    if (token && savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_user");
+      }
     }
-    return false;
+    setIsLoading(false);
+  }, []);
+
+  const login = async (
+    username: string,
+    password: string
+  ): Promise<boolean> => {
+    try {
+      const response = await authService.login({ username, password });
+      const { token, user: userData } = response;
+
+      localStorage.setItem("auth_token", token);
+      localStorage.setItem("auth_user", JSON.stringify(userData));
+      setUser(userData);
+      return true;
+    } catch (error) {
+      console.error("Login error:", error);
+      return false;
+    }
   };
 
   const logout = () => {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
     setUser(null);
   };
 
@@ -126,6 +119,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       value={{
         user,
         isAuthenticated: !!user,
+        isLoading,
         login,
         logout,
         hasPermission,
@@ -139,7 +133,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

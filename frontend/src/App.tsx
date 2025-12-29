@@ -14,12 +14,25 @@ import ShipmentDetailPage from "./pages/ShipmentDetailPage";
 import DepartureListPage from "./pages/DepartureListPage";
 import DepartureDetailPage from "./pages/DepartureDetailPage";
 import NewDeparturePage from "./pages/NewDeparturePage";
+import UserListPage from "./pages/UserListPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
@@ -31,19 +44,118 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/shipments/new" element={<ProtectedRoute><NewShipmentPage /></ProtectedRoute>} />
-      <Route path="/shipments/:id/edit" element={<ProtectedRoute><EditShipmentPage /></ProtectedRoute>} />
-      <Route path="/shipments" element={<ProtectedRoute><ShipmentListPage /></ProtectedRoute>} />
-      <Route path="/shipments/:id" element={<ProtectedRoute><ShipmentDetailPage /></ProtectedRoute>} />
-      <Route path="/departures/new" element={<ProtectedRoute><NewDeparturePage /></ProtectedRoute>} />
-      <Route path="/departures" element={<ProtectedRoute><DepartureListPage /></ProtectedRoute>} />
-      <Route path="/departures/:id" element={<ProtectedRoute><DepartureDetailPage /></ProtectedRoute>} />
-      <Route path="/waybills" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/finance" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/distribution" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/reports" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shipments/new"
+        element={
+          <ProtectedRoute>
+            <NewShipmentPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shipments/:id/edit"
+        element={
+          <ProtectedRoute>
+            <EditShipmentPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shipments"
+        element={
+          <ProtectedRoute>
+            <ShipmentListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shipments/:id"
+        element={
+          <ProtectedRoute>
+            <ShipmentDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/departures/new"
+        element={
+          <ProtectedRoute>
+            <NewDeparturePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/departures"
+        element={
+          <ProtectedRoute>
+            <DepartureListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/departures/:id"
+        element={
+          <ProtectedRoute>
+            <DepartureDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <ProtectedRoute>
+            <UserListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/waybills"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/finance"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/distribution"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
