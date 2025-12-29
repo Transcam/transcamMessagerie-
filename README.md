@@ -548,6 +548,14 @@ transcamMessagerie-/
 - `POST /api/departures/:id/close` : Fermer un départ
 - `GET /api/departures/:id/general-waybill` : Télécharger le bordereau général
 
+#### Véhicules
+- `GET /api/vehicles` : Liste des véhicules
+- `GET /api/vehicles/available` : Liste des véhicules ACTIF (pour sélection)
+- `GET /api/vehicles/:id` : Détails d'un véhicule
+- `POST /api/vehicles` : Créer un véhicule
+- `PATCH /api/vehicles/:id` : Modifier un véhicule
+- `DELETE /api/vehicles/:id` : Supprimer un véhicule
+
 #### Dépenses
 - `GET /api/expenses` : Liste des dépenses
 - `GET /api/expenses/:id` : Détails d'une dépense
