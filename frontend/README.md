@@ -293,6 +293,14 @@ frontend/
 - `update()` : Mise à jour de véhicule
 - `delete()` : Suppression de véhicule
 
+### `driver.service.ts`
+- `list()` : Liste des chauffeurs avec filtres
+- `getAvailable()` : Liste des chauffeurs ACTIF (pour sélection)
+- `getOne()` : Détails d'un chauffeur
+- `create()` : Création de chauffeur
+- `update()` : Mise à jour de chauffeur
+- `delete()` : Suppression de chauffeur
+
 ### `expense.service.ts`
 - `list()` : Liste des dépenses avec filtres
 - `getOne()` : Détails d'une dépense
@@ -339,6 +347,14 @@ frontend/
 - `useCreateVehicle()` : Création de véhicule
 - `useUpdateVehicle()` : Mise à jour de véhicule
 - `useDeleteVehicle()` : Suppression de véhicule
+
+### `use-drivers.ts`
+- `useDrivers()` : Liste des chauffeurs
+- `useDriver()` : Détails d'un chauffeur
+- `useAvailableDrivers()` : Liste des chauffeurs ACTIF
+- `useCreateDriver()` : Création de chauffeur
+- `useUpdateDriver()` : Mise à jour de chauffeur
+- `useDeleteDriver()` : Suppression de chauffeur
 
 ### `use-expenses.ts`
 - `useExpenses()` : Liste des dépenses
@@ -428,6 +444,7 @@ L'URL de l'API est configurée dans `src/services/http-service.ts` et utilise la
   - Ne voient que **leurs propres dépenses** (filtrage automatique côté backend)
   - Ne peuvent pas voir les montants des dépenses (affichés comme "-")
   - Ne peuvent pas modifier ou supprimer les dépenses
+  - Peuvent créer et modifier des véhicules et des chauffeurs, mais ne peuvent pas les supprimer
 - Les **SUPERVISOR** ne peuvent pas créer, modifier ou supprimer les comptes **ADMIN**
 - Les expéditions sont créées avec le statut **CONFIRMED** par défaut
 - Les statistiques sont filtrées selon la nature si on est sur `/shipments/colis` ou `/shipments/courrier`
