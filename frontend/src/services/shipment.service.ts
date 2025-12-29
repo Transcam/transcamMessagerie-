@@ -151,9 +151,18 @@ export const shipmentService = {
   },
 
   // Generate receipt (placeholder)
-  generateReceipt: async (id: number) => {
-    const response = await httpService.get(`/shipments/${id}/receipt`);
-    return response.data;
+  downloadReceipt: async (id: number, waybillNumber?: string): Promise<void> => {
+    const response = await httpService.get(`/shipments/${id}/receipt`, {
+      responseType: "blob",
+    } as any);
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `recu-${waybillNumber || id}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   },
 
   getStatistics: async (nature?: "colis" | "courrier"): Promise<ShipmentStatistics> => {

@@ -39,7 +39,7 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useShipments, useCancelShipment, useUpdateShipment } from "@/hooks/use-shipments";
+import { useShipments, useCancelShipment, useGenerateReceipt } from "@/hooks/use-shipments";
 import { shipmentService } from "@/services/shipment.service";
 import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -87,6 +87,7 @@ export default function ShipmentListPage() {
 
   const { data, isLoading, error } = useShipments(filters);
   const cancelShipment = useCancelShipment();
+  const generateReceipt = useGenerateReceipt();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(amount);
@@ -138,24 +139,11 @@ export default function ShipmentListPage() {
     }
   };
 
-  const handlePrintWaybill = async (shipmentId: number) => {
+  const handlePrintReceipt = async (shipmentId: number, waybillNumber?: string) => {
     try {
-      const response = await shipmentService.generateWaybill(shipmentId);
-      // If backend returns a URL or blob, open it in a new window
-      if (response.url) {
-        window.open(response.url, "_blank");
-      } else if (response.data) {
-        // If it's a blob, create a blob URL
-        const blob = new Blob([response.data], { type: "application/pdf" });
-        const url = window.URL.createObjectURL(blob);
-        window.open(url, "_blank");
-      } else {
-        // Fallback: open the endpoint directly
-        const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-        window.open(`${baseURL}/api/shipments/${shipmentId}/waybill`, "_blank");
-      }
+      await generateReceipt.mutateAsync({ id: shipmentId, waybillNumber });
     } catch (error) {
-      console.error("Failed to print waybill:", error);
+      // Error handled by hook
     }
   };
 
@@ -424,12 +412,15 @@ export default function ShipmentListPage() {
                               </DropdownMenuItem>
                               
                               {/* Print - Always visible */}
-                              <DropdownMenuItem
-                                onClick={() => handlePrintWaybill(shipment.id)}
-                              >
-                                <Printer className="mr-2 h-4 w-4" />
-                                {t("shipment.print") || (language === "fr" ? "Imprimer" : "Print")}
-                              </DropdownMenuItem>
+                              {hasPermission("print_receipt") && (
+                                <DropdownMenuItem
+                                  onClick={() => handlePrintReceipt(shipment.id, shipment.waybill_number)}
+                                  disabled={generateReceipt.isPending}
+                                >
+                                  <Printer className="mr-2 h-4 w-4" />
+                                  {language === "fr" ? "Imprimer Reçu" : "Print Receipt"}
+                                </DropdownMenuItem>
+                              )}
                               
                               {/* Delete - Always visible for now */}
                               <DropdownMenuSeparator />

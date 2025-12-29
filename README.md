@@ -45,57 +45,219 @@ Le projet est divisé en deux parties principales :
 
 ### 📦 Gestion des Expéditions
 
-- **Création et modification** d'expéditions
-- **Nature des expéditions** : Colis ou Courrier
+#### Création et Modification
+- **Création d'expéditions** avec formulaire complet et validation
+- **Modification d'expéditions** confirmées (selon permissions)
+- **Annulation d'expéditions** avec raison obligatoire
+- **Statut automatique** : Les expéditions sont créées avec le statut `CONFIRMED` par défaut
+- **Génération automatique** de numéros de bordereau séquentiels (`TC-YYYY-NNNN`)
+
+#### Classification et Filtrage
+- **Nature des expéditions** : Colis ou Courrier (sélection via dropdown)
 - **Statuts** : Pending, Confirmed, Assigned, Cancelled
-- **Génération automatique** de numéros de bordereau (`TC-YYYY-NNNN`)
-- **Filtrage avancé** : par statut, route, nature, date, numéro de bordereau
-- **Génération de bordereaux PDF** individuels
-- **Statistiques détaillées** :
+- **Filtrage avancé** :
+  - Par statut (pending, confirmed, assigned, cancelled)
+  - Par route (Yaoundé → Douala, Douala → Yaoundé, etc.)
+  - Par nature (colis, courrier)
+  - Par date (date de création)
+  - Par numéro de bordereau (recherche)
+- **Pages dédiées** : `/shipments/colis` et `/shipments/courrier` pour filtrer par nature
+- **Pagination** : Navigation par pages avec limite configurable
+
+#### Documents et PDF
+- **Bordereaux individuels PDF** : Document officiel avec toutes les informations de l'expédition
+- **Reçus clients PDF** : Format ticket (80mm) pour impression thermique
+  - En-tête de l'entreprise
+  - Numéro de reçu (numéro de bordereau)
+  - Informations expéditeur et destinataire
+  - Détails complets (trajet, nature, poids, valeur déclarée, montant)
+  - Date de départ
+  - Conditions générales
+- **Téléchargement** : Boutons "Imprimer Reçu" dans les listes et pages de détail
+
+#### Statistiques
+- **Statistiques globales** :
   - Total d'expéditions
   - Revenu total (masqué pour STAFF)
   - Poids total
-  - Statistiques du jour et du mois
-  - Répartition par statut et par nature
+  - Expéditions aujourd'hui
+  - Expéditions ce mois
+  - Revenus du mois (masqué pour STAFF)
+- **Répartition** :
+  - Par statut (pending, confirmed, assigned, cancelled)
+  - Par nature (colis, courrier) - affiché uniquement si non filtré
+- **Filtrage par nature** : Les statistiques s'adaptent selon la page (colis/courrier/tous)
 
 ### 🚌 Gestion des Départs
 
-- **Création et gestion** de départs de véhicules
-- **Assignation d'expéditions** à un départ
+#### Création et Gestion
+- **Création de départs** avec sélection de route, véhicule et chauffeur
+- **Modification de départs** ouverts (avant scellement)
+- **Statuts** : Open, Sealed, Closed
+- **Un véhicule peut avoir plusieurs départs** (pas de restriction)
+
+#### Assignation d'Expéditions
+- **Assignation multiple** : Sélection et assignation de plusieurs expéditions à un départ
+- **Retrait d'expéditions** : Possibilité de retirer des expéditions d'un départ ouvert
+- **Validation** : Vérification que les expéditions ne sont pas déjà assignées à un autre départ scellé
+
+#### Scellement et Fermeture
 - **Scellement de départ** :
-  - Génération du numéro de bordereau général (`BG-YYYY-NNNN`)
+  - Génération automatique du numéro de bordereau général (`BG-YYYY-NNNN`)
   - Génération du PDF du bordereau général
-  - Blocage des modifications
-- **Fermeture de départ** : Finalisation du départ
-- **Téléchargement de bordereaux** :
-  - Bordereau général (toutes les expéditions)
-  - Tous les bordereaux individuels (ZIP)
+  - Blocage des modifications (statut passe à "sealed")
+  - Enregistrement de la date de scellement
+- **Fermeture de départ** : Finalisation du départ (statut passe à "closed")
+- **Permissions** : Seuls les ADMIN peuvent sceller et fermer les départs
+
+#### Documents et PDF
+- **Bordereau général PDF** :
+  - En-tête officiel de l'entreprise
+  - Informations du départ (bureau de départ, bureau destinataire, véhicule, chauffeur, date, heure)
+  - Tableau détaillé des expéditions (numéro, expéditeur, destinataire, description, poids)
+  - Totaux (nombre de colis, poids total, montant total)
+  - Zones de signatures
+  - Régénération à chaque téléchargement pour refléter les modifications
+- **Téléchargement de bordereaux individuels** : ZIP contenant tous les bordereaux des expéditions assignées
 
 ### 👥 Gestion des Utilisateurs
 
-- **Système de rôles** :
-  - **ADMIN** : Toutes les permissions
-  - **SUPERVISOR** : Gestion des utilisateurs (sauf ADMIN), gestion des expéditions et départs
-  - **STAFF** : Création et visualisation d'expéditions (sans voir les montants)
-  - **OPERATIONAL_ACCOUNTANT** : Permissions spécifiques
-- **Contrôle d'accès** :
-  - Les STAFF ne peuvent pas voir les montants (prix) des expéditions
-  - Les SUPERVISOR ne peuvent pas gérer les comptes ADMIN
-  - Permissions granulaires pour chaque action
+#### Système de Rôles
+- **ADMIN** : Toutes les permissions, accès complet à toutes les fonctionnalités
+- **SUPERVISOR** : 
+  - Gestion des utilisateurs (sauf ADMIN)
+  - Gestion des expéditions et départs
+  - Scellement et fermeture de départs
+  - Visualisation des montants
+- **STAFF** : 
+  - Création et visualisation d'expéditions
+  - **Masquage des montants** (prix et valeur déclarée)
+  - Pas d'accès aux statistiques financières
+- **OPERATIONAL_ACCOUNTANT** : Permissions spécifiques (à définir selon les besoins)
 
-### 🔐 Sécurité
+#### Contrôle d'Accès
+- **Restrictions pour SUPERVISOR** :
+  - Ne peut pas créer des comptes ADMIN
+  - Ne peut pas modifier les comptes ADMIN
+  - Ne peut pas supprimer les comptes ADMIN
+  - Ne peut pas assigner le rôle ADMIN
+  - Ne voit pas les comptes ADMIN dans la liste
+- **Restrictions pour STAFF** :
+  - Ne peut pas voir les montants (prix, valeur déclarée) dans les listes, détails et statistiques
+  - Les revenus sont masqués dans les statistiques
+- **Auto-protection** : Les utilisateurs ne peuvent pas supprimer leur propre compte
 
-- **Authentification JWT** avec tokens sécurisés
-- **Hachage de mots de passe** avec bcrypt
-- **Contrôle d'accès basé sur les permissions**
-- **Masquage des données sensibles** selon les rôles
-- **Audit logging** pour traçabilité complète
+#### CRUD Utilisateurs
+- **Création** : Formulaire avec username, password, role
+- **Modification** : Mise à jour des informations utilisateur
+- **Suppression** : Suppression avec vérifications de sécurité
+- **Liste** : Affichage de tous les utilisateurs avec filtrage selon le rôle
+
+### 🔐 Sécurité et Authentification
+
+#### Authentification
+- **JWT (JSON Web Tokens)** : Tokens sécurisés avec expiration (1h)
+- **Hachage de mots de passe** : bcrypt avec 10 rounds
+- **Middleware d'authentification** : Vérification du token sur toutes les routes protégées
+- **Gestion de session** : Stockage du token dans localStorage (frontend)
+
+#### Autorisation
+- **Contrôle d'accès basé sur les permissions** (RBAC)
+- **Middleware d'autorisation** : Vérification des permissions spécifiques pour chaque action
+- **Permissions granulaires** :
+  - `view_dashboard`, `view_shipments`, `create_shipment`, `edit_shipment`, `delete_shipment`
+  - `view_departures`, `create_departure`, `validate_departure`
+  - `print_waybill`, `print_receipt`
+  - `manage_users`, `view_finance`, `view_distribution`, `view_reports`, `export_data`
+
+#### Masquage de Données
+- **Données sensibles** : Les prix sont masqués pour les utilisateurs STAFF
+- **Filtrage automatique** : Les réponses API sont filtrées selon le rôle de l'utilisateur
+- **Interface adaptative** : Les colonnes et champs sont masqués dans l'interface selon les permissions
+
+#### Audit et Traçabilité
+- **Audit logging** : Enregistrement de toutes les actions importantes
+- **Historique complet** : Traçabilité des modifications sur les expéditions et départs
+- **Informations d'audit** : Qui, quand, quoi, pourquoi (raison pour les annulations)
 
 ### 🌐 Internationalisation
 
 - **Support multilingue** : Français (FR) et Anglais (EN)
-- **Basculement de langue** en temps réel
-- **Traductions complètes** de l'interface
+- **Basculement de langue** : Changement en temps réel sans rechargement
+- **Traductions complètes** : Toute l'interface utilisateur est traduite
+- **Persistance** : La langue choisie est sauvegardée dans localStorage
+- **Traductions dynamiques** : Utilisation du hook `useLanguage()` dans tous les composants
+
+### 📊 Dashboard et Statistiques
+
+#### Dashboard Principal
+- **Statistiques en temps réel** :
+  - Expéditions aujourd'hui
+  - Expéditions ce mois
+  - Revenu total (masqué pour STAFF)
+  - Total des départs
+- **Tableau des expéditions récentes** : 20 dernières expéditions avec actions rapides
+- **Navigation rapide** : Liens vers les différentes sections
+
+#### Statistiques par Nature
+- **Page Colis** (`/shipments/colis`) : Statistiques et liste filtrée pour les colis uniquement
+- **Page Courrier** (`/shipments/courrier`) : Statistiques et liste filtrée pour le courrier uniquement
+- **Page Tous** (`/shipments`) : Statistiques globales avec répartition par nature
+
+### 📄 Génération de Documents PDF
+
+#### Bordereaux Individuels
+- **Format** : PDF standard A4
+- **Contenu** : Informations complètes de l'expédition
+- **Génération** : À la volée (pas de stockage)
+- **Téléchargement** : Via bouton "Imprimer Bordereau" (si permission `print_waybill`)
+
+#### Bordereaux Généraux
+- **Format** : PDF standard A4
+- **Génération** : Uniquement lors du scellement d'un départ
+- **Contenu** :
+  - En-tête officiel de l'entreprise
+  - Informations du départ (bureau, véhicule, chauffeur, date, heure)
+  - Tableau détaillé des expéditions
+  - Totaux et signatures
+- **Régénération** : Le PDF est régénéré à chaque téléchargement pour refléter les modifications
+- **Stockage** : Chemin sauvegardé dans la base de données
+
+#### Reçus Clients
+- **Format** : Ticket 80mm (226.77 points de largeur)
+- **Optimisation** : Pour impression sur imprimantes thermiques
+- **Contenu** :
+  - En-tête "TRANSCAM COLIS ET COURRIER"
+  - Placeholder pour logo (à venir)
+  - Informations de l'entreprise (siège social, téléphone, N° contribuable)
+  - Numéro de reçu (numéro de bordereau)
+  - Informations expéditeur et destinataire
+  - Détails de l'expédition (trajet, nature, poids, valeur déclarée, montant)
+  - Date de départ (sans heure)
+  - Conditions générales
+  - Message de remerciement
+- **Génération** : À la volée (pas de stockage)
+- **Téléchargement** : Via bouton "Imprimer Reçu" (si permission `print_receipt`)
+
+### 🎨 Interface Utilisateur
+
+#### Design et UX
+- **Framework UI** : shadcn/ui avec Tailwind CSS
+- **Design moderne** : Interface claire et professionnelle
+- **Responsive** : Adaptation à tous les écrans (mobile, tablette, desktop)
+- **Icônes** : Lucide React pour une cohérence visuelle
+
+#### Navigation
+- **Sidebar** : Navigation principale avec menu déroulant pour les expéditions
+- **Breadcrumbs** : Indication du chemin de navigation
+- **Actions rapides** : Boutons d'action contextuels selon les permissions
+
+#### Composants Réutilisables
+- **Badges de statut** : Indicateurs visuels colorés pour les statuts
+- **Cartes de statistiques** : Affichage des métriques avec icônes
+- **Tableaux** : Affichage paginé avec actions
+- **Formulaires** : Validation en temps réel avec React Hook Form et Zod
+- **Dialogs** : Modales pour les actions importantes (confirmation, assignation, etc.)
 
 ## 🛠️ Technologies
 
@@ -286,6 +448,7 @@ transcamMessagerie-/
 - `PATCH /api/shipments/:id` : Modifier une expédition
 - `DELETE /api/shipments/:id` : Annuler une expédition
 - `GET /api/shipments/:id/waybill` : Télécharger le bordereau PDF
+- `GET /api/shipments/:id/receipt` : Télécharger le reçu PDF (format ticket)
 - `GET /api/shipments/statistics` : Statistiques des expéditions
 
 #### Départs
@@ -329,6 +492,7 @@ Le système utilise un contrôle d'accès basé sur les rôles (RBAC) :
 
 - **Bordereaux individuels** : Un PDF par expédition avec toutes les informations
 - **Bordereaux généraux** : Un PDF par départ avec toutes les expéditions assignées
+- **Reçus clients** : Format ticket (80mm) pour les clients avec toutes les informations de l'expédition
 - **Format officiel** : Conforme aux standards de transport au Cameroun
 - **Régénération** : Les PDF sont régénérés à chaque téléchargement pour refléter les modifications
 

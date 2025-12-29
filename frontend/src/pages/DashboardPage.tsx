@@ -35,7 +35,7 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useShipments } from "@/hooks/use-shipments";
+import { useShipments, useGenerateReceipt } from "@/hooks/use-shipments";
 import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo } from "react";
@@ -66,6 +66,7 @@ export default function DashboardPage() {
     limit: 20,
     includeCancelled: false,
   });
+  const generateReceipt = useGenerateReceipt();
 
   // Calculate stats from real data
   const stats = useMemo(() => {
@@ -362,15 +363,13 @@ export default function DashboardPage() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 {t("common.view")}
                               </DropdownMenuItem>
-                              {hasPermission("print_waybill") && (
+                              {hasPermission("print_receipt") && (
                                 <DropdownMenuItem
-                                  onClick={() => {
-                                    // TODO: Implement print waybill
-                                    console.log("Print waybill", shipment.id);
-                                  }}
+                                  onClick={() => generateReceipt.mutate({ id: shipment.id, waybillNumber: shipment.waybill_number })}
+                                  disabled={generateReceipt.isPending}
                                 >
                                   <Printer className="mr-2 h-4 w-4" />
-                                  {t("shipment.print")}
+                                  {language === "fr" ? "Imprimer Reçu" : "Print Receipt"}
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>

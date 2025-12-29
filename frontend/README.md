@@ -58,13 +58,13 @@ frontend/
    - Affichage de toutes les expéditions
    - Filtrage par statut, route, nature (colis/courrier), numéro de bordereau
    - Pagination
-   - Actions : Voir, Modifier, Imprimer bordereau, Annuler
+   - Actions : Voir, Modifier, Imprimer reçu, Annuler
    - **Filtrage par nature** : `/shipments/colis` et `/shipments/courrier`
 
 2. **Détails d'Expédition** (`/shipments/:id`)
    - Informations complètes de l'expédition
    - Historique et audit trail
-   - Actions : Modifier, Imprimer bordereau, Annuler
+   - Actions : Modifier, Imprimer reçu, Annuler
 
 3. **Création d'Expédition** (`/shipments/new`)
    - Formulaire complet avec validation
@@ -80,6 +80,7 @@ frontend/
 - **Nature des expéditions** : Colis ou Courrier
 - **Statuts** : Pending, Confirmed, Assigned, Cancelled
 - **Génération de bordereaux PDF** individuels
+- **Génération de reçus PDF** en format ticket (80mm) pour les clients
 - **Statistiques** :
   - Total d'expéditions
   - Revenu total (masqué pour STAFF)
@@ -168,6 +169,7 @@ frontend/
 - `update()` : Mise à jour d'expédition
 - `cancel()` : Annulation d'expédition
 - `downloadWaybill()` : Téléchargement du bordereau PDF
+- `downloadReceipt()` : Téléchargement du reçu PDF (format ticket)
 - `getStatistics()` : Statistiques des expéditions
 
 ### `departure.service.ts`
@@ -201,6 +203,7 @@ frontend/
 - `useCreateShipment()` : Création d'expédition
 - `useUpdateShipment()` : Mise à jour d'expédition
 - `useCancelShipment()` : Annulation d'expédition
+- `useGenerateReceipt()` : Génération et téléchargement de reçu PDF
 - `useShipmentStatistics()` : Statistiques des expéditions
 
 ### `use-departures.ts`
@@ -291,7 +294,8 @@ L'URL de l'API est configurée dans `src/services/http-service.ts` et utilise la
 - Les **SUPERVISOR** ne peuvent pas créer, modifier ou supprimer les comptes **ADMIN**
 - Les expéditions sont créées avec le statut **CONFIRMED** par défaut
 - Les statistiques sont filtrées selon la nature si on est sur `/shipments/colis` ou `/shipments/courrier`
-- Les bordereaux PDF sont générés côté backend et téléchargés via le frontend
+- Les bordereaux et reçus PDF sont générés côté backend et téléchargés via le frontend
+- Les reçus sont au format ticket (80mm) pour impression sur imprimantes thermiques
 
 ## 🛠️ Scripts Disponibles
 

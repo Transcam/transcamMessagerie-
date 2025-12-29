@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useShipment, useCancelShipment } from "@/hooks/use-shipments";
+import { useShipment, useCancelShipment, useGenerateReceipt } from "@/hooks/use-shipments";
 import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -44,9 +44,11 @@ export default function ShipmentDetailPage() {
   const shipmentId = id ? parseInt(id) : 0;
   const { data: shipment, isLoading, error } = useShipment(shipmentId);
   const cancelShipment = useCancelShipment();
+  const generateReceipt = useGenerateReceipt();
 
   const canEdit = hasPermission("edit_shipment") && shipment && !shipment.is_cancelled;
   const canCancel = hasPermission("delete_shipment") && shipment && !shipment.is_cancelled;
+  const canPrintReceipt = hasPermission("print_receipt") && shipment;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(amount);
@@ -143,10 +145,24 @@ export default function ShipmentDetailPage() {
               status={shipment.status}
               isCancelled={shipment.is_cancelled}
             />
-            {hasPermission("print_waybill") && (
-              <Button variant="outline" size="sm">
-                <Printer className="mr-2 h-4 w-4" />
-                {t("shipment.print")}
+            {canPrintReceipt && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => generateReceipt.mutate({ id: shipment.id, waybillNumber: shipment.waybill_number })}
+                disabled={generateReceipt.isPending}
+              >
+                {generateReceipt.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {language === "fr" ? "Téléchargement..." : "Downloading..."}
+                  </>
+                ) : (
+                  <>
+                    <Printer className="mr-2 h-4 w-4" />
+                    {language === "fr" ? "Imprimer Reçu" : "Print Receipt"}
+                  </>
+                )}
               </Button>
             )}
           </div>
