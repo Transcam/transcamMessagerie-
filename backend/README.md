@@ -463,6 +463,8 @@ backend/
 - `CreateExpensesTable` : Table expenses avec enum de catégories
 - `CreateVehiclesTable` : Table vehicles avec enums type et status
 - `UpdateDeparturesAddVehicleRelation` : Ajout de vehicle_id à departures et relation avec vehicles
+- `CreateDriversTable` : Table drivers avec enum status
+- `UpdateDeparturesAddDriverRelation` : Ajout de driver_id à departures et relation avec drivers
 
 ## 🔒 Sécurité
 
