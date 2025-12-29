@@ -115,7 +115,7 @@ frontend/
 
 3. **Création de Départ** (`/departures/new`)
    - Formulaire de création
-   - Sélection de route, véhicule (dropdown avec véhicules ACTIF), chauffeur
+   - Sélection de route, véhicule (dropdown avec véhicules ACTIF), chauffeur (dropdown avec chauffeurs ACTIF)
 
 #### Fonctionnalités
 
@@ -123,6 +123,7 @@ frontend/
 - **Assignation d'expéditions** à un départ (les expéditions déjà assignées sont pré-cochées dans le dialog)
 - **Scellement** : Génération du numéro de bordereau général (BG-YYYY-NNNN)
 - **Génération de bordereau général PDF** avec toutes les expéditions
+  - Affichage de l'immatriculation du véhicule et du nom complet du chauffeur depuis la base de données
 - **Masquage des montants** pour les utilisateurs STAFF dans les listes et détails
 
 ### 🚗 Gestion des Véhicules

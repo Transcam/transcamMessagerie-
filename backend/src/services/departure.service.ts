@@ -10,14 +10,14 @@ import { UserRole } from "../types/roles";
 export interface CreateDepartureDTO {
   route?: string;
   vehicle_id?: number;
-  driver_name?: string;
+  driver_id?: number;
   notes?: string;
 }
 
 export interface UpdateDepartureDTO {
   route?: string;
   vehicle_id?: number;
-  driver_name?: string;
+  driver_id?: number;
   notes?: string;
 }
 
@@ -102,6 +102,7 @@ export class DepartureService {
       .leftJoinAndSelect("departure.sealed_by", "sealed_by")
       .leftJoinAndSelect("departure.closed_by", "closed_by")
       .leftJoinAndSelect("departure.vehicle", "vehicle")
+      .leftJoinAndSelect("departure.driver", "driver")
       .leftJoinAndSelect("departure.shipments", "shipments");
 
     if (filters.status) {
@@ -280,7 +281,7 @@ export class DepartureService {
   }> {
     const departure = await this.departureRepo.findOne({
       where: { id: departureId },
-      relations: ["shipments"],
+      relations: ["shipments", "vehicle", "driver"],
     });
 
     if (!departure) {
@@ -415,7 +416,7 @@ export class DepartureService {
     
     const departure = await this.departureRepo.findOne({
       where: { id },
-      relations: ["shipments"],
+      relations: ["shipments", "vehicle", "driver"],
     });
 
     if (!departure) {

@@ -329,7 +329,11 @@ export default function DepartureListPage() {
                               ? `${departure.vehicle.name} (${departure.vehicle.registration_number})`
                               : "-"}
                           </TableCell>
-                          <TableCell>{departure.driver_name || "-"}</TableCell>
+                          <TableCell>
+                            {departure.driver
+                              ? `${departure.driver.first_name} ${departure.driver.last_name}`
+                              : "-"}
+                          </TableCell>
                           <TableCell>{totals.count}</TableCell>
                           <TableCell className="text-right font-medium">
                             {totals.total !== null && totals.total !== undefined && totals.total > 0

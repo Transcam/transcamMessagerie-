@@ -27,6 +27,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCreateDeparture } from "@/hooks/use-departures";
 import { useAvailableVehicles } from "@/hooks/use-vehicles";
+import { useAvailableDrivers } from "@/hooks/use-drivers";
 
 const routes = [
   "Yaoundé → Douala",
@@ -40,7 +41,7 @@ const routes = [
 const departureSchema = z.object({
   route: z.string().min(1, "Route is required"),
   vehicle_id: z.number().min(1, "Vehicle is required"),
-  driver_name: z.string().min(1, "Driver name is required"),
+  driver_id: z.number().min(1, "Driver is required"),
   notes: z.string().optional(),
 });
 
@@ -51,13 +52,14 @@ export default function NewDeparturePage() {
   const { language } = useLanguage();
   const createDeparture = useCreateDeparture();
   const { data: availableVehicles, isLoading: vehiclesLoading } = useAvailableVehicles();
+  const { data: availableDrivers, isLoading: driversLoading } = useAvailableDrivers();
 
   const form = useForm<DepartureFormValues>({
     resolver: zodResolver(departureSchema),
     defaultValues: {
       route: "",
       vehicle_id: undefined,
-      driver_name: "",
+      driver_id: undefined,
       notes: "",
     },
   });
@@ -172,18 +174,42 @@ export default function NewDeparturePage() {
 
                 <FormField
                   control={form.control}
-                  name="driver_name"
+                  name="driver_id"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        {language === "fr" ? "Nom du chauffeur" : "Driver Name"} *
+                        {language === "fr" ? "Chauffeur" : "Driver"} *
                       </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder={language === "fr" ? "Jean Dupont" : "Jean Dupont"}
-                          {...field}
-                        />
-                      </FormControl>
+                      <Select
+                        onValueChange={(value) => field.onChange(parseInt(value))}
+                        value={field.value?.toString()}
+                        disabled={driversLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                driversLoading
+                                  ? (language === "fr" ? "Chargement..." : "Loading...")
+                                  : (language === "fr" ? "Sélectionner un chauffeur" : "Select a driver")
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableDrivers && availableDrivers.length > 0 ? (
+                            availableDrivers.map((driver) => (
+                              <SelectItem key={driver.id} value={driver.id.toString()}>
+                                {driver.first_name} {driver.last_name} ({driver.phone})
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="none" disabled>
+                              {language === "fr" ? "Aucun chauffeur disponible" : "No drivers available"}
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

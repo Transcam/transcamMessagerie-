@@ -13,7 +13,8 @@
     "migration:revert": "npm run typeorm -- migration:revert -d ./data-source.ts",
     "seed:shipments": "ts-node scripts/insert-test-shipments.ts",
     "seed:expenses": "ts-node scripts/insert-test-expenses.ts",
-    "seed:vehicles": "ts-node scripts/insert-test-vehicles.ts"
+    "seed:vehicles": "ts-node scripts/insert-test-vehicles.ts",
+    "seed:drivers": "ts-node scripts/insert-test-drivers.ts"
   },
   "keywords": [],
   "author": "",

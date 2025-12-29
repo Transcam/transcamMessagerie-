@@ -19,6 +19,7 @@ const translations: Translations = {
   "nav.newShipment": { fr: "Nouvelle expédition", en: "New Shipment" },
   "nav.departures": { fr: "Départs", en: "Departures" },
   "nav.vehicles": { fr: "Véhicules", en: "Vehicles" },
+  "nav.drivers": { fr: "Chauffeurs", en: "Drivers" },
   "nav.expenses": { fr: "depense", en: "Expenses" },
   "nav.waybills": { fr: "Bordereaux", en: "Waybills" },
   "nav.finance": { fr: "Finance", en: "Finance" },

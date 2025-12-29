@@ -12,6 +12,7 @@ import {
 import { User } from "./user.entity";
 import { Shipment } from "./shipment.entity";
 import { Vehicle } from "./vehicle.entity";
+import { Driver } from "./driver.entity";
 
 export enum DepartureStatus {
   OPEN = "open",
@@ -54,8 +55,12 @@ export class Departure {
   @Column({ nullable: true })
   vehicle_id!: number | null;
 
-  @Column({ type: "varchar", length: 255, nullable: true })
-  driver_name!: string | null;
+  @ManyToOne(() => Driver, { nullable: true })
+  @JoinColumn({ name: "driver_id" })
+  driver!: Driver | null;
+
+  @Column({ nullable: true })
+  driver_id!: number | null;
 
   @Column({ type: "text", nullable: true })
   notes!: string | null;

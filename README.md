@@ -21,6 +21,7 @@ Transcam Messagerie est une application web complète pour la gestion des expéd
 - Gérer les expéditions (colis et courrier) avec suivi complet
 - Organiser les départs de véhicules
 - Gérer la flotte de véhicules (création, modification, suivi)
+- Gérer l'équipe de chauffeurs (création, modification, suivi)
 - Assigner des expéditions aux départs
 - Gérer les dépenses avec suivi complet et statistiques
 - Générer des bordereaux individuels et généraux en PDF
@@ -93,10 +94,11 @@ Le projet est divisé en deux parties principales :
 ### 🚌 Gestion des Départs
 
 #### Création et Gestion
-- **Création de départs** avec sélection de route, véhicule et chauffeur
+- **Création de départs** avec sélection de route, véhicule (dropdown) et chauffeur (dropdown)
 - **Modification de départs** ouverts (avant scellement)
 - **Statuts** : Open, Sealed, Closed
 - **Un véhicule peut avoir plusieurs départs** (pas de restriction)
+- **Sélection de véhicule et chauffeur** : Dropdowns avec valeurs ACTIF uniquement
 
 #### Assignation d'Expéditions
 - **Assignation multiple** : Sélection et assignation de plusieurs expéditions à un départ
@@ -117,11 +119,12 @@ Le projet est divisé en deux parties principales :
 #### Documents et PDF
 - **Bordereau général PDF** :
   - En-tête officiel de l'entreprise
-  - Informations du départ (bureau de départ, bureau destinataire, véhicule, chauffeur, date, heure)
+  - Informations du départ (bureau de départ, bureau destinataire, immatriculation du véhicule, nom du chauffeur, date, heure)
   - Tableau détaillé des expéditions (numéro, expéditeur, destinataire, description, poids)
   - Totaux (nombre de colis, poids total, montant total)
   - Zones de signatures
   - Régénération à chaque téléchargement pour refléter les modifications
+  - **Affichage** : Immatriculation du véhicule et nom complet du chauffeur depuis la base de données
 
 ### 🚗 Gestion des Véhicules
 
@@ -154,6 +157,43 @@ Le projet est divisé en deux parties principales :
 - **Sélection de véhicule** lors de la création d'un départ
 - **Dropdown avec véhicules ACTIF uniquement** lors de la création de départ
 - **Affichage** : Nom du véhicule et immatriculation dans les listes et détails de départ
+
+#### Permissions
+- **ADMIN** : View, Create, Edit, Delete
+- **SUPERVISOR** : View, Create, Edit, Delete
+- **STAFF** : View, Create, Edit (pas de delete)
+- **OPERATIONAL_ACCOUNTANT** : View uniquement
+
+### 👨‍✈️ Gestion des Chauffeurs
+
+#### Création et Gestion
+- **Création de chauffeurs** avec informations complètes
+- **Modification de chauffeurs** (seulement pour ADMIN/SUPERVISOR/STAFF)
+- **Suppression de chauffeurs** (seulement pour ADMIN/SUPERVISOR)
+- **Champs obligatoires** :
+  - Prénom (varchar 100)
+  - Nom (varchar 100)
+  - Téléphone (varchar 20)
+  - Numéro de permis (unique, varchar 50)
+  - Statut : ACTIF ou INACTIF
+- **Champs optionnels** :
+  - Email (varchar 255)
+  - Adresse (text)
+
+#### Statuts
+- **ACTIF** : Chauffeur disponible pour affectation
+- **INACTIF** : Chauffeur non disponible
+
+#### Filtrage et Recherche
+- **Filtrage par statut** : ACTIF ou INACTIF
+- **Recherche** : Par nom, prénom, téléphone ou numéro de permis
+- **Pagination** : Navigation par pages
+
+#### Intégration avec les Départs
+- **Sélection de chauffeur** lors de la création d'un départ
+- **Dropdown avec chauffeurs ACTIF uniquement** lors de la création de départ
+- **Affichage** : Nom complet du chauffeur et téléphone dans les listes et détails de départ
+- **Affichage dans le PDF** : Nom complet du chauffeur dans le bordereau général
 
 #### Permissions
 - **ADMIN** : View, Create, Edit, Delete
@@ -436,6 +476,7 @@ npm run migration:run
 npm run seed:shipments
 npm run seed:expenses
 npm run seed:vehicles
+npm run seed:drivers
 ```
 
 ## 🚀 Utilisation
@@ -556,6 +597,14 @@ transcamMessagerie-/
 - `PATCH /api/vehicles/:id` : Modifier un véhicule
 - `DELETE /api/vehicles/:id` : Supprimer un véhicule
 
+#### Chauffeurs
+- `GET /api/drivers` : Liste des chauffeurs
+- `GET /api/drivers/available` : Liste des chauffeurs ACTIF (pour sélection)
+- `GET /api/drivers/:id` : Détails d'un chauffeur
+- `POST /api/drivers` : Créer un chauffeur
+- `PATCH /api/drivers/:id` : Modifier un chauffeur
+- `DELETE /api/drivers/:id` : Supprimer un chauffeur
+
 #### Dépenses
 - `GET /api/expenses` : Liste des dépenses
 - `GET /api/expenses/:id` : Détails d'une dépense
@@ -641,6 +690,8 @@ npm run migration:revert
 # Seed
 npm run seed:shipments
 npm run seed:expenses
+npm run seed:vehicles
+npm run seed:drivers
 ```
 
 ### Frontend

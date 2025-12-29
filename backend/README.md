@@ -143,10 +143,11 @@ backend/
   - Génération de numéros de bordereau général
   - Génération de PDF du bordereau général avec :
     - En-tête officiel de l'entreprise
-    - Informations du départ (bureau, véhicule, chauffeur, date, heure)
+    - Informations du départ (bureau, immatriculation du véhicule, nom du chauffeur, date, heure)
     - Tableau détaillé des expéditions (numéro, expéditeur, destinataire, description, poids)
     - Totaux (nombre de colis, poids total, montant total)
     - Zones de signatures
+    - **Affichage** : Immatriculation du véhicule et nom complet du chauffeur depuis la base de données
 
 ### 🚗 Gestion des Véhicules
 
@@ -207,7 +208,61 @@ backend/
 
 - Le champ `vehicle` (string) a été remplacé par une relation `ManyToOne` vers `Vehicle`
 - La colonne `vehicle_id` a été ajoutée à la table `departures`
-- Migration : `UpdateDeparturesAddVehicleRelation`
+- Le champ `driver_name` (string) a été remplacé par une relation `ManyToOne` vers `Driver`
+- La colonne `driver_id` a été ajoutée à la table `departures`
+- Migrations : `UpdateDeparturesAddVehicleRelation`, `UpdateDeparturesAddDriverRelation`
+
+### 👨‍✈️ Gestion des Chauffeurs
+
+#### Entité `Driver`
+
+- **Champs principaux** :
+  - Prénom (obligatoire, varchar 100)
+  - Nom (obligatoire, varchar 100)
+  - Téléphone (obligatoire, varchar 20)
+  - Numéro de permis (unique, obligatoire, varchar 50)
+  - Email (optionnel, varchar 255)
+  - Adresse (optionnel, text)
+  - Statut (enum : actif, inactif)
+  - Date de création et modification
+- **Relations** :
+  - Créé par (User)
+  - Départs (Departure[]) - relation OneToMany
+
+#### Statuts
+
+- `actif` : Chauffeur disponible
+- `inactif` : Chauffeur non disponible
+
+#### Endpoints API
+
+- `GET /api/drivers` : Liste des chauffeurs (avec filtres)
+  - Filtres : status, search
+  - Pagination
+- `GET /api/drivers/available` : Liste des chauffeurs ACTIF (pour sélection dans départ)
+- `GET /api/drivers/:id` : Détails d'un chauffeur
+- `POST /api/drivers` : Création de chauffeur
+  - Validation : numéro de permis unique, champs obligatoires
+- `PATCH /api/drivers/:id` : Mise à jour de chauffeur
+  - Validation : numéro de permis unique si modifié
+- `DELETE /api/drivers/:id` : Suppression de chauffeur
+  - Vérification : Empêche la suppression si le chauffeur est utilisé dans des départs
+
+#### Services
+
+- **`DriverService`** :
+  - CRUD complet
+  - Validation d'unicité du numéro de permis
+  - Vérification d'utilisation avant suppression
+  - Méthode `getAvailable()` pour récupérer uniquement les chauffeurs ACTIF
+  - Audit logging
+
+#### Permissions
+
+- `view_drivers` : Tous les utilisateurs peuvent voir les chauffeurs
+- `create_driver` : ADMIN, SUPERVISOR, STAFF peuvent créer
+- `edit_driver` : ADMIN, SUPERVISOR, STAFF peuvent modifier
+- `delete_driver` : Seulement ADMIN et SUPERVISOR peuvent supprimer
 
 ### 💰 Gestion des Dépenses
 

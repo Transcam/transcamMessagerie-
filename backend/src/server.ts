@@ -8,6 +8,7 @@ import departuresRoutes from "./routes/departures.routes";
 import userRoutes from "./routes/user.routes";
 import expensesRoutes from "./routes/expenses.routes";
 import vehiclesRoutes from "./routes/vehicles.routes";
+import driversRoutes from "./routes/drivers.routes";
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use("/api/departures", departuresRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/expenses", expensesRoutes);
 app.use("/api/vehicles", vehiclesRoutes);
+app.use("/api/drivers", driversRoutes);
 
 // Test route with database
 // app.get("/", async (req: Request, res: Response) => {

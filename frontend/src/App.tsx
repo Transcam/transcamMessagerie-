@@ -23,6 +23,10 @@ import VehicleListPage from "./pages/VehicleListPage";
 import VehicleDetailPage from "./pages/VehicleDetailPage";
 import NewVehiclePage from "./pages/NewVehiclePage";
 import EditVehiclePage from "./pages/EditVehiclePage";
+import DriverListPage from "./pages/DriverListPage";
+import DriverDetailPage from "./pages/DriverDetailPage";
+import NewDriverPage from "./pages/NewDriverPage";
+import EditDriverPage from "./pages/EditDriverPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -161,6 +165,38 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <VehicleListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/drivers/new"
+        element={
+          <ProtectedRoute>
+            <NewDriverPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/drivers/:id/edit"
+        element={
+          <ProtectedRoute>
+            <EditDriverPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/drivers/:id"
+        element={
+          <ProtectedRoute>
+            <DriverDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/drivers"
+        element={
+          <ProtectedRoute>
+            <DriverListPage />
           </ProtectedRoute>
         }
       />

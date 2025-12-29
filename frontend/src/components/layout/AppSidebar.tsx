@@ -19,6 +19,7 @@ import {
   Users,
   Receipt,
   Car,
+  UserCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,12 @@ const navItems: NavItem[] = [
     labelKey: "nav.vehicles",
     href: "/vehicles",
     permission: "view_vehicles",
+  },
+  {
+    icon: UserCircle,
+    labelKey: "nav.drivers",
+    href: "/drivers",
+    permission: "view_drivers",
   },
   {
     icon: Receipt,

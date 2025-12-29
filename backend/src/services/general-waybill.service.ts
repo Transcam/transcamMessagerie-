@@ -221,7 +221,7 @@ export class GeneralWaybillService {
     
     const value3ZoneX = currentX + label3Width + labelValueGap;
     doc.fontSize(7).font("Helvetica");
-    const vehicleValue = departure.vehicle ? departure.vehicle.name : "";
+    const vehicleValue = departure.vehicle ? departure.vehicle.registration_number : "";
     // Center the value text in the zone
     doc.text(vehicleValue, value3ZoneX, currentY, { width: valueZoneWidth, align: "center" });
     // Center the underline under the value
@@ -264,7 +264,9 @@ export class GeneralWaybillService {
     
     const value5ZoneX = currentX + label5Width + labelValueGap;
     doc.fontSize(7).font("Helvetica");
-    const driverValue = departure.driver_name || "";
+    const driverValue = departure.driver 
+      ? `${departure.driver.first_name} ${departure.driver.last_name}` 
+      : "";
     // Center the value text in the zone
     doc.text(driverValue, value5ZoneX, currentY, { width: valueZoneWidth, align: "center" });
     // Center the underline under the value
