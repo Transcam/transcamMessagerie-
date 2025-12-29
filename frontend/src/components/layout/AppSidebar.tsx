@@ -17,6 +17,7 @@ import {
   Globe,
   User,
   Users,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,12 @@ const navItems: NavItem[] = [
     labelKey: "nav.departures",
     href: "/departures",
     permission: "view_dashboard",
+  },
+  {
+    icon: Receipt,
+    labelKey: "nav.expenses",
+    href: "/expenses",
+    permission: "view_expenses",
   },
   {
     icon: FileText,

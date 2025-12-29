@@ -42,6 +42,11 @@ const rolePermissions: Record<UserRole, string[]> = {
     "manage_users",
     "print_waybill",
     "print_receipt",
+    "create_expense",
+    "view_expenses",
+    "view_expense_amount",
+    "edit_expense",
+    "delete_expense",
   ],
   [UserRole.STAFF]: [
     "view_dashboard",
@@ -49,12 +54,18 @@ const rolePermissions: Record<UserRole, string[]> = {
     "view_shipments",
     "print_waybill",
     "print_receipt",
+    "create_expense",
+    "view_expenses",
   ],
   [UserRole.OPERATIONAL_ACCOUNTANT]: [
     "view_dashboard",
     "view_shipments",
     "view_finance",
     "export_data",
+    "create_expense",
+    "view_expenses",
+    "view_expense_amount",
+    "edit_expense",
   ],
   [UserRole.SUPERVISOR]: [
     "view_dashboard",
@@ -72,6 +83,11 @@ const rolePermissions: Record<UserRole, string[]> = {
     "manage_users",
     "print_waybill",
     "print_receipt",
+    "create_expense",
+    "view_expenses",
+    "view_expense_amount",
+    "edit_expense",
+    "delete_expense",
   ],
 };
 

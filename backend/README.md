@@ -149,6 +149,75 @@ backend/
     - Totaux (nombre de colis, poids total, montant total)
     - Zones de signatures
 
+### 💰 Gestion des Dépenses
+
+#### Entité `Expense`
+
+- **Champs principaux** :
+  - Description (obligatoire, texte)
+  - Montant (obligatoire, decimal 10,2)
+  - Catégorie (enum avec 13 catégories)
+  - Date de création (utilisée comme date de dépense)
+- **Relations** :
+  - Créé par (User)
+  - Modifié par (User, nullable)
+
+#### Catégories de Dépenses
+
+13 catégories disponibles :
+- `depense_du_boss` : Dépense du boss
+- `carburant` : Carburant
+- `maintenance` : Maintenance
+- `fournitures_bureau` : Fournitures de bureau
+- `loyer` : Loyer
+- `salaires` : Salaires
+- `communication` : Communication
+- `assurance` : Assurance
+- `reparations` : Réparations
+- `charges` : Charges
+- `impots` : Impôts/Taxes
+- `marketing` : Marketing
+- `autre` : Autre
+
+#### Endpoints API
+
+- `GET /api/expenses` : Liste des dépenses (avec filtres)
+  - Filtres : category, dateFrom, dateTo
+  - Pagination
+  - **Filtre automatique pour STAFF** : Ne voit que ses propres dépenses
+  - **Masque le montant pour les utilisateurs STAFF**
+- `GET /api/expenses/:id` : Détails d'une dépense
+  - **Vérifie que le STAFF ne peut voir que ses propres dépenses**
+  - **Masque le montant pour les utilisateurs STAFF**
+- `POST /api/expenses` : Création de dépense
+  - Validation : description, amount > 0, category valide
+- `PATCH /api/expenses/:id` : Mise à jour de dépense
+  - **Blocage pour les utilisateurs STAFF** (au niveau de l'autorisation)
+- `DELETE /api/expenses/:id` : Suppression de dépense
+  - **Seulement pour ADMIN/SUPERVISOR** (permission `delete_expense`)
+- `GET /api/expenses/statistics` : Statistiques des dépenses
+  - Total, montant total, répartition par catégorie
+  - Statistiques du jour et du mois
+  - **Filtre automatique pour STAFF** : Statistiques seulement sur ses propres dépenses
+  - **Masque les montants pour les utilisateurs STAFF**
+
+#### Services
+
+- **`ExpenseService`** :
+  - CRUD complet
+  - Filtrage automatique pour STAFF (ne voit que ses propres dépenses)
+  - Masquage des montants pour STAFF
+  - Calcul de statistiques
+  - Audit logging
+
+#### Permissions
+
+- `create_expense` : Tous les utilisateurs peuvent créer des dépenses
+- `view_expenses` : Tous les utilisateurs peuvent voir les dépenses (liste)
+- `view_expense_amount` : Seuls les non-STAFF peuvent voir les montants
+- `edit_expense` : Seuls les non-STAFF peuvent modifier les dépenses
+- `delete_expense` : Seulement ADMIN et SUPERVISOR peuvent supprimer
+
 ### 👥 Gestion des Utilisateurs
 
 #### Entité `User`
@@ -243,6 +312,13 @@ backend/
 ### `WaybillService`
 - Génération de numéros de bordereau séquentiels
 
+### `ExpenseService`
+- Gestion complète du cycle de vie des dépenses
+- Filtrage automatique pour STAFF (ne voit que ses propres dépenses)
+- Masquage des montants pour STAFF
+- Calcul de statistiques
+- Audit logging
+
 ## 🗄️ Base de Données
 
 ### Tables Principales
@@ -250,6 +326,7 @@ backend/
 - **`users`** : Utilisateurs du système
 - **`shipments`** : Expéditions
 - **`departures`** : Départs
+- **`expenses`** : Dépenses
 - **`audit_logs`** : Logs d'audit
 
 ### Migrations
@@ -259,6 +336,7 @@ backend/
 - `CreateDeparturesAndUpdateShipments` : Table departures et relation avec shipments
 - `AddNatureToShipments` : Ajout du champ nature (colis/courrier)
 - `DeleteEmailFromUserEntity` : Suppression du champ email
+- `CreateExpensesTable` : Table expenses avec enum de catégories
 
 ## 🔒 Sécurité
 
@@ -290,6 +368,11 @@ Le système de permissions est défini dans `src/types/permissions.ts` et `src/h
 - `view_distribution` : Voir la distribution
 - `view_reports` : Voir les rapports
 - `export_data` : Exporter des données
+- `create_expense` : Créer des dépenses
+- `view_expenses` : Voir les dépenses
+- `view_expense_amount` : Voir les montants des dépenses (seuls les non-STAFF)
+- `edit_expense` : Modifier les dépenses (seuls les non-STAFF)
+- `delete_expense` : Supprimer les dépenses (seulement ADMIN/SUPERVISOR)
 
 ## 🚀 Installation et Démarrage
 
@@ -361,6 +444,7 @@ npm start
 - `npm run migration:run` : Exécute les migrations
 - `npm run migration:revert` : Annule la dernière migration
 - `npm run seed:shipments` : Insère des expéditions de test
+- `npm run seed:expenses` : Insère des dépenses de test
 
 ## 📂 Stockage des Fichiers
 
@@ -407,6 +491,16 @@ POST   /departures/:id/seal
 POST   /departures/:id/close
 GET    /departures/:id/general-waybill
 GET    /departures/:id/waybills
+```
+
+### Dépenses
+```
+GET    /expenses
+GET    /expenses/:id
+POST   /expenses
+PATCH  /expenses/:id
+DELETE /expenses/:id
+GET    /expenses/statistics
 ```
 
 ### Utilisateurs

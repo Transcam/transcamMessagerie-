@@ -15,7 +15,12 @@ export type Permission =
   | "export_data"
   | "manage_users"
   | "print_waybill"
-  | "print_receipt";
+  | "print_receipt"
+  | "create_expense"
+  | "view_expenses"
+  | "view_expense_amount"
+  | "edit_expense"
+  | "delete_expense";
 
 // Permission mappings for each role - matches frontend
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -35,6 +40,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "manage_users",
     "print_waybill",
     "print_receipt",
+    "create_expense",
+    "view_expenses",
+    "view_expense_amount",
+    "edit_expense",
+    "delete_expense",
   ],
   [UserRole.STAFF]: [
     "view_dashboard",
@@ -42,12 +52,18 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "view_shipments",
     "print_waybill",
     "print_receipt",
+    "create_expense",
+    "view_expenses",
   ],
   [UserRole.OPERATIONAL_ACCOUNTANT]: [
     "view_dashboard",
     "view_shipments",
     "view_finance",
     "export_data",
+    "create_expense",
+    "view_expenses",
+    "view_expense_amount",
+    "edit_expense",
   ],
   [UserRole.SUPERVISOR]: [
     "view_dashboard",
@@ -65,5 +81,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "manage_users",
     "print_waybill",
     "print_receipt",
+    "create_expense",
+    "view_expenses",
+    "view_expense_amount",
+    "edit_expense",
+    "delete_expense",
   ],
 };

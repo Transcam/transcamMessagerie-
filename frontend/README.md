@@ -22,6 +22,7 @@ frontend/
 ├── src/
 │   ├── components/          # Composants réutilisables
 │   │   ├── departures/     # Composants spécifiques aux départs
+│   │   ├── expenses/       # Composants spécifiques aux dépenses
 │   │   ├── layout/          # Composants de mise en page
 │   │   ├── shipments/       # Composants spécifiques aux expéditions
 │   │   └── ui/             # Composants UI de base (shadcn/ui)
@@ -41,6 +42,8 @@ frontend/
 - **Gestion des rôles** : ADMIN, STAFF, SUPERVISOR, OPERATIONAL_ACCOUNTANT
 - **Contrôle d'accès basé sur les permissions** :
   - Les utilisateurs STAFF ne peuvent pas voir les montants (prix) des expéditions
+  - Les utilisateurs STAFF ne voient que leurs propres dépenses (montants masqués)
+  - Les utilisateurs STAFF ne peuvent pas modifier ou supprimer les dépenses
   - Les SUPERVISOR ne peuvent pas créer/modifier/supprimer les comptes ADMIN
   - Permissions granulaires pour chaque action
 
@@ -119,6 +122,46 @@ frontend/
 - **Génération de bordereau général PDF** avec toutes les expéditions
 - **Téléchargement de bordereaux individuels** pour toutes les expéditions
 
+### 💰 Gestion des Dépenses
+
+#### Pages Disponibles
+
+1. **Liste des Dépenses** (`/expenses`)
+   - Affichage de toutes les dépenses (ou seulement celles de l'utilisateur STAFF)
+   - Filtrage par catégorie et date (plage de dates)
+   - Pagination
+   - Actions : Modifier, Supprimer (selon permissions)
+   - **Affichage conditionnel** :
+     - Les montants sont masqués pour les utilisateurs STAFF (affichés comme "-")
+     - Les boutons Modifier/Supprimer sont masqués pour STAFF
+
+2. **Création de Dépense** (`/expenses/new`)
+   - Formulaire avec validation
+   - Champs : Description (obligatoire), Catégorie (dropdown), Montant (obligatoire)
+   - **13 catégories** disponibles via dropdown
+   - Date automatique (date de création)
+
+3. **Modification de Dépense** (`/expenses/:id/edit`)
+   - Édition des informations de dépense
+   - Validation en temps réel
+   - **Non accessible pour STAFF** (pas de permission)
+
+#### Fonctionnalités
+
+- **Catégories** : 13 catégories prédéfinies (Dépense du boss, Carburant, Maintenance, etc.)
+- **Description obligatoire** : Champ requis pour chaque dépense
+- **Montant obligatoire** : Doit être supérieur à 0
+- **Statistiques** :
+  - Total de dépenses
+  - Montant total (masqué pour STAFF)
+  - Dépenses aujourd'hui
+  - Dépenses ce mois
+  - Montant du mois (masqué pour STAFF)
+  - Répartition par catégorie (masquée pour STAFF)
+- **Contrôle d'accès** :
+  - **STAFF** : Voit uniquement ses propres dépenses, montants masqués, ne peut pas modifier/supprimer
+  - **Autres rôles** : Voient toutes les dépenses, voient les montants, peuvent modifier/supprimer (selon permissions)
+
 ### 👥 Gestion des Utilisateurs
 
 #### Page Disponible
@@ -160,6 +203,12 @@ frontend/
 
 - **`DepartureStatusBadge`** : Badge coloré pour les statuts de départ
 
+### Composants de Dépenses
+
+- **`ExpenseStats`** : Composant de statistiques avec cartes
+  - Masque les montants pour les utilisateurs STAFF
+  - Affiche les statistiques adaptées selon le rôle
+
 ## 🔧 Services API
 
 ### `shipment.service.ts`
@@ -183,6 +232,14 @@ frontend/
 - `close()` : Fermeture du départ
 - `downloadGeneralWaybill()` : Téléchargement du bordereau général
 - `downloadAllWaybills()` : Téléchargement de tous les bordereaux individuels
+
+### `expense.service.ts`
+- `list()` : Liste des dépenses avec filtres
+- `getOne()` : Détails d'une dépense
+- `create()` : Création de dépense
+- `update()` : Mise à jour de dépense
+- `delete()` : Suppression de dépense
+- `getStatistics()` : Statistiques des dépenses
 
 ### `user.service.ts`
 - `list()` : Liste des utilisateurs
@@ -214,6 +271,14 @@ frontend/
 - `useAssignShipments()` : Assignation d'expéditions
 - `useSealDeparture()` : Scellement de départ
 - `useCloseDeparture()` : Fermeture de départ
+
+### `use-expenses.ts`
+- `useExpenses()` : Liste des dépenses
+- `useExpense()` : Détails d'une dépense
+- `useCreateExpense()` : Création de dépense
+- `useUpdateExpense()` : Mise à jour de dépense
+- `useDeleteExpense()` : Suppression de dépense
+- `useExpenseStatistics()` : Statistiques des dépenses
 
 ### `use-users.ts`
 - `useUsers()` : Liste des utilisateurs
@@ -290,12 +355,18 @@ L'URL de l'API est configurée dans `src/services/http-service.ts` et utilise la
 
 ## 📝 Notes Importantes
 
-- Les utilisateurs **STAFF** ne peuvent pas voir les montants (prix) des expéditions
+- Les utilisateurs **STAFF** :
+  - Ne peuvent pas voir les montants (prix) des expéditions
+  - Ne voient que **leurs propres dépenses** (filtrage automatique côté backend)
+  - Ne peuvent pas voir les montants des dépenses (affichés comme "-")
+  - Ne peuvent pas modifier ou supprimer les dépenses
 - Les **SUPERVISOR** ne peuvent pas créer, modifier ou supprimer les comptes **ADMIN**
 - Les expéditions sont créées avec le statut **CONFIRMED** par défaut
 - Les statistiques sont filtrées selon la nature si on est sur `/shipments/colis` ou `/shipments/courrier`
 - Les bordereaux et reçus PDF sont générés côté backend et téléchargés via le frontend
 - Les reçus sont au format ticket (80mm) pour impression sur imprimantes thermiques
+- Les dépenses utilisent la date de création comme date de dépense
+- 13 catégories de dépenses sont disponibles via dropdown dans le formulaire de création
 
 ## 🛠️ Scripts Disponibles
 

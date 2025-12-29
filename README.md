@@ -21,6 +21,7 @@ Transcam Messagerie est une application web complète pour la gestion des expéd
 - Gérer les expéditions (colis et courrier) avec suivi complet
 - Organiser les départs de véhicules
 - Assigner des expéditions aux départs
+- Gérer les dépenses avec suivi complet et statistiques
 - Générer des bordereaux individuels et généraux en PDF
 - Suivre les statistiques et les performances
 - Gérer les utilisateurs avec contrôle d'accès basé sur les rôles
@@ -120,6 +121,49 @@ Le projet est divisé en deux parties principales :
   - Régénération à chaque téléchargement pour refléter les modifications
 - **Téléchargement de bordereaux individuels** : ZIP contenant tous les bordereaux des expéditions assignées
 
+### 💰 Gestion des Dépenses
+
+#### Création et Gestion
+- **Création de dépenses** avec description, montant et catégorie
+- **13 catégories** disponibles : Dépense du boss, Carburant, Maintenance, Fournitures de bureau, Loyer, Salaires, Communication, Assurance, Réparations, Charges, Impôts/Taxes, Marketing, Autre
+- **Date automatique** : La date de dépense correspond à la date de création
+- **Modification de dépenses** (seulement pour non-STAFF)
+- **Suppression de dépenses** (seulement pour ADMIN/SUPERVISOR)
+
+#### Filtrage et Recherche
+- **Filtrage par catégorie** : Sélection d'une catégorie spécifique
+- **Filtrage par date** : Plage de dates (date de début et date de fin)
+- **Pagination** : Navigation par pages avec limite configurable
+- **Tri** : Tri par date de création (plus récent en premier)
+
+#### Contrôle d'Accès par Rôle
+- **STAFF** :
+  - Peut créer des dépenses
+  - **Voit uniquement ses propres dépenses** (filtrage automatique)
+  - **Montants masqués** (affichés comme "-" ou "N/A")
+  - Ne peut pas modifier ou supprimer les dépenses
+- **Autres rôles** (ADMIN, SUPERVISOR, OPERATIONAL_ACCOUNTANT) :
+  - Peuvent créer des dépenses
+  - Voient **toutes les dépenses** de tous les utilisateurs
+  - Voient les montants complets
+  - Peuvent modifier et supprimer (selon permissions)
+
+#### Statistiques
+- **Statistiques globales** :
+  - Total de dépenses (nombre)
+  - Montant total (masqué pour STAFF)
+  - Dépenses aujourd'hui
+  - Dépenses ce mois
+  - Montant du mois (masqué pour STAFF)
+  - Montant moyen (masqué pour STAFF)
+- **Répartition par catégorie** : Montant par catégorie (masqué pour STAFF)
+- **Filtrage par date** : Statistiques sur une plage de dates
+
+#### Audit et Traçabilité
+- **Historique complet** : Enregistrement de toutes les actions (création, modification, suppression)
+- **Traçabilité** : Suivi de qui a créé/modifié chaque dépense
+- **Date de création** : Utilisée comme date de dépense pour les rapports financiers
+
 ### 👥 Gestion des Utilisateurs
 
 #### Système de Rôles
@@ -168,6 +212,7 @@ Le projet est divisé en deux parties principales :
   - `view_dashboard`, `view_shipments`, `create_shipment`, `edit_shipment`, `delete_shipment`
   - `view_departures`, `create_departure`, `validate_departure`
   - `print_waybill`, `print_receipt`
+  - `create_expense`, `view_expenses`, `view_expense_amount`, `edit_expense`, `delete_expense`
   - `manage_users`, `view_finance`, `view_distribution`, `view_reports`, `export_data`
 
 #### Masquage de Données
@@ -349,6 +394,7 @@ npm run migration:run
 
 # (Optionnel) Insérer des données de test
 npm run seed:shipments
+npm run seed:expenses
 ```
 
 ## 🚀 Utilisation
@@ -462,6 +508,14 @@ transcamMessagerie-/
 - `GET /api/departures/:id/general-waybill` : Télécharger le bordereau général
 - `GET /api/departures/:id/waybills` : Télécharger tous les bordereaux individuels
 
+#### Dépenses
+- `GET /api/expenses` : Liste des dépenses
+- `GET /api/expenses/:id` : Détails d'une dépense
+- `POST /api/expenses` : Créer une dépense
+- `PATCH /api/expenses/:id` : Modifier une dépense
+- `DELETE /api/expenses/:id` : Supprimer une dépense
+- `GET /api/expenses/statistics` : Statistiques des dépenses
+
 #### Utilisateurs
 - `GET /api/users` : Liste des utilisateurs
 - `GET /api/users/:id` : Détails d'un utilisateur
@@ -476,13 +530,19 @@ transcamMessagerie-/
 Le système utilise un contrôle d'accès basé sur les rôles (RBAC) :
 
 - **ADMIN** : Accès complet à toutes les fonctionnalités
-- **SUPERVISOR** : Gestion des utilisateurs (sauf ADMIN), gestion des expéditions et départs
-- **STAFF** : Création et visualisation d'expéditions (les montants sont masqués)
-- **OPERATIONAL_ACCOUNTANT** : Permissions spécifiques (à définir selon les besoins)
+- **SUPERVISOR** : Gestion des utilisateurs (sauf ADMIN), gestion des expéditions, départs et dépenses
+- **STAFF** : 
+  - Création et visualisation d'expéditions (les montants sont masqués)
+  - Création de dépenses et visualisation de **ses propres dépenses uniquement** (montants masqués)
+- **OPERATIONAL_ACCOUNTANT** : Visualisation et gestion des dépenses, visualisation des expéditions
 
 ### Restrictions Spécifiques
 
-- Les utilisateurs **STAFF** ne peuvent pas voir les montants (prix) des expéditions
+- Les utilisateurs **STAFF** :
+  - Ne peuvent pas voir les montants (prix) des expéditions
+  - Ne voient que **leurs propres dépenses** (filtrage automatique)
+  - Ne peuvent pas voir les montants des dépenses (masqués)
+  - Ne peuvent pas modifier ou supprimer les dépenses
 - Les **SUPERVISOR** ne peuvent pas créer, modifier ou supprimer les comptes **ADMIN**
 - Les utilisateurs ne peuvent pas supprimer leur propre compte
 
@@ -530,6 +590,7 @@ npm run migration:revert
 
 # Seed
 npm run seed:shipments
+npm run seed:expenses
 ```
 
 ### Frontend
@@ -552,6 +613,9 @@ npm run preview
 - Les bordereaux généraux ne peuvent être générés qu'après le scellement d'un départ
 - Les PDF sont stockés localement dans `/storage/waybills/`
 - Les statistiques sont calculées en temps réel
+- Les dépenses sont tracées pour les rapports financiers
+- Les utilisateurs **STAFF** ne voient que leurs propres dépenses
+- La date de dépense correspond automatiquement à la date de création
 
 ## 🤝 Contribution
 

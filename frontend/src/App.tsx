@@ -15,6 +15,9 @@ import DepartureListPage from "./pages/DepartureListPage";
 import DepartureDetailPage from "./pages/DepartureDetailPage";
 import NewDeparturePage from "./pages/NewDeparturePage";
 import UserListPage from "./pages/UserListPage";
+import ExpenseListPage from "./pages/ExpenseListPage";
+import NewExpensePage from "./pages/NewExpensePage";
+import EditExpensePage from "./pages/EditExpensePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -129,6 +132,30 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <UserListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/expenses/new"
+        element={
+          <ProtectedRoute>
+            <NewExpensePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/expenses/:id/edit"
+        element={
+          <ProtectedRoute>
+            <EditExpensePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/expenses"
+        element={
+          <ProtectedRoute>
+            <ExpenseListPage />
           </ProtectedRoute>
         }
       />
