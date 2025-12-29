@@ -47,6 +47,10 @@ const rolePermissions: Record<UserRole, string[]> = {
     "view_expense_amount",
     "edit_expense",
     "delete_expense",
+    "view_vehicles",
+    "create_vehicle",
+    "edit_vehicle",
+    "delete_vehicle",
   ],
   [UserRole.STAFF]: [
     "view_dashboard",
@@ -58,6 +62,9 @@ const rolePermissions: Record<UserRole, string[]> = {
     "view_expenses",
     "create_departure",
     "validate_departure",
+    "view_vehicles",
+    "create_vehicle",
+    "edit_vehicle",
   ],
   [UserRole.OPERATIONAL_ACCOUNTANT]: [
     "view_dashboard",
@@ -68,6 +75,7 @@ const rolePermissions: Record<UserRole, string[]> = {
     "view_expenses",
     "view_expense_amount",
     "edit_expense",
+    "view_vehicles",
   ],
   [UserRole.SUPERVISOR]: [
     "view_dashboard",
@@ -90,6 +98,10 @@ const rolePermissions: Record<UserRole, string[]> = {
     "view_expense_amount",
     "edit_expense",
     "delete_expense",
+    "view_vehicles",
+    "create_vehicle",
+    "edit_vehicle",
+    "delete_vehicle",
   ],
 };
 

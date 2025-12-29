@@ -20,6 +20,7 @@ Transcam Messagerie est une application web complète pour la gestion des expéd
 
 - Gérer les expéditions (colis et courrier) avec suivi complet
 - Organiser les départs de véhicules
+- Gérer la flotte de véhicules (création, modification, suivi)
 - Assigner des expéditions aux départs
 - Gérer les dépenses avec suivi complet et statistiques
 - Générer des bordereaux individuels et généraux en PDF
@@ -121,6 +122,44 @@ Le projet est divisé en deux parties principales :
   - Totaux (nombre de colis, poids total, montant total)
   - Zones de signatures
   - Régénération à chaque téléchargement pour refléter les modifications
+
+### 🚗 Gestion des Véhicules
+
+#### Création et Gestion
+- **Création de véhicules** avec immatriculation, nom/code, type et statut
+- **Modification de véhicules** (seulement pour ADMIN/SUPERVISOR/STAFF)
+- **Suppression de véhicules** (seulement pour ADMIN/SUPERVISOR)
+- **Champs obligatoires** :
+  - Immatriculation (unique, format ex: LT-234-AB)
+  - Nom/Code du véhicule (ex: Bus 003, Coaster Kribi)
+  - Type de véhicule : Bus, Coaster, Minibus
+  - Statut : ACTIF ou INACTIF
+
+#### Types de Véhicules
+- **Bus** : Bus de transport
+- **Coaster** : Coaster
+- **Minibus** : Minibus
+
+#### Statuts
+- **ACTIF** : Véhicule disponible pour utilisation
+- **INACTIF** : Véhicule non disponible
+
+#### Filtrage et Recherche
+- **Filtrage par statut** : ACTIF ou INACTIF
+- **Filtrage par type** : Bus, Coaster, Minibus
+- **Recherche** : Par immatriculation ou nom
+- **Pagination** : Navigation par pages
+
+#### Intégration avec les Départs
+- **Sélection de véhicule** lors de la création d'un départ
+- **Dropdown avec véhicules ACTIF uniquement** lors de la création de départ
+- **Affichage** : Nom du véhicule et immatriculation dans les listes et détails de départ
+
+#### Permissions
+- **ADMIN** : View, Create, Edit, Delete
+- **SUPERVISOR** : View, Create, Edit, Delete
+- **STAFF** : View, Create, Edit (pas de delete)
+- **OPERATIONAL_ACCOUNTANT** : View uniquement
 
 ### 💰 Gestion des Dépenses
 
@@ -396,6 +435,7 @@ npm run migration:run
 # (Optionnel) Insérer des données de test
 npm run seed:shipments
 npm run seed:expenses
+npm run seed:vehicles
 ```
 
 ## 🚀 Utilisation

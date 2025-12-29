@@ -379,7 +379,11 @@ export default function DepartureDetailPage() {
                 <label className="text-sm font-medium text-muted-foreground">
                   {language === "fr" ? "Véhicule" : "Vehicle"}
                 </label>
-                <p className="text-lg">{departure.vehicle || "-"}</p>
+                <p className="text-lg">
+                  {departure.vehicle
+                    ? `${departure.vehicle.name} (${departure.vehicle.registration_number})`
+                    : "-"}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">

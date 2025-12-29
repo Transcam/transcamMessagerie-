@@ -115,7 +115,7 @@ frontend/
 
 3. **Création de Départ** (`/departures/new`)
    - Formulaire de création
-   - Sélection de route, véhicule, chauffeur
+   - Sélection de route, véhicule (dropdown avec véhicules ACTIF), chauffeur
 
 #### Fonctionnalités
 
@@ -124,6 +124,46 @@ frontend/
 - **Scellement** : Génération du numéro de bordereau général (BG-YYYY-NNNN)
 - **Génération de bordereau général PDF** avec toutes les expéditions
 - **Masquage des montants** pour les utilisateurs STAFF dans les listes et détails
+
+### 🚗 Gestion des Véhicules
+
+#### Pages Disponibles
+
+1. **Liste des Véhicules** (`/vehicles`)
+   - Affichage de tous les véhicules
+   - Filtrage par statut (ACTIF/INACTIF) et type (Bus/Coaster/Minibus)
+   - Recherche par immatriculation ou nom
+   - Pagination
+   - Actions : Voir, Modifier, Supprimer (selon permissions)
+
+2. **Détails de Véhicule** (`/vehicles/:id`)
+   - Informations complètes du véhicule
+   - Immatriculation, nom, type, statut
+   - Date de création et créateur
+   - Actions : Modifier, Supprimer (selon permissions)
+
+3. **Création de Véhicule** (`/vehicles/new`)
+   - Formulaire avec validation
+   - Champs obligatoires : Immatriculation, Nom/Code, Type, Statut
+   - Sélection via dropdowns pour Type et Statut
+
+4. **Modification de Véhicule** (`/vehicles/:id/edit`)
+   - Édition des informations de véhicule
+   - Validation en temps réel
+   - Accessible pour ADMIN, SUPERVISOR et STAFF
+
+#### Fonctionnalités
+
+- **Types** : Bus, Coaster, Minibus
+- **Statuts** : ACTIF, INACTIF
+- **Intégration avec les départs** :
+  - Dropdown de sélection lors de la création d'un départ
+  - Affiche uniquement les véhicules ACTIF
+  - Format d'affichage : "Nom (Immatriculation)" (ex: "Bus 003 (LT-234-AB)")
+- **Contrôle d'accès** :
+  - **ADMIN/SUPERVISOR** : Accès complet (view, create, edit, delete)
+  - **STAFF** : Peut créer et modifier (view, create, edit)
+  - **OPERATIONAL_ACCOUNTANT** : Peut seulement voir (view)
 
 ### 💰 Gestion des Dépenses
 
@@ -199,6 +239,7 @@ frontend/
 - **`DashboardLayout`** : Layout principal avec sidebar et header
 - **`AppSidebar`** : Barre latérale de navigation avec :
   - Menu déroulant pour les expéditions (Courrier, Colis)
+  - Lien vers la gestion des véhicules
   - Affichage conditionnel basé sur les permissions
   - Basculement de langue
   - Informations utilisateur
@@ -243,6 +284,14 @@ frontend/
 - `downloadGeneralWaybill()` : Téléchargement du bordereau général
 - `downloadAllWaybills()` : Téléchargement de tous les bordereaux individuels
 
+### `vehicle.service.ts`
+- `list()` : Liste des véhicules avec filtres
+- `getAvailable()` : Liste des véhicules ACTIF (pour sélection)
+- `getOne()` : Détails d'un véhicule
+- `create()` : Création de véhicule
+- `update()` : Mise à jour de véhicule
+- `delete()` : Suppression de véhicule
+
 ### `expense.service.ts`
 - `list()` : Liste des dépenses avec filtres
 - `getOne()` : Détails d'une dépense
@@ -281,6 +330,14 @@ frontend/
 - `useAssignShipments()` : Assignation d'expéditions
 - `useSealDeparture()` : Scellement de départ
 - `useCloseDeparture()` : Fermeture de départ
+
+### `use-vehicles.ts`
+- `useVehicles()` : Liste des véhicules
+- `useVehicle()` : Détails d'un véhicule
+- `useAvailableVehicles()` : Liste des véhicules ACTIF
+- `useCreateVehicle()` : Création de véhicule
+- `useUpdateVehicle()` : Mise à jour de véhicule
+- `useDeleteVehicle()` : Suppression de véhicule
 
 ### `use-expenses.ts`
 - `useExpenses()` : Liste des dépenses

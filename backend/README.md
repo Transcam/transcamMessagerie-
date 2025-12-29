@@ -148,6 +148,67 @@ backend/
     - Totaux (nombre de colis, poids total, montant total)
     - Zones de signatures
 
+### 🚗 Gestion des Véhicules
+
+#### Entité `Vehicle`
+
+- **Champs principaux** :
+  - Immatriculation (unique, obligatoire, varchar 50)
+  - Nom/Code du véhicule (obligatoire, varchar 255)
+  - Type (enum : bus, coaster, minibus)
+  - Statut (enum : actif, inactif)
+  - Date de création et modification
+- **Relations** :
+  - Créé par (User)
+  - Départs (Departure[]) - relation OneToMany
+
+#### Types de Véhicules
+
+- `bus` : Bus
+- `coaster` : Coaster
+- `minibus` : Minibus
+
+#### Statuts
+
+- `actif` : Véhicule disponible
+- `inactif` : Véhicule non disponible
+
+#### Endpoints API
+
+- `GET /api/vehicles` : Liste des véhicules (avec filtres)
+  - Filtres : status, type, search
+  - Pagination
+- `GET /api/vehicles/available` : Liste des véhicules ACTIF (pour sélection dans départ)
+- `GET /api/vehicles/:id` : Détails d'un véhicule
+- `POST /api/vehicles` : Création de véhicule
+  - Validation : immatriculation unique, champs obligatoires
+- `PATCH /api/vehicles/:id` : Mise à jour de véhicule
+  - Validation : immatriculation unique si modifiée
+- `DELETE /api/vehicles/:id` : Suppression de véhicule
+  - Vérification : Empêche la suppression si le véhicule est utilisé dans des départs
+
+#### Services
+
+- **`VehicleService`** :
+  - CRUD complet
+  - Validation d'unicité de l'immatriculation
+  - Vérification d'utilisation avant suppression
+  - Méthode `getAvailable()` pour récupérer uniquement les véhicules ACTIF
+  - Audit logging
+
+#### Permissions
+
+- `view_vehicles` : Tous les utilisateurs peuvent voir les véhicules
+- `create_vehicle` : ADMIN, SUPERVISOR, STAFF peuvent créer
+- `edit_vehicle` : ADMIN, SUPERVISOR, STAFF peuvent modifier
+- `delete_vehicle` : Seulement ADMIN et SUPERVISOR peuvent supprimer
+
+#### Modification de l'Entité Departure
+
+- Le champ `vehicle` (string) a été remplacé par une relation `ManyToOne` vers `Vehicle`
+- La colonne `vehicle_id` a été ajoutée à la table `departures`
+- Migration : `UpdateDeparturesAddVehicleRelation`
+
 ### 💰 Gestion des Dépenses
 
 #### Entité `Expense`
@@ -318,6 +379,13 @@ backend/
 - Calcul de statistiques
 - Audit logging
 
+### `VehicleService`
+- Gestion complète du cycle de vie des véhicules
+- Validation d'unicité de l'immatriculation
+- Vérification d'utilisation avant suppression
+- Méthode pour récupérer uniquement les véhicules ACTIF
+- Audit logging
+
 ## 🗄️ Base de Données
 
 ### Tables Principales
@@ -325,6 +393,7 @@ backend/
 - **`users`** : Utilisateurs du système
 - **`shipments`** : Expéditions
 - **`departures`** : Départs
+- **`vehicles`** : Véhicules de la flotte
 - **`expenses`** : Dépenses
 - **`audit_logs`** : Logs d'audit
 
@@ -336,6 +405,8 @@ backend/
 - `AddNatureToShipments` : Ajout du champ nature (colis/courrier)
 - `DeleteEmailFromUserEntity` : Suppression du champ email
 - `CreateExpensesTable` : Table expenses avec enum de catégories
+- `CreateVehiclesTable` : Table vehicles avec enums type et status
+- `UpdateDeparturesAddVehicleRelation` : Ajout de vehicle_id à departures et relation avec vehicles
 
 ## 🔒 Sécurité
 
@@ -372,6 +443,10 @@ Le système de permissions est défini dans `src/types/permissions.ts` et `src/h
 - `view_expense_amount` : Voir les montants des dépenses (seuls les non-STAFF)
 - `edit_expense` : Modifier les dépenses (seuls les non-STAFF)
 - `delete_expense` : Supprimer les dépenses (seulement ADMIN/SUPERVISOR)
+- `view_vehicles` : Voir les véhicules
+- `create_vehicle` : Créer des véhicules (ADMIN, SUPERVISOR, STAFF)
+- `edit_vehicle` : Modifier des véhicules (ADMIN, SUPERVISOR, STAFF)
+- `delete_vehicle` : Supprimer des véhicules (seulement ADMIN/SUPERVISOR)
 
 ## 🚀 Installation et Démarrage
 
@@ -444,6 +519,7 @@ npm start
 - `npm run migration:revert` : Annule la dernière migration
 - `npm run seed:shipments` : Insère des expéditions de test
 - `npm run seed:expenses` : Insère des dépenses de test
+- `npm run seed:vehicles` : Insère des véhicules de test
 
 ## 📂 Stockage des Fichiers
 
@@ -489,7 +565,16 @@ DELETE /departures/:id/shipments/:shipmentId
 POST   /departures/:id/seal
 POST   /departures/:id/close
 GET    /departures/:id/general-waybill
-GET    /departures/:id/waybills
+```
+
+### Véhicules
+```
+GET    /vehicles
+GET    /vehicles/available
+GET    /vehicles/:id
+POST   /vehicles
+PATCH  /vehicles/:id
+DELETE /vehicles/:id
 ```
 
 ### Dépenses

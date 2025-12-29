@@ -221,7 +221,7 @@ export class GeneralWaybillService {
     
     const value3ZoneX = currentX + label3Width + labelValueGap;
     doc.fontSize(7).font("Helvetica");
-    const vehicleValue = departure.vehicle || "";
+    const vehicleValue = departure.vehicle ? departure.vehicle.name : "";
     // Center the value text in the zone
     doc.text(vehicleValue, value3ZoneX, currentY, { width: valueZoneWidth, align: "center" });
     // Center the underline under the value

@@ -9,14 +9,14 @@ import { UserRole } from "../types/roles";
 
 export interface CreateDepartureDTO {
   route?: string;
-  vehicle?: string;
+  vehicle_id?: number;
   driver_name?: string;
   notes?: string;
 }
 
 export interface UpdateDepartureDTO {
   route?: string;
-  vehicle?: string;
+  vehicle_id?: number;
   driver_name?: string;
   notes?: string;
 }
@@ -70,6 +70,7 @@ export class DepartureService {
       where: { id },
       relations: [
         "shipments",
+        "vehicle",
         "created_by",
         "sealed_by",
         "closed_by",
@@ -100,6 +101,7 @@ export class DepartureService {
       .leftJoinAndSelect("departure.created_by", "created_by")
       .leftJoinAndSelect("departure.sealed_by", "sealed_by")
       .leftJoinAndSelect("departure.closed_by", "closed_by")
+      .leftJoinAndSelect("departure.vehicle", "vehicle")
       .leftJoinAndSelect("departure.shipments", "shipments");
 
     if (filters.status) {

@@ -6,7 +6,8 @@ export interface Departure {
   pdf_path: string | null;
   status: "open" | "sealed" | "closed";
   route: string | null;
-  vehicle: string | null;
+  vehicle: { id: number; registration_number: string; name: string; type: string; status: string } | null;
+  vehicle_id: number | null;
   driver_name: string | null;
   notes: string | null;
   sealed_at: string | null;
@@ -21,14 +22,14 @@ export interface Departure {
 
 export interface CreateDepartureDTO {
   route?: string;
-  vehicle?: string;
+  vehicle_id?: number;
   driver_name?: string;
   notes?: string;
 }
 
 export interface UpdateDepartureDTO {
   route?: string;
-  vehicle?: string;
+  vehicle_id?: number;
   driver_name?: string;
   notes?: string;
 }

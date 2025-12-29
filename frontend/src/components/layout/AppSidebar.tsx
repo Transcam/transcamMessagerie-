@@ -18,6 +18,7 @@ import {
   User,
   Users,
   Receipt,
+  Car,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,12 @@ const navItems: NavItem[] = [
     labelKey: "nav.departures",
     href: "/departures",
     permission: "view_dashboard",
+  },
+  {
+    icon: Car,
+    labelKey: "nav.vehicles",
+    href: "/vehicles",
+    permission: "view_vehicles",
   },
   {
     icon: Receipt,

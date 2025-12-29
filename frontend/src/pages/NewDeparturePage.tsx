@@ -26,6 +26,7 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCreateDeparture } from "@/hooks/use-departures";
+import { useAvailableVehicles } from "@/hooks/use-vehicles";
 
 const routes = [
   "Yaoundé → Douala",
@@ -38,7 +39,7 @@ const routes = [
 // Form validation schema
 const departureSchema = z.object({
   route: z.string().min(1, "Route is required"),
-  vehicle: z.string().min(1, "Vehicle is required"),
+  vehicle_id: z.number().min(1, "Vehicle is required"),
   driver_name: z.string().min(1, "Driver name is required"),
   notes: z.string().optional(),
 });
@@ -49,12 +50,13 @@ export default function NewDeparturePage() {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const createDeparture = useCreateDeparture();
+  const { data: availableVehicles, isLoading: vehiclesLoading } = useAvailableVehicles();
 
   const form = useForm<DepartureFormValues>({
     resolver: zodResolver(departureSchema),
     defaultValues: {
       route: "",
-      vehicle: "",
+      vehicle_id: undefined,
       driver_name: "",
       notes: "",
     },
@@ -127,18 +129,42 @@ export default function NewDeparturePage() {
 
                 <FormField
                   control={form.control}
-                  name="vehicle"
+                  name="vehicle_id"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
                         {language === "fr" ? "Véhicule" : "Vehicle"} *
                       </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder={language === "fr" ? "Bus-001" : "Bus-001"}
-                          {...field}
-                        />
-                      </FormControl>
+                      <Select
+                        onValueChange={(value) => field.onChange(parseInt(value))}
+                        value={field.value?.toString()}
+                        disabled={vehiclesLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                vehiclesLoading
+                                  ? (language === "fr" ? "Chargement..." : "Loading...")
+                                  : (language === "fr" ? "Sélectionner un véhicule" : "Select a vehicle")
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableVehicles && availableVehicles.length > 0 ? (
+                            availableVehicles.map((vehicle) => (
+                              <SelectItem key={vehicle.id} value={vehicle.id.toString()}>
+                                {vehicle.name} ({vehicle.registration_number})
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="none" disabled>
+                              {language === "fr" ? "Aucun véhicule disponible" : "No vehicles available"}
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

@@ -20,7 +20,11 @@ export type Permission =
   | "view_expenses"
   | "view_expense_amount"
   | "edit_expense"
-  | "delete_expense";
+  | "delete_expense"
+  | "view_vehicles"
+  | "create_vehicle"
+  | "edit_vehicle"
+  | "delete_vehicle";
 
 // Permission mappings for each role - matches frontend
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -45,6 +49,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "view_expense_amount",
     "edit_expense",
     "delete_expense",
+    "view_vehicles",
+    "create_vehicle",
+    "edit_vehicle",
+    "delete_vehicle",
   ],
   [UserRole.STAFF]: [
     "view_dashboard",
@@ -56,6 +64,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "view_expenses",
     "create_departure",
     "validate_departure",
+    "view_vehicles",
+    "create_vehicle",
+    "edit_vehicle",
   ],
   [UserRole.OPERATIONAL_ACCOUNTANT]: [
     "view_dashboard",
@@ -66,6 +77,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "view_expenses",
     "view_expense_amount",
     "edit_expense",
+    "view_vehicles",
   ],
   [UserRole.SUPERVISOR]: [
     "view_dashboard",
@@ -88,5 +100,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "view_expense_amount",
     "edit_expense",
     "delete_expense",
+    "view_vehicles",
+    "create_vehicle",
+    "edit_vehicle",
+    "delete_vehicle",
   ],
 };

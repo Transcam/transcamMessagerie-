@@ -11,6 +11,7 @@ import {
 } from "typeorm";
 import { User } from "./user.entity";
 import { Shipment } from "./shipment.entity";
+import { Vehicle } from "./vehicle.entity";
 
 export enum DepartureStatus {
   OPEN = "open",
@@ -46,8 +47,12 @@ export class Departure {
   @Column({ type: "varchar", length: 255, nullable: true })
   route!: string | null;
 
-  @Column({ type: "varchar", length: 255, nullable: true })
-  vehicle!: string | null;
+  @ManyToOne(() => Vehicle, { nullable: true })
+  @JoinColumn({ name: "vehicle_id" })
+  vehicle!: Vehicle | null;
+
+  @Column({ nullable: true })
+  vehicle_id!: number | null;
 
   @Column({ type: "varchar", length: 255, nullable: true })
   driver_name!: string | null;

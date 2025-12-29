@@ -7,6 +7,7 @@ import shipmentsRoutes from "./routes/shipments.routes";
 import departuresRoutes from "./routes/departures.routes";
 import userRoutes from "./routes/user.routes";
 import expensesRoutes from "./routes/expenses.routes";
+import vehiclesRoutes from "./routes/vehicles.routes";
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use("/api/shipments", shipmentsRoutes);
 app.use("/api/departures", departuresRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/expenses", expensesRoutes);
+app.use("/api/vehicles", vehiclesRoutes);
 
 // Test route with database
 // app.get("/", async (req: Request, res: Response) => {

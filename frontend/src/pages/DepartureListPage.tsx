@@ -324,7 +324,11 @@ export default function DepartureListPage() {
                             {departure.general_waybill_number || "-"}
                           </TableCell>
                           <TableCell>{departure.route || "-"}</TableCell>
-                          <TableCell>{departure.vehicle || "-"}</TableCell>
+                          <TableCell>
+                            {departure.vehicle
+                              ? `${departure.vehicle.name} (${departure.vehicle.registration_number})`
+                              : "-"}
+                          </TableCell>
                           <TableCell>{departure.driver_name || "-"}</TableCell>
                           <TableCell>{totals.count}</TableCell>
                           <TableCell className="text-right font-medium">
