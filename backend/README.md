@@ -449,6 +449,7 @@ backend/
 - **`shipments`** : Expéditions
 - **`departures`** : Départs
 - **`vehicles`** : Véhicules de la flotte
+- **`drivers`** : Chauffeurs
 - **`expenses`** : Dépenses
 - **`audit_logs`** : Logs d'audit
 
