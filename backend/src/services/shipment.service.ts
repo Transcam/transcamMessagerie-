@@ -9,6 +9,7 @@ import { User } from "../entities/user.entity";
 import { AuditLog } from "../entities/audit-log.entity";
 import { WaybillService } from "./waybill.service";
 import { IndividualWaybillService } from "./individual-waybill.service";
+import { ReceiptService } from "./receipt.service";
 import { UserRole } from "../types/roles";
 
 export interface CreateShipmentDTO {
@@ -54,12 +55,14 @@ export class ShipmentService {
   private auditRepo: Repository<AuditLog>;
   private waybillService: WaybillService;
   private individualWaybillService: IndividualWaybillService;
+  private receiptService: ReceiptService;
 
   constructor() {
     this.shipmentRepo = AppDataSource.getRepository(Shipment);
     this.auditRepo = AppDataSource.getRepository(AuditLog);
     this.waybillService = new WaybillService();
     this.individualWaybillService = new IndividualWaybillService();
+    this.receiptService = new ReceiptService();
   }
 
   async create(data: CreateShipmentDTO, user: User): Promise<Shipment> {
@@ -358,5 +361,16 @@ export class ShipmentService {
     }
 
     return await this.individualWaybillService.generatePDF(shipment);
+  }
+
+  /**
+   * Generate Receipt PDF (Ticket format)
+   */
+  async generateReceiptPDF(shipmentId: number): Promise<Buffer> {
+    const shipment = await this.getOne(shipmentId);
+    if (!shipment) {
+      throw new Error("Shipment not found");
+    }
+    return await this.receiptService.generatePDF(shipment);
   }
 }

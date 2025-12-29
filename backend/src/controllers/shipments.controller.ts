@@ -188,11 +188,14 @@ export class ShipmentsController {
   generateReceipt = async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const shipment = await this.service.getOne(id);
-      res.json({
-        message: "Receipt generation - to be implemented",
-        data: shipment,
-      });
+      const pdfBuffer = await this.service.generateReceiptPDF(id);
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="recu-${id}.pdf"`
+      );
+      res.send(pdfBuffer);
     } catch (error: any) {
       res.status(404).json({ error: error.message });
     }

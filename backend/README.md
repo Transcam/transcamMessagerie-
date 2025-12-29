@@ -78,6 +78,7 @@ backend/
 - `PATCH /api/shipments/:id` : Mise à jour d'expédition
 - `DELETE /api/shipments/:id` : Annulation d'expédition (avec raison)
 - `GET /api/shipments/:id/waybill` : Téléchargement du bordereau PDF individuel
+- `GET /api/shipments/:id/receipt` : Téléchargement du reçu PDF (format ticket 80mm)
 - `GET /api/shipments/statistics` : Statistiques des expéditions
   - Total, revenu total, poids total
   - Répartition par statut et par nature
@@ -94,6 +95,11 @@ backend/
 
 - **`IndividualWaybillService`** :
   - Génération de PDF pour bordereaux individuels
+
+- **`ReceiptService`** :
+  - Génération de PDF pour reçus clients
+  - Format ticket (80mm) pour impression thermique
+  - Contenu : Informations complètes de l'expédition, conditions générales
 
 ### 🚌 Gestion des Départs
 
@@ -182,7 +188,19 @@ backend/
 
 - Format : `TC-YYYY-NNNN`
 - Contenu : Informations complètes de l'expédition
-- Stockage : `/storage/waybills/individual/`
+- Stockage : Générés à la volée (pas de stockage)
+
+#### Reçus Clients
+
+- Format : Ticket 80mm (226.77 points de largeur)
+- Contenu : 
+  - En-tête de l'entreprise
+  - Numéro de reçu (numéro de bordereau)
+  - Informations expéditeur et destinataire
+  - Détails de l'expédition (trajet, nature, poids, valeur déclarée, montant)
+  - Date de départ
+  - Conditions générales
+- Stockage : Générés à la volée (pas de stockage)
 
 #### Bordereaux Généraux
 
@@ -217,6 +235,10 @@ backend/
 
 ### `IndividualWaybillService`
 - Création de PDF pour bordereaux individuels
+
+### `ReceiptService`
+- Création de PDF pour reçus clients
+- Format ticket (80mm) optimisé pour impression thermique
 
 ### `WaybillService`
 - Génération de numéros de bordereau séquentiels
@@ -262,7 +284,7 @@ Le système de permissions est défini dans `src/types/permissions.ts` et `src/h
 - `create_departure` : Créer des départs
 - `validate_departure` : Sceller/fermer des départs
 - `print_waybill` : Imprimer des bordereaux
-- `print_receipt` : Imprimer des reçus
+- `print_receipt` : Imprimer des reçus (tickets clients)
 - `manage_users` : Gérer les utilisateurs
 - `view_finance` : Voir les finances
 - `view_distribution` : Voir la distribution
@@ -369,6 +391,7 @@ POST   /shipments
 PATCH  /shipments/:id
 DELETE /shipments/:id
 GET    /shipments/:id/waybill
+GET    /shipments/:id/receipt
 GET    /shipments/statistics
 ```
 
