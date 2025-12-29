@@ -59,6 +59,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const { user, hasPermission } = useAuth();
+  const isStaff = user?.role === "staff";
 
   // Fetch recent shipments (last 20, not cancelled)
   const { data: shipmentsData, isLoading } = useShipments({
@@ -303,9 +304,11 @@ export default function DashboardPage() {
                       <TableHead>{t("shipment.sender")}</TableHead>
                       <TableHead>{t("shipment.receiver")}</TableHead>
                       <TableHead>{t("shipment.route")}</TableHead>
-                      <TableHead className="text-right">
-                        {t("common.amount")}
-                      </TableHead>
+                      {!isStaff && (
+                        <TableHead className="text-right">
+                          {t("common.amount")}
+                        </TableHead>
+                      )}
                       <TableHead>{t("shipment.status")}</TableHead>
                       <TableHead>{t("common.date")}</TableHead>
                       <TableHead className="w-12"></TableHead>
@@ -329,9 +332,11 @@ export default function DashboardPage() {
                             {shipment.route}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(shipment.price)} FCFA
-                        </TableCell>
+                        {!isStaff && (
+                          <TableCell className="text-right font-medium">
+                            {shipment.price ? `${formatCurrency(shipment.price)} FCFA` : "-"}
+                          </TableCell>
+                        )}
                         <TableCell>
                           <ShipmentStatusBadge
                             status={shipment.status}

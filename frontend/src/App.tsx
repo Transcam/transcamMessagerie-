@@ -69,6 +69,22 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/shipments/courrier"
+        element={
+          <ProtectedRoute>
+            <ShipmentListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shipments/colis"
+        element={
+          <ProtectedRoute>
+            <ShipmentListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/shipments"
         element={
           <ProtectedRoute>

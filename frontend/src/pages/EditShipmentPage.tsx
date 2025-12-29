@@ -47,6 +47,7 @@ const shipmentSchema = z.object({
   declared_value: z.number().min(0).optional(),
   price: z.number().min(1, "Price must be greater than 0"),
   route: z.string().min(1, "Route is required"),
+  nature: z.enum(["colis", "courrier"]).default("colis"),
 });
 
 type ShipmentFormValues = z.infer<typeof shipmentSchema>;
@@ -71,6 +72,7 @@ export default function EditShipmentPage() {
       declared_value: 0,
       price: 0,
       route: "",
+      nature: "colis",
     },
   });
 
@@ -87,6 +89,7 @@ export default function EditShipmentPage() {
         declared_value: shipment.declared_value || 0,
         price: shipment.price,
         route: shipment.route,
+        nature: shipment.nature || "colis",
       });
     }
   }, [shipment, form]);
@@ -138,30 +141,8 @@ export default function EditShipmentPage() {
     );
   }
 
-  if (shipment.is_confirmed) {
-    return (
-      <DashboardLayout>
-        <div className="max-w-3xl mx-auto space-y-6">
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-destructive">
-                {language === "fr"
-                  ? "Cette expédition est confirmée et ne peut pas être modifiée"
-                  : "This shipment is confirmed and cannot be edited"}
-              </p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => navigate(`/shipments/${shipmentId}`)}
-              >
-                {language === "fr" ? "Retour" : "Back"}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  // Shipments are now created as confirmed, but can still be edited by users with edit_shipment permission
+  // No need to block editing based on confirmation status
 
   return (
     <DashboardLayout>
@@ -278,6 +259,42 @@ export default function EditShipmentPage() {
                               {route}
                             </SelectItem>
                           ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="nature"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {language === "fr" ? "Nature" : "Nature"}
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                language === "fr"
+                                  ? "Sélectionner la nature"
+                                  : "Select nature"
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="colis">
+                            {language === "fr" ? "Colis" : "Parcel"}
+                          </SelectItem>
+                          <SelectItem value="courrier">
+                            {language === "fr" ? "Courrier" : "Mail"}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

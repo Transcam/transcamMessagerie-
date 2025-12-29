@@ -14,6 +14,8 @@ const translations: Translations = {
   "nav.dashboard": { fr: "Tableau de bord", en: "Dashboard" },
   "nav.users": { fr: "Utilisateurs", en: "Users" },
   "nav.shipments": { fr: "Expéditions", en: "Shipments" },
+  "nav.shipments.courrier": { fr: "Courrier", en: "Mail" },
+  "nav.shipments.colis": { fr: "Colis", en: "Parcel" },
   "nav.newShipment": { fr: "Nouvelle expédition", en: "New Shipment" },
   "nav.departures": { fr: "Départs", en: "Departures" },
   "nav.waybills": { fr: "Bordereaux", en: "Waybills" },

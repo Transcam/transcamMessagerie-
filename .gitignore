@@ -35,3 +35,5 @@ out/
 # Package manager locks (optional - some teams commit these)
 # package-lock.json
 # yarn.lock
+!README.md
+!**/README.md

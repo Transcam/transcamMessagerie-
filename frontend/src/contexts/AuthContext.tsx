@@ -24,6 +24,7 @@ interface AuthContextType {
   hasPermission: (permission: string) => boolean;
 }
 
+// Permission mappings for each role - must match backend src/types/permissions.ts
 const rolePermissions: Record<UserRole, string[]> = {
   [UserRole.ADMIN]: [
     "view_dashboard",
@@ -39,6 +40,8 @@ const rolePermissions: Record<UserRole, string[]> = {
     "view_reports",
     "export_data",
     "manage_users",
+    "print_waybill",
+    "print_receipt",
   ],
   [UserRole.STAFF]: [
     "view_dashboard",
@@ -55,9 +58,20 @@ const rolePermissions: Record<UserRole, string[]> = {
   ],
   [UserRole.SUPERVISOR]: [
     "view_dashboard",
+    "create_shipment",
+    "edit_shipment",
+    "delete_shipment",
+    "view_shipments",
+    "create_departure",
+    "validate_departure",
     "view_finance",
     "view_distribution",
+    "edit_distribution",
     "view_reports",
+    "export_data",
+    "manage_users",
+    "print_waybill",
+    "print_receipt",
   ],
 };
 

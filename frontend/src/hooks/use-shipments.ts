@@ -5,6 +5,7 @@ import {
   CreateShipmentDTO,
   UpdateShipmentDTO,
   ShipmentFilters,
+  ShipmentStatistics,
 } from "@/services/shipment.service";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -154,6 +155,14 @@ export function useCancelShipment() {
         variant: "destructive",
       });
     },
+  });
+}
+
+// Shipment statistics hook
+export function useShipmentStatistics(nature?: "colis" | "courrier") {
+  return useQuery<ShipmentStatistics>({
+    queryKey: ["shipment-statistics", nature],
+    queryFn: () => shipmentService.getStatistics(nature),
   });
 }
 

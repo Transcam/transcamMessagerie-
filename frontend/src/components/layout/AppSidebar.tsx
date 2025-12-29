@@ -51,9 +51,14 @@ const navItems: NavItem[] = [
     permission: "view_shipments",
     children: [
       {
-        labelKey: "nav.newShipment",
-        href: "/shipments/new",
-        permission: "create_shipment",
+        labelKey: "nav.shipments.courrier",
+        href: "/shipments/courrier",
+        permission: "view_shipments",
+      },
+      {
+        labelKey: "nav.shipments.colis",
+        href: "/shipments/colis",
+        permission: "view_shipments",
       },
     ],
   },

@@ -12,6 +12,7 @@ export interface Shipment {
   declared_value: number;
   price: number;
   route: string;
+  nature: "colis" | "courrier";
   status: "pending" | "confirmed" | "assigned" | "cancelled";
   is_confirmed: boolean;
   is_cancelled: boolean;
@@ -35,6 +36,7 @@ export interface CreateShipmentDTO {
   declared_value?: number;
   price: number;
   route: string;
+  nature?: "colis" | "courrier";
 }
 
 export interface UpdateShipmentDTO {
@@ -47,6 +49,7 @@ export interface UpdateShipmentDTO {
   declared_value?: number;
   price?: number;
   route?: string;
+  nature?: "colis" | "courrier";
 }
 
 export interface ShipmentFilters {
@@ -55,6 +58,7 @@ export interface ShipmentFilters {
   dateFrom?: string;
   dateTo?: string;
   waybillNumber?: string;
+  nature?: string;
   includeCancelled?: boolean;
   page?: number;
   limit?: number;
@@ -70,6 +74,17 @@ export interface ShipmentListResponse {
   };
 }
 
+export interface ShipmentStatistics {
+  total: number;
+  totalPrice: number;
+  totalWeight: number;
+  byStatus: { [key: string]: number };
+  byNature?: { colis: number; courrier: number };
+  todayCount: number;
+  monthCount: number;
+  monthRevenue: number;
+}
+
 export const shipmentService = {
   // List shipments with filters
   list: async (filters?: ShipmentFilters): Promise<ShipmentListResponse> => {
@@ -79,6 +94,7 @@ export const shipmentService = {
     if (filters?.dateFrom) params.append("dateFrom", filters.dateFrom);
     if (filters?.dateTo) params.append("dateTo", filters.dateTo);
     if (filters?.waybillNumber) params.append("waybillNumber", filters.waybillNumber);
+    if (filters?.nature) params.append("nature", filters.nature);
     if (filters?.includeCancelled) params.append("includeCancelled", "true");
     if (filters?.page) params.append("page", filters.page.toString());
     if (filters?.limit) params.append("limit", filters.limit.toString());
@@ -138,6 +154,13 @@ export const shipmentService = {
   generateReceipt: async (id: number) => {
     const response = await httpService.get(`/shipments/${id}/receipt`);
     return response.data;
+  },
+
+  getStatistics: async (nature?: "colis" | "courrier"): Promise<ShipmentStatistics> => {
+    const params = new URLSearchParams();
+    if (nature) params.append("nature", nature);
+    const response = await httpService.get(`/shipments/statistics?${params.toString()}`);
+    return response.data.data;
   },
 };
 
