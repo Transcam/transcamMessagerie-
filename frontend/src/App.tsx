@@ -16,6 +16,7 @@ import DepartureDetailPage from "./pages/DepartureDetailPage";
 import NewDeparturePage from "./pages/NewDeparturePage";
 import UserListPage from "./pages/UserListPage";
 import ExpenseListPage from "./pages/ExpenseListPage";
+import ExpenseDetailPage from "./pages/ExpenseDetailPage";
 import NewExpensePage from "./pages/NewExpensePage";
 import EditExpensePage from "./pages/EditExpensePage";
 import NotFound from "./pages/NotFound";
@@ -148,6 +149,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <EditExpensePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/expenses/:id"
+        element={
+          <ProtectedRoute>
+            <ExpenseDetailPage />
           </ProtectedRoute>
         }
       />

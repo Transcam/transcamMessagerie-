@@ -109,7 +109,9 @@ Le projet est divisé en deux parties principales :
   - Blocage des modifications (statut passe à "sealed")
   - Enregistrement de la date de scellement
 - **Fermeture de départ** : Finalisation du départ (statut passe à "closed")
-- **Permissions** : Seuls les ADMIN peuvent sceller et fermer les départs
+- **Permissions** : 
+  - **STAFF** : Peut créer, sceller, imprimer et fermer les départs, mais ne voit pas les montants
+  - **ADMIN/SUPERVISOR** : Accès complet avec visualisation des montants
 
 #### Documents et PDF
 - **Bordereau général PDF** :
@@ -119,7 +121,6 @@ Le projet est divisé en deux parties principales :
   - Totaux (nombre de colis, poids total, montant total)
   - Zones de signatures
   - Régénération à chaque téléchargement pour refléter les modifications
-- **Téléchargement de bordereaux individuels** : ZIP contenant tous les bordereaux des expéditions assignées
 
 ### 💰 Gestion des Dépenses
 
@@ -506,7 +507,6 @@ transcamMessagerie-/
 - `POST /api/departures/:id/seal` : Sceller un départ
 - `POST /api/departures/:id/close` : Fermer un départ
 - `GET /api/departures/:id/general-waybill` : Télécharger le bordereau général
-- `GET /api/departures/:id/waybills` : Télécharger tous les bordereaux individuels
 
 #### Dépenses
 - `GET /api/expenses` : Liste des dépenses
@@ -543,6 +543,8 @@ Le système utilise un contrôle d'accès basé sur les rôles (RBAC) :
   - Ne voient que **leurs propres dépenses** (filtrage automatique)
   - Ne peuvent pas voir les montants des dépenses (masqués)
   - Ne peuvent pas modifier ou supprimer les dépenses
+  - Peuvent créer, sceller, imprimer et fermer les départs, mais ne voient pas les montants dans les listes et détails
+  - Peuvent créer, sceller, imprimer et fermer les départs, mais ne voient pas les montants dans les listes et détails
 - Les **SUPERVISOR** ne peuvent pas créer, modifier ou supprimer les comptes **ADMIN**
 - Les utilisateurs ne peuvent pas supprimer leur propre compte
 

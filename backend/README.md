@@ -129,7 +129,6 @@ backend/
 - `POST /api/departures/:id/close` : Fermeture du départ
   - Change le statut à "closed"
 - `GET /api/departures/:id/general-waybill` : Téléchargement du bordereau général PDF
-- `GET /api/departures/:id/waybills` : Téléchargement de tous les bordereaux individuels (ZIP)
 
 #### Services
 

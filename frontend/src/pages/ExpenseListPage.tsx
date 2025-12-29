@@ -293,7 +293,11 @@ export default function ExpenseListPage() {
                   </TableHeader>
                   <TableBody>
                     {data.data.map((expense) => (
-                      <TableRow key={expense.id}>
+                      <TableRow
+                        key={expense.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/expenses/${expense.id}`)}
+                      >
                         <TableCell className="text-muted-foreground">
                           {formatDate(expense.created_at)}
                         </TableCell>
@@ -315,7 +319,7 @@ export default function ExpenseListPage() {
                         <TableCell className="text-muted-foreground">
                           {expense.created_by?.username || "-"}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -323,11 +327,15 @@ export default function ExpenseListPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => navigate(`/expenses/${expense.id}`)}
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                {language === "fr" ? "Voir" : "View"}
+                              </DropdownMenuItem>
                               {canEdit && (
                                 <DropdownMenuItem
-                                  onClick={() =>
-                                    navigate(`/expenses/${expense.id}/edit`)
-                                  }
+                                  onClick={() => navigate(`/expenses/${expense.id}/edit`)}
                                 >
                                   <Edit className="mr-2 h-4 w-4" />
                                   {language === "fr" ? "Modifier" : "Edit"}

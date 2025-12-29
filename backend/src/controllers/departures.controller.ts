@@ -28,7 +28,7 @@ export class DeparturesController {
         limit: req.query.limit ? parseInt(req.query.limit as string) : 20,
       };
 
-      const [departures, total] = await this.service.list(filters);
+      const [departures, total] = await this.service.list(filters, req.user);
 
       res.json({
         data: departures,
@@ -47,7 +47,7 @@ export class DeparturesController {
   getOne = async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const departure = await this.service.getOne(id);
+      const departure = await this.service.getOne(id, req.user);
       res.json({ data: departure });
     } catch (error: any) {
       res.status(404).json({ error: error.message });
@@ -211,7 +211,7 @@ export class DeparturesController {
   getSummary = async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const summary = await this.service.getSummary(id);
+      const summary = await this.service.getSummary(id, req.user);
       res.json({ data: summary });
     } catch (error: any) {
       res.status(404).json({ error: error.message });

@@ -130,22 +130,25 @@ export default function DepartureListPage() {
     }
   };
 
-  // TODO: When roles are implemented, uncomment the line below
-  // const isAgencyAdmin = user?.role === "agency_admin";
-  // For now, allow all authenticated users (roles not yet implemented)
-  const isAgencyAdmin = true;
-  const canSeal = (departure: Departure) => isAgencyAdmin && departure.status === "open";
-  const canClose = (departure: Departure) => isAgencyAdmin && departure.status === "sealed";
-  const canEdit = (departure: Departure) => departure.status === "open";
-  const canDownloadPDF = (departure: Departure) => departure.status === "sealed" || departure.status === "closed";
+  const canSeal = (departure: Departure) => hasPermission("validate_departure") && departure.status === "open";
+  const canClose = (departure: Departure) => hasPermission("validate_departure") && departure.status === "sealed";
+  const canEdit = (departure: Departure) => hasPermission("create_departure") && departure.status === "open";
+  const canDownloadPDF = (departure: Departure) => hasPermission("print_waybill") && (departure.status === "sealed" || departure.status === "closed");
 
   // Calculate totals for a departure
   const getDepartureTotals = (departure: Departure) => {
     if (!departure.shipments || departure.shipments.length === 0) {
-      return { count: 0, total: 0 };
+      return { count: 0, total: null };
     }
     const count = departure.shipments.length;
-    const total = departure.shipments.reduce((sum: number, s: any) => sum + Number(s.price || 0), 0);
+    const canSeeAmount = hasPermission("view_finance"); // Use view_finance to check if user can see financial data
+    if (!canSeeAmount) {
+      return { count, total: null };
+    }
+    const total = departure.shipments.reduce((sum: number, s: any) => {
+      const price = s.price !== null && s.price !== undefined ? Number(s.price) : 0;
+      return sum + price;
+    }, 0);
     return { count, total };
   };
 
@@ -325,7 +328,9 @@ export default function DepartureListPage() {
                           <TableCell>{departure.driver_name || "-"}</TableCell>
                           <TableCell>{totals.count}</TableCell>
                           <TableCell className="text-right font-medium">
-                            {totals.total > 0 ? `${formatCurrency(totals.total)} FCFA` : "-"}
+                            {totals.total !== null && totals.total !== undefined && totals.total > 0
+                              ? `${formatCurrency(totals.total)} FCFA`
+                              : "-"}
                           </TableCell>
                           <TableCell>
                             <DepartureStatusBadge status={departure.status} />

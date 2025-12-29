@@ -109,6 +109,9 @@ frontend/
      - **Open** : Assigner des expéditions, Sceller le départ
      - **Sealed** : Télécharger bordereau général, Fermer le départ
      - **Closed** : Télécharger bordereau général
+   - **Contrôle d'accès** :
+     - **STAFF** : Peut créer, sceller, imprimer et fermer les départs, mais ne voit pas les montants (affichés comme "-")
+     - **Autres rôles** : Accès complet avec visualisation des montants
 
 3. **Création de Départ** (`/departures/new`)
    - Formulaire de création
@@ -117,10 +120,10 @@ frontend/
 #### Fonctionnalités
 
 - **Statuts** : Open, Sealed, Closed
-- **Assignation d'expéditions** à un départ
+- **Assignation d'expéditions** à un départ (les expéditions déjà assignées sont pré-cochées dans le dialog)
 - **Scellement** : Génération du numéro de bordereau général (BG-YYYY-NNNN)
 - **Génération de bordereau général PDF** avec toutes les expéditions
-- **Téléchargement de bordereaux individuels** pour toutes les expéditions
+- **Masquage des montants** pour les utilisateurs STAFF dans les listes et détails
 
 ### 💰 Gestion des Dépenses
 
@@ -135,13 +138,20 @@ frontend/
      - Les montants sont masqués pour les utilisateurs STAFF (affichés comme "-")
      - Les boutons Modifier/Supprimer sont masqués pour STAFF
 
-2. **Création de Dépense** (`/expenses/new`)
+2. **Détails de Dépense** (`/expenses/:id`)
+   - Affichage des informations complètes de la dépense
+   - Description, catégorie, montant (masqué pour STAFF)
+   - Dates de création et modification
+   - Informations sur les utilisateurs (créé par, modifié par)
+   - Actions : Modifier, Supprimer (selon permissions)
+
+3. **Création de Dépense** (`/expenses/new`)
    - Formulaire avec validation
    - Champs : Description (obligatoire), Catégorie (dropdown), Montant (obligatoire)
    - **13 catégories** disponibles via dropdown
    - Date automatique (date de création)
 
-3. **Modification de Dépense** (`/expenses/:id/edit`)
+4. **Modification de Dépense** (`/expenses/:id/edit`)
    - Édition des informations de dépense
    - Validation en temps réel
    - **Non accessible pour STAFF** (pas de permission)

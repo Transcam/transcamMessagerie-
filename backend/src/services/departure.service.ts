@@ -5,6 +5,7 @@ import { Shipment, ShipmentStatus } from "../entities/shipment.entity";
 import { User } from "../entities/user.entity";
 import { AuditLog } from "../entities/audit-log.entity";
 import { GeneralWaybillService } from "./general-waybill.service";
+import { UserRole } from "../types/roles";
 
 export interface CreateDepartureDTO {
   route?: string;
@@ -64,7 +65,7 @@ export class DepartureService {
   /**
    * Get single departure with shipments
    */
-  async getOne(id: number): Promise<Departure> {
+  async getOne(id: number, user?: User): Promise<Departure> {
     const departure = await this.departureRepo.findOne({
       where: { id },
       relations: [
@@ -79,13 +80,21 @@ export class DepartureService {
       throw new Error("Departure not found");
     }
 
+    // Mask shipment prices for STAFF role
+    if (user?.role === UserRole.STAFF && departure.shipments) {
+      departure.shipments.forEach((shipment) => {
+        (shipment as any).price = null;
+        (shipment as any).declared_value = null;
+      });
+    }
+
     return departure;
   }
 
   /**
    * List departures with filters
    */
-  async list(filters: DepartureFiltersDTO): Promise<[Departure[], number]> {
+  async list(filters: DepartureFiltersDTO, user?: User): Promise<[Departure[], number]> {
     const query = this.departureRepo
       .createQueryBuilder("departure")
       .leftJoinAndSelect("departure.created_by", "created_by")
@@ -362,22 +371,26 @@ export class DepartureService {
   /**
    * Get departure summary with totals
    */
-  async getSummary(id: number): Promise<{
+  async getSummary(id: number, user?: User): Promise<{
     departure: Departure;
     shipment_count: number;
-    total_price: number;
+    total_price: number | null;
     total_weight: number;
-    total_declared_value: number;
+    total_declared_value: number | null;
   }> {
-    const departure = await this.getOne(id);
+    const departure = await this.getOne(id, user);
 
     const shipments = departure.shipments || [];
 
     const totals = shipments.reduce(
       (acc, shipment) => {
-        acc.total_price += parseFloat(shipment.price.toString());
+        if (user?.role !== UserRole.STAFF && shipment.price !== null && shipment.price !== undefined) {
+          acc.total_price += parseFloat(shipment.price.toString());
+        }
+        if (user?.role !== UserRole.STAFF && shipment.declared_value !== null && shipment.declared_value !== undefined) {
+          acc.total_declared_value += parseFloat(shipment.declared_value.toString());
+        }
         acc.total_weight += parseFloat(shipment.weight.toString());
-        acc.total_declared_value += parseFloat(shipment.declared_value.toString());
         return acc;
       },
       { total_price: 0, total_weight: 0, total_declared_value: 0 }
@@ -386,7 +399,9 @@ export class DepartureService {
     return {
       departure,
       shipment_count: shipments.length,
-      ...totals,
+      total_price: user?.role === UserRole.STAFF ? null : totals.total_price,
+      total_weight: totals.total_weight,
+      total_declared_value: user?.role === UserRole.STAFF ? null : totals.total_declared_value,
     };
   }
 
