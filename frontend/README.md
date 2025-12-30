@@ -14,6 +14,7 @@ Application frontend de gestion de messagerie et d'expéditions pour Transcam, c
 - **Lucide React** - Icônes
 - **Zod** - Validation de schémas
 - **React Hook Form** - Gestion de formulaires
+- **date-fns** - Manipulation et formatage de dates
 
 ## 📁 Structure du Projet
 

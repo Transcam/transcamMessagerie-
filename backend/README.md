@@ -59,6 +59,7 @@ backend/
   - Poids, prix, valeur déclarée
   - Route
   - **Nature** : Colis ou Courrier
+  - **Type** : Express ou Standard
   - Statut : Pending, Confirmed, Assigned, Cancelled
 - **Relations** :
   - Créé par, confirmé par, annulé par (User)
