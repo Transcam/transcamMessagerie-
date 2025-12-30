@@ -335,6 +335,56 @@ backend/
 - `edit_expense` : Seuls les non-STAFF peuvent modifier les dépenses
 - `delete_expense` : Seulement ADMIN et SUPERVISOR peuvent supprimer
 
+### 💰 Gestion des Répartitions
+
+#### Vue d'ensemble
+- **Calcul automatique** : Les répartitions sont calculées en temps réel à partir des expéditions liées aux départs fermés
+- **Date de référence** : Utilise la date de scellement (`sealed_at`) des départs fermés
+- **Filtrage par date** : Tous les endpoints supportent les filtres `dateFrom` et `dateTo`
+- **Pas de stockage** : Les répartitions sont calculées à la volée (pas de table dédiée)
+
+#### Répartition Chauffeurs
+- **Règle** : 60% du montant des colis ≤ 40kg transportés
+- **Calcul** : Pour chaque expédition de type colis avec poids ≤ 40kg dans un départ fermé
+- **Retour** : Liste des chauffeurs avec montant total, nombre d'expéditions, et détails par expédition
+
+#### Répartition Ministère
+- **Règle** : 5% du chiffre d'affaires des expéditions éligibles
+- **Expéditions éligibles** :
+  - Colis ≤ 50kg, OU
+  - Courrier Standard ≤ 100g, OU
+  - Courrier Express entre 100g et 2kg (exclus de 100g, inclus de 2kg)
+- **Retour** : Montant total, chiffre d'affaires éligible, nombre d'expéditions, et liste des expéditions éligibles
+
+#### Répartition Agence
+- **Règle** : Montant restant après déduction des répartitions chauffeurs et ministère
+- **Calcul** : Prix de l'expédition - Montant chauffeur - Montant ministère
+- **Retour** : Montant total agence, chiffre d'affaires concerné, nombre d'expéditions, et liste avec détail des montants
+
+#### Résumé Général
+- **Endpoint** : `/api/distributions/summary`
+- **Retour** : Totaux consolidés (chauffeurs, ministère, agence, CA total, nombre d'expéditions)
+
+#### Contrôle d'Accès
+- **Permission requise** : `view_distribution`
+- **Masquage STAFF** : Les montants sont masqués (retournés comme `null`) pour les utilisateurs STAFF
+- **Autres rôles** : Visualisation complète de tous les montants
+
+#### Services
+- **`DistributionService`** :
+  - `calculateDriverDistribution()` : Calcul des répartitions par chauffeur
+  - `calculateMinistryDistribution()` : Calcul de la répartition ministère
+  - `calculateAgencyDistribution()` : Calcul de la répartition agence
+  - `getDistributionSummary()` : Résumé général des répartitions
+  - Filtrage par plage de dates
+  - Masquage des montants pour STAFF
+
+#### Endpoints API
+- `GET /api/distributions/summary` : Résumé général (filtres: dateFrom, dateTo)
+- `GET /api/distributions/drivers` : Répartitions par chauffeur (filtres: dateFrom, dateTo, driverId)
+- `GET /api/distributions/ministry` : Répartition ministère (filtres: dateFrom, dateTo)
+- `GET /api/distributions/agency` : Répartition agence (filtres: dateFrom, dateTo)
+
 ### 👥 Gestion des Utilisateurs
 
 #### Entité `User`
@@ -487,56 +537,6 @@ backend/
 - **Middleware d'autorisation** : Vérification des permissions spécifiques
 - **Masquage des données** : Les prix sont masqués pour les utilisateurs STAFF
 - **Validation des entrées** : Validation des données avant traitement
-
-### 💰 Gestion des Répartitions
-
-#### Vue d'ensemble
-- **Calcul automatique** : Les répartitions sont calculées en temps réel à partir des expéditions liées aux départs fermés
-- **Date de référence** : Utilise la date de scellement (`sealed_at`) des départs fermés
-- **Filtrage par date** : Tous les endpoints supportent les filtres `dateFrom` et `dateTo`
-- **Pas de stockage** : Les répartitions sont calculées à la volée (pas de table dédiée)
-
-#### Répartition Chauffeurs
-- **Règle** : 60% du montant des colis ≤ 40kg transportés
-- **Calcul** : Pour chaque expédition de type colis avec poids ≤ 40kg dans un départ fermé
-- **Retour** : Liste des chauffeurs avec montant total, nombre d'expéditions, et détails par expédition
-
-#### Répartition Ministère
-- **Règle** : 5% du chiffre d'affaires des expéditions éligibles
-- **Expéditions éligibles** :
-  - Colis ≤ 50kg, OU
-  - Courrier Standard ≤ 100g, OU
-  - Courrier Express entre 100g et 2kg (exclus de 100g, inclus de 2kg)
-- **Retour** : Montant total, chiffre d'affaires éligible, nombre d'expéditions, et liste des expéditions éligibles
-
-#### Répartition Agence
-- **Règle** : Montant restant après déduction des répartitions chauffeurs et ministère
-- **Calcul** : Prix de l'expédition - Montant chauffeur - Montant ministère
-- **Retour** : Montant total agence, chiffre d'affaires concerné, nombre d'expéditions, et liste avec détail des montants
-
-#### Résumé Général
-- **Endpoint** : `/api/distributions/summary`
-- **Retour** : Totaux consolidés (chauffeurs, ministère, agence, CA total, nombre d'expéditions)
-
-#### Contrôle d'Accès
-- **Permission requise** : `view_distribution`
-- **Masquage STAFF** : Les montants sont masqués (retournés comme `null`) pour les utilisateurs STAFF
-- **Autres rôles** : Visualisation complète de tous les montants
-
-#### Services
-- **`DistributionService`** :
-  - `calculateDriverDistribution()` : Calcul des répartitions par chauffeur
-  - `calculateMinistryDistribution()` : Calcul de la répartition ministère
-  - `calculateAgencyDistribution()` : Calcul de la répartition agence
-  - `getDistributionSummary()` : Résumé général des répartitions
-  - Filtrage par plage de dates
-  - Masquage des montants pour STAFF
-
-#### Endpoints API
-- `GET /api/distributions/summary` : Résumé général (filtres: dateFrom, dateTo)
-- `GET /api/distributions/drivers` : Répartitions par chauffeur (filtres: dateFrom, dateTo, driverId)
-- `GET /api/distributions/ministry` : Répartition ministère (filtres: dateFrom, dateTo)
-- `GET /api/distributions/agency` : Répartition agence (filtres: dateFrom, dateTo)
 
 ## 📝 Permissions
 
