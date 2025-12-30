@@ -211,7 +211,7 @@ Le projet est divisé en deux parties principales :
 
 #### Filtrage et Recherche
 - **Filtrage par catégorie** : Sélection d'une catégorie spécifique
-- **Filtrage par date** : Plage de dates (date de début et date de fin)
+- **Filtrage par date** : Sélecteur de plage de dates avec presets (Aujourd'hui, Hier, Cette semaine, Semaine dernière, Ce mois, Mois dernier, Cette année, Année dernière, Personnalisé)
 - **Pagination** : Navigation par pages avec limite configurable
 - **Tri** : Tri par date de création (plus récent en premier)
 
@@ -316,17 +316,17 @@ Le projet est divisé en deux parties principales :
 
 #### Dashboard Principal
 - **Statistiques en temps réel** :
-  - Expéditions aujourd'hui
-  - Expéditions ce mois
-  - Revenu total (masqué pour STAFF)
+  - Expéditions (filtrées par plage de dates)
+  - Revenu total (masqué pour STAFF, filtré par plage de dates)
   - Total des départs
-- **Tableau des expéditions récentes** : 20 dernières expéditions avec actions rapides
+- **Sélecteur de plage de dates** : Permet de filtrer toutes les statistiques par période
+- **Tableau des expéditions récentes** : Expéditions filtrées par la plage de dates sélectionnée
 - **Navigation rapide** : Liens vers les différentes sections
 
 #### Statistiques par Nature
-- **Page Colis** (`/shipments/colis`) : Statistiques et liste filtrée pour les colis uniquement
-- **Page Courrier** (`/shipments/courrier`) : Statistiques et liste filtrée pour le courrier uniquement
-- **Page Tous** (`/shipments`) : Statistiques globales avec répartition par nature
+- **Page Colis** (`/shipments/colis`) : Statistiques et liste filtrées pour les colis uniquement (avec filtrage par date)
+- **Page Courrier** (`/shipments/courrier`) : Statistiques et liste filtrées pour le courrier uniquement (avec filtrage par date)
+- **Page Tous** (`/shipments`) : Statistiques globales avec répartition par nature (avec filtrage par date)
 
 ### 📄 Génération de Documents PDF
 
@@ -382,6 +382,7 @@ Le projet est divisé en deux parties principales :
 - **Tableaux** : Affichage paginé avec actions
 - **Formulaires** : Validation en temps réel avec React Hook Form et Zod
 - **Dialogs** : Modales pour les actions importantes (confirmation, assignation, etc.)
+- **DateRangePicker** : Composant réutilisable pour la sélection de plage de dates avec presets (Aujourd'hui, Hier, Cette semaine, Semaine dernière, Ce mois, Mois dernier, Cette année, Année dernière, Personnalisé)
 
 ## 🛠️ Technologies
 
@@ -407,6 +408,7 @@ Le projet est divisé en deux parties principales :
 - Zod
 - React Hook Form
 - Lucide React
+- date-fns (manipulation de dates)
 
 ## 📦 Installation
 
@@ -610,7 +612,13 @@ transcamMessagerie-/
 - `POST /api/expenses` : Créer une dépense
 - `PATCH /api/expenses/:id` : Modifier une dépense
 - `DELETE /api/expenses/:id` : Supprimer une dépense
-- `GET /api/expenses/statistics` : Statistiques des dépenses
+- `GET /api/expenses/statistics` : Statistiques des dépenses (support des filtres dateFrom/dateTo)
+
+#### Répartitions
+- `GET /api/distributions/summary` : Résumé général des répartitions (filtres dateFrom/dateTo)
+- `GET /api/distributions/drivers` : Répartitions par chauffeur (filtres dateFrom/dateTo)
+- `GET /api/distributions/ministry` : Répartition ministère (filtres dateFrom/dateTo)
+- `GET /api/distributions/agency` : Répartition agence (filtres dateFrom/dateTo)
 
 #### Utilisateurs
 - `GET /api/users` : Liste des utilisateurs
@@ -657,9 +665,10 @@ Le système utilise un contrôle d'accès basé sur les rôles (RBAC) :
 ### Statistiques
 
 - Statistiques globales et filtrées par nature (colis/courrier)
-- Répartition par statut et par nature
-- Statistiques du jour et du mois
-- Revenus et poids totaux
+- Répartition par nature (sur page générale uniquement)
+- Filtrage par plage de dates sur toutes les pages (Dashboard, Expéditions, Dépenses, Répartitions)
+- Revenus et poids totaux (masqués pour STAFF)
+- Statistiques liées dynamiquement au sélecteur de dates
 
 ### Audit et Traçabilité
 
