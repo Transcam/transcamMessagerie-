@@ -18,17 +18,18 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "typeorm": "^0.3.x",
-    "dotenv": "^16.x",
-    "reflect-metadata": "^0.1.x",
-    "typescript": "^5.9.x",
-    "ts-node": "^10.9.x",
     "@types/node": "^25.x",
-    "bcrypt": "^6.x",
-    "cors": "^2.x",
-    "express": "^5.x",
-    "jsonwebtoken": "^9.x",
-    "pg": "^8.x"
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pdfkit": "^0.17.2",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.1.14",
+    "ts-node": "^10.9.x",
+    "typeorm": "^0.3.28",
+    "typescript": "^5.9.x"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
