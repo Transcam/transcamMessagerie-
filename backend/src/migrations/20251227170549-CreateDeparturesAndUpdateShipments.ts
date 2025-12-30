@@ -81,31 +81,7 @@ export class CreateDeparturesAndUpdateShipments20251227170549 implements Migrati
             }
         }
 
-        // Check if departure_id column exists in shipments
-        const columnExists = await queryRunner.query(`
-            SELECT EXISTS (
-                SELECT 1 FROM information_schema.columns 
-                WHERE table_name = 'shipments' AND column_name = 'departure_id'
-            )
-        `);
-
-        if (!columnExists[0].exists) {
-            // Add departure_id column to shipments
-            await queryRunner.query(`ALTER TABLE "shipments" ADD "departure_id" integer`);
-        }
-
-        // Check and create index for departure_id on shipments
-        const departureIdIndexExists = await queryRunner.query(`
-            SELECT EXISTS (
-                SELECT 1 FROM pg_indexes 
-                WHERE indexname = 'IDX_shipments_departure_id'
-            )
-        `);
-        if (!departureIdIndexExists[0].exists) {
-            await queryRunner.query(`CREATE INDEX "IDX_shipments_departure_id" ON "shipments" ("departure_id")`);
-        }
-
-        // Check and add foreign key constraints
+        // Check and add foreign key constraints for departures
         const fkCreatedByExists = await queryRunner.query(`
             SELECT EXISTS (
                 SELECT 1 FROM information_schema.table_constraints 
@@ -136,38 +112,180 @@ export class CreateDeparturesAndUpdateShipments20251227170549 implements Migrati
             await queryRunner.query(`ALTER TABLE "departures" ADD CONSTRAINT "FK_departures_closed_by" FOREIGN KEY ("closed_by_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         }
 
-        const fkShipmentDepartureExists = await queryRunner.query(`
+        // Check if shipments table exists before trying to modify it
+        const shipmentsTableExists = await queryRunner.query(`
             SELECT EXISTS (
-                SELECT 1 FROM information_schema.table_constraints 
-                WHERE constraint_name = 'FK_shipments_departure'
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'shipments'
             )
         `);
-        if (!fkShipmentDepartureExists[0].exists) {
-            await queryRunner.query(`ALTER TABLE "shipments" ADD CONSTRAINT "FK_shipments_departure" FOREIGN KEY ("departure_id") REFERENCES "departures"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+
+        if (shipmentsTableExists[0].exists) {
+            // Check if departure_id column exists in shipments
+            const columnExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'shipments' AND column_name = 'departure_id'
+                )
+            `);
+
+            if (!columnExists[0].exists) {
+                // Add departure_id column to shipments
+                await queryRunner.query(`ALTER TABLE "shipments" ADD "departure_id" integer`);
+            }
+
+            // Check and create index for departure_id on shipments
+            const departureIdIndexExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM pg_indexes 
+                    WHERE indexname = 'IDX_shipments_departure_id'
+                )
+            `);
+            if (!departureIdIndexExists[0].exists) {
+                await queryRunner.query(`CREATE INDEX "IDX_shipments_departure_id" ON "shipments" ("departure_id")`);
+            }
+
+            // Check and add foreign key constraint for shipments departure
+            const fkShipmentDepartureExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE constraint_name = 'FK_shipments_departure'
+                )
+            `);
+            if (!fkShipmentDepartureExists[0].exists) {
+                await queryRunner.query(`ALTER TABLE "shipments" ADD CONSTRAINT "FK_shipments_departure" FOREIGN KEY ("departure_id") REFERENCES "departures"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+            }
         }
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        // Drop foreign key constraints
-        await queryRunner.query(`ALTER TABLE "shipments" DROP CONSTRAINT "FK_shipments_departure"`);
-        await queryRunner.query(`ALTER TABLE "departures" DROP CONSTRAINT "FK_departures_closed_by"`);
-        await queryRunner.query(`ALTER TABLE "departures" DROP CONSTRAINT "FK_departures_sealed_by"`);
-        await queryRunner.query(`ALTER TABLE "departures" DROP CONSTRAINT "FK_departures_created_by"`);
+        // Check if shipments table exists before trying to modify it
+        const shipmentsTableExists = await queryRunner.query(`
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'shipments'
+            )
+        `);
 
-        // Drop indexes
-        await queryRunner.query(`DROP INDEX "public"."IDX_shipments_departure_id"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_departures_general_waybill_number"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_departures_created_at"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_departures_status"`);
+        if (shipmentsTableExists[0].exists) {
+            // Drop foreign key constraint for shipments
+            const fkShipmentDepartureExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE constraint_name = 'FK_shipments_departure'
+                )
+            `);
+            if (fkShipmentDepartureExists[0].exists) {
+                await queryRunner.query(`ALTER TABLE "shipments" DROP CONSTRAINT "FK_shipments_departure"`);
+            }
 
-        // Remove departure_id column from shipments
-        await queryRunner.query(`ALTER TABLE "shipments" DROP COLUMN "departure_id"`);
+            // Drop index for shipments departure_id
+            const departureIdIndexExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM pg_indexes 
+                    WHERE indexname = 'IDX_shipments_departure_id'
+                )
+            `);
+            if (departureIdIndexExists[0].exists) {
+                await queryRunner.query(`DROP INDEX "public"."IDX_shipments_departure_id"`);
+            }
 
-        // Drop departures table
-        await queryRunner.query(`DROP TABLE "departures"`);
+            // Check if departure_id column exists before dropping it
+            const columnExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'shipments' AND column_name = 'departure_id'
+                )
+            `);
+            if (columnExists[0].exists) {
+                await queryRunner.query(`ALTER TABLE "shipments" DROP COLUMN "departure_id"`);
+            }
+        }
 
-        // Drop departures_status enum
-        await queryRunner.query(`DROP TYPE "public"."departures_status_enum"`);
+        // Drop foreign key constraints for departures
+        const fkClosedByExists = await queryRunner.query(`
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.table_constraints 
+                WHERE constraint_name = 'FK_departures_closed_by'
+            )
+        `);
+        if (fkClosedByExists[0].exists) {
+            await queryRunner.query(`ALTER TABLE "departures" DROP CONSTRAINT "FK_departures_closed_by"`);
+        }
+
+        const fkSealedByExists = await queryRunner.query(`
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.table_constraints 
+                WHERE constraint_name = 'FK_departures_sealed_by'
+            )
+        `);
+        if (fkSealedByExists[0].exists) {
+            await queryRunner.query(`ALTER TABLE "departures" DROP CONSTRAINT "FK_departures_sealed_by"`);
+        }
+
+        const fkCreatedByExists = await queryRunner.query(`
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.table_constraints 
+                WHERE constraint_name = 'FK_departures_created_by'
+            )
+        `);
+        if (fkCreatedByExists[0].exists) {
+            await queryRunner.query(`ALTER TABLE "departures" DROP CONSTRAINT "FK_departures_created_by"`);
+        }
+
+        // Check if departures table exists before dropping indexes and table
+        const departuresTableExists = await queryRunner.query(`
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'departures'
+            )
+        `);
+
+        if (departuresTableExists[0].exists) {
+            // Drop indexes for departures
+            const waybillIndexExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM pg_indexes 
+                    WHERE indexname = 'IDX_departures_general_waybill_number'
+                )
+            `);
+            if (waybillIndexExists[0].exists) {
+                await queryRunner.query(`DROP INDEX "public"."IDX_departures_general_waybill_number"`);
+            }
+
+            const createdAtIndexExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM pg_indexes 
+                    WHERE indexname = 'IDX_departures_created_at'
+                )
+            `);
+            if (createdAtIndexExists[0].exists) {
+                await queryRunner.query(`DROP INDEX "public"."IDX_departures_created_at"`);
+            }
+
+            const statusIndexExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM pg_indexes 
+                    WHERE indexname = 'IDX_departures_status'
+                )
+            `);
+            if (statusIndexExists[0].exists) {
+                await queryRunner.query(`DROP INDEX "public"."IDX_departures_status"`);
+            }
+
+            // Drop departures table
+            await queryRunner.query(`DROP TABLE "departures"`);
+        }
+
+        // Drop departures_status enum if it exists
+        const enumExists = await queryRunner.query(`
+            SELECT EXISTS (
+                SELECT 1 FROM pg_type WHERE typname = 'departures_status_enum'
+            )
+        `);
+        if (enumExists[0].exists) {
+            await queryRunner.query(`DROP TYPE "public"."departures_status_enum"`);
+        }
     }
 }
 
