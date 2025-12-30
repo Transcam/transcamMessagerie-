@@ -30,7 +30,11 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const success = await login(username, password);
+      // Trim whitespace from username and password
+      const trimmedUsername = username.trim();
+      const trimmedPassword = password.trim();
+      
+      const success = await login(trimmedUsername, trimmedPassword);
       if (success) {
         toast({
           title: language === "fr" ? "Connexion réussie" : "Login successful",
