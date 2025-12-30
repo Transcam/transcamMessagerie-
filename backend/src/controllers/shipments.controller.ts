@@ -203,9 +203,21 @@ export class ShipmentsController {
 
   getStatistics = async (req: Request, res: Response) => {
     try {
-      const filters = {
+      const filters: {
+        nature?: ShipmentNature;
+        dateFrom?: Date;
+        dateTo?: Date;
+      } = {
         nature: req.query.nature as ShipmentNature | undefined,
       };
+
+      // Add date filters if provided
+      if (req.query.dateFrom) {
+        filters.dateFrom = new Date(req.query.dateFrom as string);
+      }
+      if (req.query.dateTo) {
+        filters.dateTo = new Date(req.query.dateTo as string);
+      }
 
       const statistics = await this.service.getStatistics(filters);
 

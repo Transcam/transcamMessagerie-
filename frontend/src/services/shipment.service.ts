@@ -1,5 +1,13 @@
 import { httpService } from "./http-service";
 
+export type ShipmentType = "express" | "standard";
+export type ShipmentNature = "colis" | "courrier";
+
+export const SHIPMENT_TYPE_LABELS: Record<ShipmentType, { fr: string; en: string }> = {
+  express: { fr: "Express", en: "Express" },
+  standard: { fr: "Standard", en: "Standard" },
+};
+
 export interface Shipment {
   id: number;
   waybill_number: string;
@@ -12,7 +20,8 @@ export interface Shipment {
   declared_value: number;
   price: number;
   route: string;
-  nature: "colis" | "courrier";
+  nature: ShipmentNature;
+  type: ShipmentType;
   status: "pending" | "confirmed" | "assigned" | "cancelled";
   is_confirmed: boolean;
   is_cancelled: boolean;
@@ -36,7 +45,8 @@ export interface CreateShipmentDTO {
   declared_value?: number;
   price: number;
   route: string;
-  nature?: "colis" | "courrier";
+  nature?: ShipmentNature;
+  type?: ShipmentType;
 }
 
 export interface UpdateShipmentDTO {
@@ -49,7 +59,8 @@ export interface UpdateShipmentDTO {
   declared_value?: number;
   price?: number;
   route?: string;
-  nature?: "colis" | "courrier";
+  nature?: ShipmentNature;
+  type?: ShipmentType;
 }
 
 export interface ShipmentFilters {
@@ -165,9 +176,17 @@ export const shipmentService = {
     window.URL.revokeObjectURL(url);
   },
 
-  getStatistics: async (nature?: "colis" | "courrier"): Promise<ShipmentStatistics> => {
+  getStatistics: async (
+    nature?: "colis" | "courrier",
+    filters?: {
+      dateFrom?: string;
+      dateTo?: string;
+    }
+  ): Promise<ShipmentStatistics> => {
     const params = new URLSearchParams();
     if (nature) params.append("nature", nature);
+    if (filters?.dateFrom) params.append("dateFrom", filters.dateFrom);
+    if (filters?.dateTo) params.append("dateTo", filters.dateTo);
     const response = await httpService.get(`/shipments/statistics?${params.toString()}`);
     return response.data.data;
   },

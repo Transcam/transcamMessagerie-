@@ -45,6 +45,8 @@ import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge"
 import { Skeleton } from "@/components/ui/skeleton";
 import { Shipment } from "@/services/shipment.service";
 import { ShipmentStats } from "@/components/shipments/ShipmentStats";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DateRange, getDateRangeForPreset } from "@/lib/date-utils";
 
 const routes = [
   "Yaoundé → Douala",
@@ -67,11 +69,15 @@ export default function ShipmentListPage() {
     return "";
   };
 
+  const [dateRange, setDateRange] = useState<DateRange>(getDateRangeForPreset("today"));
+  
   const [filters, setFilters] = useState({
     status: "",
     route: "",
     waybillNumber: "",
     nature: getNatureFromPath(),
+    dateFrom: dateRange.startDate,
+    dateTo: dateRange.endDate,
     page: 1,
     limit: 20,
   });
@@ -81,6 +87,17 @@ export default function ShipmentListPage() {
     const nature = getNatureFromPath();
     setFilters((prev) => ({ ...prev, nature, page: 1 }));
   }, [location.pathname]);
+  
+  // Mettre à jour les filtres quand la plage de dates change
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      dateFrom: dateRange.startDate,
+      dateTo: dateRange.endDate,
+      page: 1,
+    }));
+  }, [dateRange]);
+  
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [shipmentToDelete, setShipmentToDelete] = useState<Shipment | null>(null);
   const [deleteReason, setDeleteReason] = useState("");
@@ -104,11 +121,15 @@ export default function ShipmentListPage() {
 
   const clearFilters = () => {
     const nature = getNatureFromPath();
+    const defaultDateRange = getDateRangeForPreset("today");
+    setDateRange(defaultDateRange);
     setFilters({
       status: "",
       route: "",
       waybillNumber: "",
       nature: nature,
+      dateFrom: defaultDateRange.startDate,
+      dateTo: defaultDateRange.endDate,
       page: 1,
       limit: 20,
     });
@@ -216,6 +237,8 @@ export default function ShipmentListPage() {
               ? filters.nature
               : undefined
           }
+          dateFrom={filters.dateFrom}
+          dateTo={filters.dateTo}
         />
 
         {/* Filters */}
@@ -281,6 +304,17 @@ export default function ShipmentListPage() {
                     className="pl-8"
                   />
                 </div>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 mt-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  {language === "fr" ? "Période" : "Period"}
+                </label>
+                <DateRangePicker
+                  value={dateRange}
+                  onChange={setDateRange}
+                />
               </div>
               <div className="flex items-end">
                 <Button

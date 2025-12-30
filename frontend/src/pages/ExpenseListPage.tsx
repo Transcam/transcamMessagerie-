@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Filter, MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -50,6 +49,8 @@ import {
   ExpenseCategory,
   EXPENSE_CATEGORY_LABELS,
 } from "@/services/expense.service";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DateRange, getDateRangeForPreset, formatDateDisplay } from "@/lib/date-utils";
 
 export default function ExpenseListPage() {
   const navigate = useNavigate();
@@ -58,8 +59,7 @@ export default function ExpenseListPage() {
 
   const [filters, setFilters] = useState({
     category: "" as ExpenseCategory | "",
-    dateFrom: "",
-    dateTo: "",
+    dateRange: getDateRangeForPreset("today"),
     page: 1,
     limit: 20,
   });
@@ -67,7 +67,11 @@ export default function ExpenseListPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
 
-  const { data, isLoading, error } = useExpenses(filters);
+  const { data, isLoading, error } = useExpenses({
+    ...filters,
+    dateFrom: filters.dateRange.startDate,
+    dateTo: filters.dateRange.endDate,
+  });
   const deleteExpense = useDeleteExpense();
 
   const formatCurrency = (amount: number | null) => {
@@ -78,20 +82,14 @@ export default function ExpenseListPage() {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(language === "fr" ? "fr-FR" : "en-US");
-  };
-
-  const handleFilterChange = (key: string, value: string) => {
+  const handleFilterChange = (key: string, value: any) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   };
 
   const clearFilters = () => {
     setFilters({
       category: "",
-      dateFrom: "",
-      dateTo: "",
+      dateRange: getDateRangeForPreset("today"),
       page: 1,
       limit: 20,
     });
@@ -158,7 +156,10 @@ export default function ExpenseListPage() {
         </div>
 
         {/* Statistics */}
-        <ExpenseStats />
+        <ExpenseStats
+          dateFrom={filters.dateRange.startDate}
+          dateTo={filters.dateRange.endDate}
+        />
 
         {/* Filters */}
         <Card>
@@ -201,22 +202,11 @@ export default function ExpenseListPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">
-                  {language === "fr" ? "Date de début" : "Start Date"}
+                  {language === "fr" ? "Période" : "Period"}
                 </label>
-                <Input
-                  type="date"
-                  value={filters.dateFrom}
-                  onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  {language === "fr" ? "Date de fin" : "End Date"}
-                </label>
-                <Input
-                  type="date"
-                  value={filters.dateTo}
-                  onChange={(e) => handleFilterChange("dateTo", e.target.value)}
+                <DateRangePicker
+                  value={filters.dateRange}
+                  onChange={(range) => handleFilterChange("dateRange", range)}
                 />
               </div>
               <div className="flex items-end">
@@ -299,7 +289,7 @@ export default function ExpenseListPage() {
                         onClick={() => navigate(`/expenses/${expense.id}`)}
                       >
                         <TableCell className="text-muted-foreground">
-                          {formatDate(expense.created_at)}
+                          {formatDateDisplay(expense.created_at, language)}
                         </TableCell>
                         <TableCell className="font-medium">
                           {expense.description}

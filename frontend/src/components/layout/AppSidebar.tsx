@@ -5,8 +5,6 @@ import {
   Package,
   PlusCircle,
   Truck,
-  FileText,
-  DollarSign,
   PieChart,
   BarChart3,
   Settings,
@@ -88,18 +86,6 @@ const navItems: NavItem[] = [
     labelKey: "nav.expenses",
     href: "/expenses",
     permission: "view_expenses",
-  },
-  {
-    icon: FileText,
-    labelKey: "nav.waybills",
-    href: "/waybills",
-    permission: "view_shipments",
-  },
-  {
-    icon: DollarSign,
-    labelKey: "nav.finance",
-    href: "/finance",
-    permission: "view_finance",
   },
   {
     icon: PieChart,
@@ -359,7 +345,7 @@ export function AppSidebar() {
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          "hidden h-screen lg:block transition-all duration-300",
+          "hidden h-screen lg:block lg:fixed lg:left-0 lg:top-0 lg:z-40 transition-all duration-300",
           isCollapsed ? "w-20" : "w-72"
         )}
       >

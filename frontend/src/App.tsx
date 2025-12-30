@@ -27,6 +27,7 @@ import DriverListPage from "./pages/DriverListPage";
 import DriverDetailPage from "./pages/DriverDetailPage";
 import NewDriverPage from "./pages/NewDriverPage";
 import EditDriverPage from "./pages/EditDriverPage";
+import DistributionPage from "./pages/DistributionPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -260,7 +261,7 @@ function AppRoutes() {
         path="/distribution"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <DistributionPage />
           </ProtectedRoute>
         }
       />

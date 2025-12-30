@@ -5,10 +5,18 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Receipt, DollarSign, TrendingUp, Calendar } from "lucide-react";
 
-export function ExpenseStats() {
+interface ExpenseStatsProps {
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export function ExpenseStats({ dateFrom, dateTo }: ExpenseStatsProps) {
   const { language } = useLanguage();
   const { user } = useAuth();
-  const { data: stats, isLoading, error } = useExpenseStatistics();
+  const { data: stats, isLoading, error } = useExpenseStatistics({
+    dateFrom,
+    dateTo,
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US", {

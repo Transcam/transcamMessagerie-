@@ -23,6 +23,11 @@ export enum ShipmentNature {
   COURRIER = "courrier",
 }
 
+export enum ShipmentType {
+  EXPRESS = "express",
+  STANDARD = "standard",
+}
+
 @Entity("shipments")
 @Index(["waybill_number"], { unique: true })
 @Index(["status"])
@@ -71,6 +76,13 @@ export class Shipment {
     default: ShipmentNature.COLS,
   })
   nature!: ShipmentNature;
+
+  @Column({
+    type: "enum",
+    enum: ShipmentType,
+    default: ShipmentType.STANDARD,
+  })
+  type!: ShipmentType;
 
   // Status & Locking
   @Column({

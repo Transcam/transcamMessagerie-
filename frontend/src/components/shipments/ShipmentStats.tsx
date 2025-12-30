@@ -7,19 +7,22 @@ import {
   Package,
   DollarSign,
   Weight,
-  TrendingUp,
   Calendar,
-  BarChart3,
 } from "lucide-react";
 
 interface ShipmentStatsProps {
   nature?: "colis" | "courrier";
+  dateFrom?: string;
+  dateTo?: string;
 }
 
-export function ShipmentStats({ nature }: ShipmentStatsProps) {
+export function ShipmentStats({ nature, dateFrom, dateTo }: ShipmentStatsProps) {
   const { language } = useLanguage();
   const { user } = useAuth();
-  const { data: stats, isLoading, error } = useShipmentStatistics(nature);
+  const { data: stats, isLoading, error } = useShipmentStatistics(nature, {
+    dateFrom,
+    dateTo,
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US", {
@@ -152,75 +155,9 @@ export function ShipmentStats({ nature }: ShipmentStatsProps) {
         </Card>
       </div>
 
-      {/* Monthly Statistics */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {language === "fr" ? "Ce Mois" : "This Month"}
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatNumber(stats.monthCount)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {language === "fr"
-                ? "Expéditions créées"
-                : "Shipments created"}
-            </p>
-            {user?.role !== "staff" && (
-              <>
-                <div className="mt-2 text-sm font-medium">
-                  {formatCurrency(stats.monthRevenue)} FCFA
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {language === "fr" ? "Revenus du mois" : "Month revenue"}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Status Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              {language === "fr" ? "Par Statut" : "By Status"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {Object.entries(stats.byStatus).map(([status, count]) => (
-                <div
-                  key={status}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <span className="text-muted-foreground capitalize">
-                    {language === "fr"
-                      ? status === "pending"
-                        ? "En attente"
-                        : status === "confirmed"
-                        ? "Confirmé"
-                        : status === "assigned"
-                        ? "Assigné"
-                        : status === "cancelled"
-                        ? "Annulé"
-                        : status
-                      : status}
-                  </span>
-                  <span className="font-medium">{formatNumber(count)}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Nature Breakdown (only if not filtered by nature) */}
-      {stats.byNature && (
+      {stats.byNature && !nature && (
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium flex items-center gap-2">

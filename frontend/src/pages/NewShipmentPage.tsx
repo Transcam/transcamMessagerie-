@@ -26,6 +26,7 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCreateShipment } from "@/hooks/use-shipments";
+import { SHIPMENT_TYPE_LABELS } from "@/services/shipment.service";
 
 const routes = [
   "Yaoundé → Douala",
@@ -47,6 +48,7 @@ const shipmentSchema = z.object({
   price: z.number().min(1, "Price must be greater than 0"),
   route: z.string().min(1, "Route is required"),
   nature: z.enum(["colis", "courrier"]).default("colis"),
+  type: z.enum(["express", "standard"]).default("standard"),
 });
 
 type ShipmentFormValues = z.infer<typeof shipmentSchema>;
@@ -73,6 +75,7 @@ export default function NewShipmentPage() {
       price: 0,
       route: "",
       nature: defaultNature,
+      type: "standard",
     },
   });
 
@@ -243,6 +246,43 @@ export default function NewShipmentPage() {
                           </SelectItem>
                           <SelectItem value="courrier">
                             {language === "fr" ? "Courrier" : "Mail"}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {language === "fr" ? "Type d'expédition" : "Shipment Type"}
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                language === "fr"
+                                  ? "Sélectionner le type"
+                                  : "Select type"
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="standard">
+                            {SHIPMENT_TYPE_LABELS.standard[language]}
+                          </SelectItem>
+                          <SelectItem value="express">
+                            {SHIPMENT_TYPE_LABELS.express[language]}
                           </SelectItem>
                         </SelectContent>
                       </Select>

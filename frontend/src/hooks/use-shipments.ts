@@ -190,10 +190,16 @@ export function useGenerateReceipt() {
 }
 
 // Shipment statistics hook
-export function useShipmentStatistics(nature?: "colis" | "courrier") {
+export function useShipmentStatistics(
+  nature?: "colis" | "courrier",
+  filters?: {
+    dateFrom?: string;
+    dateTo?: string;
+  }
+) {
   return useQuery<ShipmentStatistics>({
-    queryKey: ["shipment-statistics", nature],
-    queryFn: () => shipmentService.getStatistics(nature),
+    queryKey: ["shipment-statistics", nature, filters],
+    queryFn: () => shipmentService.getStatistics(nature, filters),
   });
 }
 

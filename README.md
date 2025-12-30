@@ -57,12 +57,13 @@ Le projet est divisé en deux parties principales :
 
 #### Classification et Filtrage
 - **Nature des expéditions** : Colis ou Courrier (sélection via dropdown)
+- **Type d'expéditions** : Express ou Standard (sélection via dropdown)
 - **Statuts** : Pending, Confirmed, Assigned, Cancelled
 - **Filtrage avancé** :
   - Par statut (pending, confirmed, assigned, cancelled)
   - Par route (Yaoundé → Douala, Douala → Yaoundé, etc.)
   - Par nature (colis, courrier)
-  - Par date (date de création)
+  - Par date (sélecteur de plage de dates avec presets)
   - Par numéro de bordereau (recherche)
 - **Pages dédiées** : `/shipments/colis` et `/shipments/courrier` pour filtrer par nature
 - **Pagination** : Navigation par pages avec limite configurable
@@ -84,11 +85,9 @@ Le projet est divisé en deux parties principales :
   - Revenu total (masqué pour STAFF)
   - Poids total
   - Expéditions aujourd'hui
-  - Expéditions ce mois
-  - Revenus du mois (masqué pour STAFF)
+- **Filtrage par date** : Toutes les statistiques sont liées au sélecteur de plage de dates
 - **Répartition** :
-  - Par statut (pending, confirmed, assigned, cancelled)
-  - Par nature (colis, courrier) - affiché uniquement si non filtré
+  - Par nature (colis, courrier) - affiché uniquement sur la page générale (pas sur les pages dédiées)
 - **Filtrage par nature** : Les statistiques s'adaptent selon la page (colis/courrier/tous)
 
 ### 🚌 Gestion des Départs
@@ -742,3 +741,22 @@ Pour toute question ou problème, veuillez contacter l'équipe de développement
 ---
 
 **Dernière mise à jour** : Janvier 2025
+
+## 🆕 Dernières Fonctionnalités Ajoutées
+
+### Sélecteur de Plage de Dates (DateRangePicker)
+- **Composant réutilisable** : DateRangePicker disponible sur toutes les pages nécessaires
+- **Presets** : Aujourd'hui, Hier, Cette semaine, Semaine dernière, Ce mois, Mois dernier, Cette année, Année dernière, Personnalisé
+- **Intégration** : Lié aux statistiques et tableaux de données
+- **Pages concernées** : Dashboard, Expéditions, Dépenses, Répartitions
+
+### Gestion des Répartitions
+- **Nouvelle fonctionnalité** : Calcul automatique des répartitions (Chauffeurs, Ministère, Agence)
+- **Page dédiée** : `/distribution` avec vue Chauffeur et Ministère
+- **Filtrage par date** : Toutes les répartitions sont filtrables par plage de dates
+- **Masquage STAFF** : Les montants sont masqués pour les utilisateurs STAFF
+
+### Type d'Expédition
+- **Nouveau champ** : Type d'expédition (Express ou Standard)
+- **Intégration** : Utilisé dans les critères de répartition ministère
+- **Formulaire** : Ajouté aux formulaires de création et modification d'expéditions

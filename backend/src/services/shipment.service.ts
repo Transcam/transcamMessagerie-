@@ -4,6 +4,7 @@ import {
   Shipment,
   ShipmentStatus,
   ShipmentNature,
+  ShipmentType,
 } from "../entities/shipment.entity";
 import { User } from "../entities/user.entity";
 import { AuditLog } from "../entities/audit-log.entity";
@@ -23,6 +24,7 @@ export interface CreateShipmentDTO {
   price: number;
   route: string;
   nature?: ShipmentNature;
+  type?: ShipmentType;
 }
 
 export interface UpdateShipmentDTO {
@@ -36,6 +38,7 @@ export interface UpdateShipmentDTO {
   price?: number;
   route?: string;
   nature?: ShipmentNature;
+  type?: ShipmentType;
 }
 
 export interface ShipmentFiltersDTO {
@@ -72,6 +75,7 @@ export class ShipmentService {
       ...data,
       waybill_number: waybillNumber,
       nature: data.nature || ShipmentNature.COLS,
+      type: data.type || ShipmentType.STANDARD,
       status: ShipmentStatus.CONFIRMED,
       is_confirmed: true,
       confirmed_at: new Date(),
@@ -225,7 +229,11 @@ export class ShipmentService {
     return query.getManyAndCount();
   }
 
-  async getStatistics(filters?: { nature?: ShipmentNature }): Promise<{
+  async getStatistics(filters?: {
+    nature?: ShipmentNature;
+    dateFrom?: Date;
+    dateTo?: Date;
+  }): Promise<{
     total: number;
     totalPrice: number;
     totalWeight: number;
@@ -242,6 +250,20 @@ export class ShipmentService {
     // Apply nature filter if provided
     if (filters?.nature) {
       query.andWhere("shipment.nature = :nature", { nature: filters.nature });
+    }
+
+    // Apply date filters if provided
+    if (filters?.dateFrom) {
+      query.andWhere("shipment.created_at >= :dateFrom", {
+        dateFrom: filters.dateFrom,
+      });
+    }
+    if (filters?.dateTo) {
+      const endDate = new Date(filters.dateTo);
+      endDate.setHours(23, 59, 59, 999); // Include the full end date
+      query.andWhere("shipment.created_at <= :dateTo", {
+        dateTo: endDate,
+      });
     }
 
     // Get all shipments matching the filter
