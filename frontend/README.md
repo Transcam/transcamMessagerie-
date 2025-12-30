@@ -33,6 +33,7 @@ frontend/
 │   ├── services/           # Services API
 │   ├── types/              # Types TypeScript
 │   └── lib/                # Utilitaires
+│       └── date-utils.ts   # Fonctions utilitaires pour les dates (formatage, presets, etc.)
 ```
 
 ## ✨ Fonctionnalités Implémentées
@@ -82,6 +83,7 @@ frontend/
 #### Fonctionnalités
 
 - **Nature des expéditions** : Colis ou Courrier
+- **Type d'expéditions** : Express ou Standard (sélection via dropdown)
 - **Statuts** : Pending, Confirmed, Assigned, Cancelled
 - **Génération de bordereaux PDF** individuels
 - **Génération de reçus PDF** en format ticket (80mm) pour les clients
@@ -89,9 +91,9 @@ frontend/
   - Total d'expéditions
   - Revenu total (masqué pour STAFF)
   - Poids total
-  - Statistiques du jour et du mois
-  - Répartition par statut
-  - Répartition par nature (si non filtré)
+  - Expéditions aujourd'hui
+  - **Filtrage par date** : Toutes les statistiques sont liées au sélecteur de plage de dates
+  - Répartition par nature (affichée uniquement sur la page générale, pas sur les pages dédiées)
 
 ### 🚌 Gestion des Départs
 
@@ -173,7 +175,7 @@ frontend/
 
 1. **Liste des Dépenses** (`/expenses`)
    - Affichage de toutes les dépenses (ou seulement celles de l'utilisateur STAFF)
-   - Filtrage par catégorie et date (plage de dates)
+   - Filtrage par catégorie et date (sélecteur de plage de dates avec presets)
    - Pagination
    - Actions : Modifier, Supprimer (selon permissions)
    - **Affichage conditionnel** :
@@ -210,6 +212,7 @@ frontend/
   - Dépenses ce mois
   - Montant du mois (masqué pour STAFF)
   - Répartition par catégorie (masquée pour STAFF)
+  - **Filtrage par date** : Toutes les statistiques sont liées au sélecteur de plage de dates
 - **Contrôle d'accès** :
   - **STAFF** : Voit uniquement ses propres dépenses, montants masqués, ne peut pas modifier/supprimer
   - **Autres rôles** : Voient toutes les dépenses, voient les montants, peuvent modifier/supprimer (selon permissions)
@@ -227,12 +230,54 @@ frontend/
 ### 📊 Dashboard
 
 - **Statistiques globales** :
-  - Expéditions aujourd'hui
-  - Expéditions ce mois
-  - Revenu total (masqué pour STAFF)
+  - Expéditions (filtrées par plage de dates)
+  - Revenu total (masqué pour STAFF, filtré par plage de dates)
   - Total des départs
-- **Tableau des expéditions récentes**
+- **Sélecteur de plage de dates** : Permet de filtrer toutes les statistiques par période
+- **Tableau des expéditions récentes** : Expéditions filtrées par la plage de dates sélectionnée
 - **Navigation rapide** vers les différentes sections
+
+### 💰 Gestion des Répartitions
+
+#### Page Disponible
+
+1. **Page Répartitions** (`/distribution`)
+   - Vue d'ensemble avec cartes statistiques (Total Chauffeurs, Total Ministère, Total Agence, Expéditions concernées)
+   - Sélecteur de vue : Chauffeur ou Ministère
+   - **Sélecteur de plage de dates** avec presets (Aujourd'hui, Hier, Cette semaine, etc.)
+   - Filtrage automatique de toutes les données selon la plage de dates sélectionnée
+
+#### Vue Chauffeur
+
+- **Liste des chauffeurs** avec leurs répartitions
+- Pour chaque chauffeur :
+  - Nom complet
+  - Montant total (masqué pour STAFF)
+  - Nombre d'expéditions
+  - Détails par expédition (bordereau, poids, prix, montant chauffeur, date scellement)
+- **Règle** : 60% du montant des colis ≤ 40kg
+
+#### Vue Ministère
+
+- **Statistiques** :
+  - CA Éligible (masqué pour STAFF)
+  - Montant Ministère (masqué pour STAFF)
+  - Nombre d'expéditions éligibles
+- **Liste des expéditions éligibles** avec détails :
+  - Bordereau, nature, type, poids, prix (masqué pour STAFF), date scellement
+- **Règle** : 5% du CA des expéditions éligibles (colis ≤ 50kg, courrier standard ≤ 100g, courrier express entre 100g et 2kg)
+
+#### Contrôle d'Accès
+
+- **Permission requise** : `view_distribution`
+- **STAFF** : Les montants sont masqués (affichés comme "-")
+- **Autres rôles** : Visualisation complète de tous les montants
+
+#### Fonctionnalités
+
+- **Calcul automatique** : Les répartitions sont calculées en temps réel
+- **Filtrage par date** : Utilise la date de scellement (`sealed_at`) des départs fermés
+- **Mise à jour dynamique** : Les cartes et listes se mettent à jour automatiquement selon la plage de dates sélectionnée
 
 ## 🎨 Composants Principaux
 
@@ -249,8 +294,11 @@ frontend/
 ### Composants d'Expéditions
 
 - **`ShipmentStatusBadge`** : Badge coloré pour les statuts
-- **`ShipmentStats`** : Composant de statistiques avec cartes et graphiques
+- **`ShipmentStats`** : Composant de statistiques avec cartes
   - Masque les revenus pour les utilisateurs STAFF
+  - **Filtrage par date** : Accepte les props `dateFrom` et `dateTo` pour filtrer les statistiques
+  - Affiche uniquement les cartes principales (Total, Revenu, Poids, Aujourd'hui)
+  - Affiche la répartition par nature uniquement sur la page générale (pas sur les pages dédiées)
 
 ### Composants de Départs
 
@@ -261,6 +309,16 @@ frontend/
 - **`ExpenseStats`** : Composant de statistiques avec cartes
   - Masque les montants pour les utilisateurs STAFF
   - Affiche les statistiques adaptées selon le rôle
+  - **Filtrage par date** : Accepte les props `dateFrom` et `dateTo` pour filtrer les statistiques
+
+### Composants Utilitaires
+
+- **`DateRangePicker`** : Composant réutilisable pour la sélection de plage de dates
+  - **Presets** : Aujourd'hui, Hier, Cette semaine, Semaine dernière, Ce mois, Mois dernier, Cette année, Année dernière, Personnalisé
+  - **Mode personnalisé** : Sélection via calendrier avec plage de dates
+  - **Auto-détection** : Détecte automatiquement le preset correspondant à la plage sélectionnée
+  - **Internationalisé** : Support FR/EN avec formatage de dates adapté
+  - **Utilisé sur** : Dashboard, Expéditions, Dépenses, Répartitions
 
 ## 🔧 Services API
 
@@ -308,7 +366,13 @@ frontend/
 - `create()` : Création de dépense
 - `update()` : Mise à jour de dépense
 - `delete()` : Suppression de dépense
-- `getStatistics()` : Statistiques des dépenses
+- `getStatistics()` : Statistiques des dépenses (filtres: dateFrom, dateTo)
+
+### `distribution.service.ts`
+- `getDriverDistributions()` : Liste des répartitions par chauffeur (filtres: dateFrom, dateTo, driverId)
+- `getMinistryDistribution()` : Répartition ministère (filtres: dateFrom, dateTo)
+- `getAgencyDistribution()` : Répartition agence (filtres: dateFrom, dateTo)
+- `getDistributionSummary()` : Résumé général des répartitions (filtres: dateFrom, dateTo)
 
 ### `user.service.ts`
 - `list()` : Liste des utilisateurs
@@ -330,7 +394,7 @@ frontend/
 - `useUpdateShipment()` : Mise à jour d'expédition
 - `useCancelShipment()` : Annulation d'expédition
 - `useGenerateReceipt()` : Génération et téléchargement de reçu PDF
-- `useShipmentStatistics()` : Statistiques des expéditions
+- `useShipmentStatistics()` : Statistiques des expéditions (filtres: nature, dateFrom, dateTo)
 
 ### `use-departures.ts`
 - `useDepartures()` : Liste des départs
@@ -363,7 +427,13 @@ frontend/
 - `useCreateExpense()` : Création de dépense
 - `useUpdateExpense()` : Mise à jour de dépense
 - `useDeleteExpense()` : Suppression de dépense
-- `useExpenseStatistics()` : Statistiques des dépenses
+- `useExpenseStatistics()` : Statistiques des dépenses (filtres: dateFrom, dateTo)
+
+### `use-distributions.ts`
+- `useDriverDistributions()` : Liste des répartitions par chauffeur (filtres: dateFrom, dateTo, driverId)
+- `useMinistryDistribution()` : Répartition ministère (filtres: dateFrom, dateTo)
+- `useAgencyDistribution()` : Répartition agence (filtres: dateFrom, dateTo)
+- `useDistributionSummary()` : Résumé général des répartitions (filtres: dateFrom, dateTo)
 
 ### `use-users.ts`
 - `useUsers()` : Liste des utilisateurs
@@ -448,7 +518,10 @@ L'URL de l'API est configurée dans `src/services/http-service.ts` et utilise la
   - Peuvent créer et modifier des véhicules et des chauffeurs, mais ne peuvent pas les supprimer
 - Les **SUPERVISOR** ne peuvent pas créer, modifier ou supprimer les comptes **ADMIN**
 - Les expéditions sont créées avec le statut **CONFIRMED** par défaut
+- Les expéditions ont maintenant un **type** (Express ou Standard) en plus de la nature (Colis/Courrier)
 - Les statistiques sont filtrées selon la nature si on est sur `/shipments/colis` ou `/shipments/courrier`
+- Toutes les statistiques (Dashboard, Expéditions, Dépenses, Répartitions) sont liées au sélecteur de plage de dates
+- Le composant **DateRangePicker** est disponible sur toutes les pages nécessaires avec des presets et une sélection personnalisée
 - Les bordereaux et reçus PDF sont générés côté backend et téléchargés via le frontend
 - Les reçus sont au format ticket (80mm) pour impression sur imprimantes thermiques
 - Les dépenses utilisent la date de création comme date de dépense
