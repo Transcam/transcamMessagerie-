@@ -1,7 +1,22 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Filter, Eye, Printer, MoreHorizontal, Edit, Trash2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Plus,
+  Search,
+  Filter,
+  Eye,
+  Printer,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -39,7 +54,11 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useShipments, useCancelShipment, useUpdateShipment } from "@/hooks/use-shipments";
+import {
+  useShipments,
+  useCancelShipment,
+  useUpdateShipment,
+} from "@/hooks/use-shipments";
 import { shipmentService } from "@/services/shipment.service";
 import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -65,14 +84,18 @@ export default function ShipmentListPage() {
     limit: 20,
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [shipmentToDelete, setShipmentToDelete] = useState<Shipment | null>(null);
+  const [shipmentToDelete, setShipmentToDelete] = useState<Shipment | null>(
+    null
+  );
   const [deleteReason, setDeleteReason] = useState("");
 
   const { data, isLoading, error } = useShipments(filters);
   const cancelShipment = useCancelShipment();
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(amount);
+    return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(
+      amount
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -101,11 +124,13 @@ export default function ShipmentListPage() {
 
   const confirmDelete = async () => {
     if (!shipmentToDelete) return;
-    
-    const reason = deleteReason || (language === "fr" 
-      ? "Annulation par l'utilisateur" 
-      : "Cancelled by user");
-    
+
+    const reason =
+      deleteReason ||
+      (language === "fr"
+        ? "Annulation par l'utilisateur"
+        : "Cancelled by user");
+
     try {
       await cancelShipment.mutateAsync({
         id: shipmentToDelete.id,
@@ -132,7 +157,7 @@ export default function ShipmentListPage() {
         window.open(url, "_blank");
       } else {
         // Fallback: open the endpoint directly
-        const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+        const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3001";
         window.open(`${baseURL}/api/shipments/${shipmentId}/waybill`, "_blank");
       }
     } catch (error) {
@@ -200,30 +225,50 @@ export default function ShipmentListPage() {
                 </label>
                 <Select
                   value={filters.status || "all"}
-                  onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
+                  onValueChange={(value) =>
+                    handleFilterChange("status", value === "all" ? "" : value)
+                  }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={language === "fr" ? "Tous" : "All"} />
+                    <SelectValue
+                      placeholder={language === "fr" ? "Tous" : "All"}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{language === "fr" ? "Tous" : "All"}</SelectItem>
-                    <SelectItem value="pending">{t("shipment.pending")}</SelectItem>
-                    <SelectItem value="confirmed">{t("shipment.confirmed")}</SelectItem>
-                    <SelectItem value="assigned">{t("shipment.assigned")}</SelectItem>
+                    <SelectItem value="all">
+                      {language === "fr" ? "Tous" : "All"}
+                    </SelectItem>
+                    <SelectItem value="pending">
+                      {t("shipment.pending")}
+                    </SelectItem>
+                    <SelectItem value="confirmed">
+                      {t("shipment.confirmed")}
+                    </SelectItem>
+                    <SelectItem value="assigned">
+                      {t("shipment.assigned")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">{t("shipment.route")}</label>
+                <label className="text-sm font-medium">
+                  {t("shipment.route")}
+                </label>
                 <Select
                   value={filters.route || "all"}
-                  onValueChange={(value) => handleFilterChange("route", value === "all" ? "" : value)}
+                  onValueChange={(value) =>
+                    handleFilterChange("route", value === "all" ? "" : value)
+                  }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={language === "fr" ? "Toutes" : "All"} />
+                    <SelectValue
+                      placeholder={language === "fr" ? "Toutes" : "All"}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{language === "fr" ? "Toutes" : "All"}</SelectItem>
+                    <SelectItem value="all">
+                      {language === "fr" ? "Toutes" : "All"}
+                    </SelectItem>
                     {routes.map((route) => (
                       <SelectItem key={route} value={route}>
                         {route}
@@ -239,7 +284,9 @@ export default function ShipmentListPage() {
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder={language === "fr" ? "Rechercher..." : "Search..."}
+                    placeholder={
+                      language === "fr" ? "Rechercher..." : "Search..."
+                    }
                     value={filters.waybillNumber}
                     onChange={(e) =>
                       handleFilterChange("waybillNumber", e.target.value)
@@ -304,7 +351,9 @@ export default function ShipmentListPage() {
                       <TableHead>{t("shipment.sender")}</TableHead>
                       <TableHead>{t("shipment.receiver")}</TableHead>
                       <TableHead>{t("shipment.route")}</TableHead>
-                      <TableHead className="text-right">{t("common.amount")}</TableHead>
+                      <TableHead className="text-right">
+                        {t("common.amount")}
+                      </TableHead>
                       <TableHead>{t("shipment.status")}</TableHead>
                       <TableHead>{t("common.date")}</TableHead>
                       <TableHead className="w-12 text-right">
@@ -341,22 +390,32 @@ export default function ShipmentListPage() {
                         <TableCell className="text-muted-foreground">
                           {formatDate(shipment.created_at)}
                         </TableCell>
-                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <TableCell
+                          className="text-right"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               {/* View - Always visible */}
                               <DropdownMenuItem
-                                onClick={() => navigate(`/shipments/${shipment.id}`)}
+                                onClick={() =>
+                                  navigate(`/shipments/${shipment.id}`)
+                                }
                               >
                                 <Eye className="mr-2 h-4 w-4" />
-                                {t("common.view") || (language === "fr" ? "Voir" : "View")}
+                                {t("common.view") ||
+                                  (language === "fr" ? "Voir" : "View")}
                               </DropdownMenuItem>
-                              
+
                               {/* Edit - Always visible for now */}
                               <DropdownMenuItem
                                 onClick={() => handleEdit(shipment)}
@@ -364,15 +423,16 @@ export default function ShipmentListPage() {
                                 <Edit className="mr-2 h-4 w-4" />
                                 {language === "fr" ? "Modifier" : "Edit"}
                               </DropdownMenuItem>
-                              
+
                               {/* Print - Always visible */}
                               <DropdownMenuItem
                                 onClick={() => handlePrintWaybill(shipment.id)}
                               >
                                 <Printer className="mr-2 h-4 w-4" />
-                                {t("shipment.print") || (language === "fr" ? "Imprimer" : "Print")}
+                                {t("shipment.print") ||
+                                  (language === "fr" ? "Imprimer" : "Print")}
                               </DropdownMenuItem>
-                              
+
                               {/* Delete - Always visible for now */}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
@@ -433,10 +493,12 @@ export default function ShipmentListPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {language === "fr" ? "Confirmer la suppression" : "Confirm Deletion"}
+              {language === "fr"
+                ? "Confirmer la suppression"
+                : "Confirm Deletion"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {language === "fr" 
+              {language === "fr"
                 ? `Êtes-vous sûr de vouloir supprimer l'expédition ${shipmentToDelete?.waybill_number} ? Cette action est irréversible.`
                 : `Are you sure you want to delete shipment ${shipmentToDelete?.waybill_number}? This action cannot be undone.`}
             </AlertDialogDescription>
@@ -448,7 +510,11 @@ export default function ShipmentListPage() {
             <Input
               value={deleteReason}
               onChange={(e) => setDeleteReason(e.target.value)}
-              placeholder={language === "fr" ? "Raison de la suppression..." : "Reason for deletion..."}
+              placeholder={
+                language === "fr"
+                  ? "Raison de la suppression..."
+                  : "Reason for deletion..."
+              }
               className="mt-2"
             />
           </div>
@@ -462,8 +528,12 @@ export default function ShipmentListPage() {
               disabled={cancelShipment.isPending}
             >
               {cancelShipment.isPending
-                ? (language === "fr" ? "Suppression..." : "Deleting...")
-                : (language === "fr" ? "Supprimer" : "Delete")}
+                ? language === "fr"
+                  ? "Suppression..."
+                  : "Deleting..."
+                : language === "fr"
+                ? "Supprimer"
+                : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -471,5 +541,3 @@ export default function ShipmentListPage() {
     </DashboardLayout>
   );
 }
-
-

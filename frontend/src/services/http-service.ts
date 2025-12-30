@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const getBaseURL = () => {
-  return `${import.meta.env.VITE_API_URL || "http://localhost:3000"}/api`;
+  return `${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api`;
 };
 
 const axiosInstance = axios.create({
