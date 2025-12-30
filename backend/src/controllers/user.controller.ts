@@ -141,6 +141,8 @@ export const deleteUser = async (req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
+    console.log("username", username);
+    console.log("password", password);
 
     if (!username || !password) {
       return res

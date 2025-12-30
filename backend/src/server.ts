@@ -11,13 +11,15 @@ import { User } from "./entities/user.entity";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // CORS middleware - must be before other middleware
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:8080",
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
