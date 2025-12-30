@@ -42,15 +42,53 @@ export class CreateDriversTable1767036000000 implements MigrationInterface {
             await queryRunner.query(`CREATE INDEX "IDX_drivers_status" ON "drivers" ("status")`);
             await queryRunner.query(`CREATE INDEX "IDX_drivers_created_at" ON "drivers" ("created_at")`);
 
-            // Create foreign key
-            await queryRunner.query(`
-                ALTER TABLE "drivers" 
-                ADD CONSTRAINT "FK_drivers_created_by" 
-                FOREIGN KEY ("created_by_id") 
-                REFERENCES "users"("id") 
-                ON DELETE NO ACTION 
-                ON UPDATE NO ACTION
+            // Check if users table exists before creating foreign key
+            const usersTableExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.tables 
+                    WHERE table_schema = 'public' AND table_name = 'users'
+                )
             `);
+
+            if (usersTableExists[0].exists) {
+                // Create foreign key
+                await queryRunner.query(`
+                    ALTER TABLE "drivers" 
+                    ADD CONSTRAINT "FK_drivers_created_by" 
+                    FOREIGN KEY ("created_by_id") 
+                    REFERENCES "users"("id") 
+                    ON DELETE NO ACTION 
+                    ON UPDATE NO ACTION
+                `);
+            }
+        } else {
+            // Table exists but FK might not - check and add it if users table exists
+            const fkExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE constraint_name = 'FK_drivers_created_by'
+                )
+            `);
+
+            if (!fkExists[0].exists) {
+                const usersTableExists = await queryRunner.query(`
+                    SELECT EXISTS (
+                        SELECT 1 FROM information_schema.tables 
+                        WHERE table_schema = 'public' AND table_name = 'users'
+                    )
+                `);
+
+                if (usersTableExists[0].exists) {
+                    await queryRunner.query(`
+                        ALTER TABLE "drivers" 
+                        ADD CONSTRAINT "FK_drivers_created_by" 
+                        FOREIGN KEY ("created_by_id") 
+                        REFERENCES "users"("id") 
+                        ON DELETE NO ACTION 
+                        ON UPDATE NO ACTION
+                    `);
+                }
+            }
         }
     }
 
@@ -76,4 +114,6 @@ export class CreateDriversTable1767036000000 implements MigrationInterface {
         await queryRunner.query(`DROP TYPE IF EXISTS "public"."drivers_status_enum"`);
     }
 }
+
+
 
