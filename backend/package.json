@@ -5,12 +5,15 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "postbuild": "npm run migrate:auto",
     "start": "node dist/src/server.js",
     "dev": "nodemon --exec ts-node src/server.ts",
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:generate": "npm run typeorm -- migration:generate -d ./data-source.ts",
     "migration:run": "npm run typeorm -- migration:run -d ./data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d ./data-source.ts",
+    "migrate": "node dist/src/scripts/run-migrations.js",
+    "migrate:auto": "node scripts/migrate-auto.js",
     "seed:shipments": "ts-node scripts/insert-test-shipments.ts"
   },
   "keywords": [],
