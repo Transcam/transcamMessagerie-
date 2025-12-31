@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "postbuild": "npm run migrate:auto",
     "start": "node dist/src/server.js",
     "dev": "nodemon --exec ts-node src/server.ts",
     "typeorm": "typeorm-ts-node-commonjs",
@@ -13,6 +14,7 @@
     "migration:revert": "npm run typeorm -- migration:revert -d ./data-source.ts",
     "migrate:auto": "node scripts/migrate-auto.js",
     "seed:admin": "ts-node scripts/insert-admin-user.ts",
+    "migrate": "node dist/src/scripts/run-migrations.js",
     "seed:shipments": "ts-node scripts/insert-test-shipments.ts",
     "seed:expenses": "ts-node scripts/insert-test-expenses.ts",
     "seed:vehicles": "ts-node scripts/insert-test-vehicles.ts",
@@ -23,26 +25,26 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "bcrypt": "^6.0.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "pdfkit": "^0.15.0",
-    "pg": "^8.16.3",
-    "reflect-metadata": "^0.2.2",
-    "typeorm": "^0.3.28"
-  },
-  "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.x",
     "@types/pdfkit": "^0.13.3",
     "@types/pg": "^8.16.0",
-    "nodemon": "^3.1.11",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pdfkit": "^0.17.2",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.1.14",
+    "ts-node": "^10.9.x",
+    "typeorm": "^0.3.28",
+    "typescript": "^5.9.x"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
   }
 }

@@ -3,6 +3,8 @@ import { Request, Response, NextFunction } from "express";
 import { UserRole } from "../types/roles";
 import { User } from "../entities/user.entity";
 import { AppDataSource } from "../../db";
+import dotenv from "dotenv";
+dotenv.config();
 
 export const authenticate = async (
   req: Request,
