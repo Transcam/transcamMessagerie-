@@ -18,34 +18,54 @@ export class AddNatureToShipments1735689600000 implements MigrationInterface {
             `);
         }
         
-        // Vérifier si la colonne existe déjà
-        const columnExists = await queryRunner.query(`
+        // Check if shipments table exists before modifying it
+        const shipmentsTableExists = await queryRunner.query(`
             SELECT EXISTS (
-                SELECT 1 FROM information_schema.columns 
-                WHERE table_schema = 'public' AND table_name = 'shipments' AND column_name = 'nature'
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'shipments'
             )
         `);
 
-        if (!columnExists[0].exists) {
-            // Ajouter la colonne avec valeur par défaut
-            await queryRunner.query(`
-                ALTER TABLE "shipments" 
-                ADD COLUMN "nature" "public"."shipments_nature_enum" NOT NULL DEFAULT 'colis'
+        if (shipmentsTableExists[0].exists) {
+            // Vérifier si la colonne existe déjà
+            const columnExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_schema = 'public' AND table_name = 'shipments' AND column_name = 'nature'
+                )
             `);
+
+            if (!columnExists[0].exists) {
+                // Ajouter la colonne avec valeur par défaut
+                await queryRunner.query(`
+                    ALTER TABLE "shipments" 
+                    ADD COLUMN "nature" "public"."shipments_nature_enum" NOT NULL DEFAULT 'colis'
+                `);
+            }
         }
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        // Vérifier si la colonne existe avant de la supprimer
-        const columnExists = await queryRunner.query(`
+        // Check if shipments table exists before modifying it
+        const shipmentsTableExists = await queryRunner.query(`
             SELECT EXISTS (
-                SELECT 1 FROM information_schema.columns 
-                WHERE table_schema = 'public' AND table_name = 'shipments' AND column_name = 'nature'
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'shipments'
             )
         `);
 
-        if (columnExists[0].exists) {
-            await queryRunner.query(`ALTER TABLE "shipments" DROP COLUMN "nature"`);
+        if (shipmentsTableExists[0].exists) {
+            // Vérifier si la colonne existe avant de la supprimer
+            const columnExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_schema = 'public' AND table_name = 'shipments' AND column_name = 'nature'
+                )
+            `);
+
+            if (columnExists[0].exists) {
+                await queryRunner.query(`ALTER TABLE "shipments" DROP COLUMN "nature"`);
+            }
         }
 
         // Vérifier si l'enum existe avant de le supprimer

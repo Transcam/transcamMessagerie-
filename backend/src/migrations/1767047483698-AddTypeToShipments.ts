@@ -16,34 +16,54 @@ export class AddTypeToShipments1767047483698 implements MigrationInterface {
             END $$;
         `);
 
-        // Check if column exists
-        const columnExists = await queryRunner.query(`
+        // Check if shipments table exists before modifying it
+        const shipmentsTableExists = await queryRunner.query(`
             SELECT EXISTS (
-                SELECT 1 FROM information_schema.columns 
-                WHERE table_schema = 'public' AND table_name = 'shipments' AND column_name = 'type'
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'shipments'
             )
         `);
 
-        if (!columnExists[0].exists) {
-            // Add column with default value
-            await queryRunner.query(`
-                ALTER TABLE "shipments" 
-                ADD COLUMN "type" "public"."shipments_type_enum" NOT NULL DEFAULT 'standard'
+        if (shipmentsTableExists[0].exists) {
+            // Check if column exists
+            const columnExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_schema = 'public' AND table_name = 'shipments' AND column_name = 'type'
+                )
             `);
+
+            if (!columnExists[0].exists) {
+                // Add column with default value
+                await queryRunner.query(`
+                    ALTER TABLE "shipments" 
+                    ADD COLUMN "type" "public"."shipments_type_enum" NOT NULL DEFAULT 'standard'
+                `);
+            }
         }
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        // Check if column exists before dropping
-        const columnExists = await queryRunner.query(`
+        // Check if shipments table exists before modifying it
+        const shipmentsTableExists = await queryRunner.query(`
             SELECT EXISTS (
-                SELECT 1 FROM information_schema.columns 
-                WHERE table_schema = 'public' AND table_name = 'shipments' AND column_name = 'type'
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'shipments'
             )
         `);
 
-        if (columnExists[0].exists) {
-            await queryRunner.query(`ALTER TABLE "shipments" DROP COLUMN "type"`);
+        if (shipmentsTableExists[0].exists) {
+            // Check if column exists before dropping
+            const columnExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_schema = 'public' AND table_name = 'shipments' AND column_name = 'type'
+                )
+            `);
+
+            if (columnExists[0].exists) {
+                await queryRunner.query(`ALTER TABLE "shipments" DROP COLUMN "type"`);
+            }
         }
 
         // Check if enum exists before dropping
