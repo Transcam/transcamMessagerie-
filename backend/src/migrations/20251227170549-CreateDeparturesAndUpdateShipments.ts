@@ -81,35 +81,45 @@ export class CreateDeparturesAndUpdateShipments20251227170549 implements Migrati
             }
         }
 
-        // Check and add foreign key constraints for departures
-        const fkCreatedByExists = await queryRunner.query(`
+        // Check if users table exists before adding foreign key constraints
+        const usersTableExists = await queryRunner.query(`
             SELECT EXISTS (
-                SELECT 1 FROM information_schema.table_constraints 
-                WHERE constraint_name = 'FK_departures_created_by'
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'users'
             )
         `);
-        if (!fkCreatedByExists[0].exists) {
-            await queryRunner.query(`ALTER TABLE "departures" ADD CONSTRAINT "FK_departures_created_by" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        }
 
-        const fkSealedByExists = await queryRunner.query(`
-            SELECT EXISTS (
-                SELECT 1 FROM information_schema.table_constraints 
-                WHERE constraint_name = 'FK_departures_sealed_by'
-            )
-        `);
-        if (!fkSealedByExists[0].exists) {
-            await queryRunner.query(`ALTER TABLE "departures" ADD CONSTRAINT "FK_departures_sealed_by" FOREIGN KEY ("sealed_by_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        }
+        if (usersTableExists[0].exists) {
+            // Check and add foreign key constraints for departures
+            const fkCreatedByExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE constraint_name = 'FK_departures_created_by'
+                )
+            `);
+            if (!fkCreatedByExists[0].exists) {
+                await queryRunner.query(`ALTER TABLE "departures" ADD CONSTRAINT "FK_departures_created_by" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+            }
 
-        const fkClosedByExists = await queryRunner.query(`
-            SELECT EXISTS (
-                SELECT 1 FROM information_schema.table_constraints 
-                WHERE constraint_name = 'FK_departures_closed_by'
-            )
-        `);
-        if (!fkClosedByExists[0].exists) {
-            await queryRunner.query(`ALTER TABLE "departures" ADD CONSTRAINT "FK_departures_closed_by" FOREIGN KEY ("closed_by_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+            const fkSealedByExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE constraint_name = 'FK_departures_sealed_by'
+                )
+            `);
+            if (!fkSealedByExists[0].exists) {
+                await queryRunner.query(`ALTER TABLE "departures" ADD CONSTRAINT "FK_departures_sealed_by" FOREIGN KEY ("sealed_by_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+            }
+
+            const fkClosedByExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE constraint_name = 'FK_departures_closed_by'
+                )
+            `);
+            if (!fkClosedByExists[0].exists) {
+                await queryRunner.query(`ALTER TABLE "departures" ADD CONSTRAINT "FK_departures_closed_by" FOREIGN KEY ("closed_by_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+            }
         }
 
         // Check if shipments table exists before trying to modify it

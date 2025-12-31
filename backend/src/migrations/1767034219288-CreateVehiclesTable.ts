@@ -53,15 +53,53 @@ export class CreateVehiclesTable1767034219288 implements MigrationInterface {
             await queryRunner.query(`CREATE INDEX "IDX_vehicles_type" ON "vehicles" ("type")`);
             await queryRunner.query(`CREATE INDEX "IDX_vehicles_created_at" ON "vehicles" ("created_at")`);
 
-            // Create foreign key
-            await queryRunner.query(`
-                ALTER TABLE "vehicles" 
-                ADD CONSTRAINT "FK_vehicles_created_by" 
-                FOREIGN KEY ("created_by_id") 
-                REFERENCES "users"("id") 
-                ON DELETE NO ACTION 
-                ON UPDATE NO ACTION
+            // Check if users table exists before creating foreign key
+            const usersTableExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.tables 
+                    WHERE table_schema = 'public' AND table_name = 'users'
+                )
             `);
+
+            if (usersTableExists[0].exists) {
+                // Create foreign key
+                await queryRunner.query(`
+                    ALTER TABLE "vehicles" 
+                    ADD CONSTRAINT "FK_vehicles_created_by" 
+                    FOREIGN KEY ("created_by_id") 
+                    REFERENCES "users"("id") 
+                    ON DELETE NO ACTION 
+                    ON UPDATE NO ACTION
+                `);
+            }
+        } else {
+            // Table exists but FK might not - check and add it if users table exists
+            const fkExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints 
+                    WHERE constraint_name = 'FK_vehicles_created_by'
+                )
+            `);
+
+            if (!fkExists[0].exists) {
+                const usersTableExists = await queryRunner.query(`
+                    SELECT EXISTS (
+                        SELECT 1 FROM information_schema.tables 
+                        WHERE table_schema = 'public' AND table_name = 'users'
+                    )
+                `);
+
+                if (usersTableExists[0].exists) {
+                    await queryRunner.query(`
+                        ALTER TABLE "vehicles" 
+                        ADD CONSTRAINT "FK_vehicles_created_by" 
+                        FOREIGN KEY ("created_by_id") 
+                        REFERENCES "users"("id") 
+                        ON DELETE NO ACTION 
+                        ON UPDATE NO ACTION
+                    `);
+                }
+            }
         }
     }
 
