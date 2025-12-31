@@ -5,8 +5,6 @@ import {
   Package,
   PlusCircle,
   Truck,
-  FileText,
-  DollarSign,
   PieChart,
   BarChart3,
   Settings,
@@ -17,6 +15,9 @@ import {
   Globe,
   User,
   Users,
+  Receipt,
+  Car,
+  UserCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -51,9 +52,14 @@ const navItems: NavItem[] = [
     permission: "view_shipments",
     children: [
       {
-        labelKey: "nav.newShipment",
-        href: "/shipments/new",
-        permission: "create_shipment",
+        labelKey: "nav.shipments.courrier",
+        href: "/shipments/courrier",
+        permission: "view_shipments",
+      },
+      {
+        labelKey: "nav.shipments.colis",
+        href: "/shipments/colis",
+        permission: "view_shipments",
       },
     ],
   },
@@ -64,16 +70,22 @@ const navItems: NavItem[] = [
     permission: "view_dashboard",
   },
   {
-    icon: FileText,
-    labelKey: "nav.waybills",
-    href: "/waybills",
-    permission: "view_shipments",
+    icon: Car,
+    labelKey: "nav.vehicles",
+    href: "/vehicles",
+    permission: "view_vehicles",
   },
   {
-    icon: DollarSign,
-    labelKey: "nav.finance",
-    href: "/finance",
-    permission: "view_finance",
+    icon: UserCircle,
+    labelKey: "nav.drivers",
+    href: "/drivers",
+    permission: "view_drivers",
+  },
+  {
+    icon: Receipt,
+    labelKey: "nav.expenses",
+    href: "/expenses",
+    permission: "view_expenses",
   },
   {
     icon: PieChart,
@@ -333,7 +345,7 @@ export function AppSidebar() {
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          "hidden h-screen lg:block transition-all duration-300",
+          "hidden h-screen lg:block lg:fixed lg:left-0 lg:top-0 lg:z-40 transition-all duration-300",
           isCollapsed ? "w-20" : "w-72"
         )}
       >

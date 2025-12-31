@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Plus, Search, Filter, Eye, Printer, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,11 +39,14 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useShipments, useCancelShipment, useUpdateShipment } from "@/hooks/use-shipments";
+import { useShipments, useCancelShipment, useGenerateReceipt } from "@/hooks/use-shipments";
 import { shipmentService } from "@/services/shipment.service";
 import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Shipment } from "@/services/shipment.service";
+import { ShipmentStats } from "@/components/shipments/ShipmentStats";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DateRange, getDateRangeForPreset } from "@/lib/date-utils";
 
 const routes = [
   "Yaoundé → Douala",
@@ -55,21 +58,53 @@ const routes = [
 
 export default function ShipmentListPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, language } = useLanguage();
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
+  
+  // Détecter la nature depuis l'URL
+  const getNatureFromPath = () => {
+    if (location.pathname === "/shipments/courrier") return "courrier";
+    if (location.pathname === "/shipments/colis") return "colis";
+    return "";
+  };
+
+  const [dateRange, setDateRange] = useState<DateRange>(getDateRangeForPreset("today"));
+  
   const [filters, setFilters] = useState({
     status: "",
     route: "",
     waybillNumber: "",
+    nature: getNatureFromPath(),
+    dateFrom: dateRange.startDate,
+    dateTo: dateRange.endDate,
     page: 1,
     limit: 20,
   });
+
+  // Mettre à jour le filtre nature quand l'URL change
+  useEffect(() => {
+    const nature = getNatureFromPath();
+    setFilters((prev) => ({ ...prev, nature, page: 1 }));
+  }, [location.pathname]);
+  
+  // Mettre à jour les filtres quand la plage de dates change
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      dateFrom: dateRange.startDate,
+      dateTo: dateRange.endDate,
+      page: 1,
+    }));
+  }, [dateRange]);
+  
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [shipmentToDelete, setShipmentToDelete] = useState<Shipment | null>(null);
   const [deleteReason, setDeleteReason] = useState("");
 
   const { data, isLoading, error } = useShipments(filters);
   const cancelShipment = useCancelShipment();
+  const generateReceipt = useGenerateReceipt();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(amount);
@@ -85,10 +120,16 @@ export default function ShipmentListPage() {
   };
 
   const clearFilters = () => {
+    const nature = getNatureFromPath();
+    const defaultDateRange = getDateRangeForPreset("today");
+    setDateRange(defaultDateRange);
     setFilters({
       status: "",
       route: "",
       waybillNumber: "",
+      nature: nature,
+      dateFrom: defaultDateRange.startDate,
+      dateTo: defaultDateRange.endDate,
       page: 1,
       limit: 20,
     });
@@ -119,24 +160,11 @@ export default function ShipmentListPage() {
     }
   };
 
-  const handlePrintWaybill = async (shipmentId: number) => {
+  const handlePrintReceipt = async (shipmentId: number, waybillNumber?: string) => {
     try {
-      const response = await shipmentService.generateWaybill(shipmentId);
-      // If backend returns a URL or blob, open it in a new window
-      if (response.url) {
-        window.open(response.url, "_blank");
-      } else if (response.data) {
-        // If it's a blob, create a blob URL
-        const blob = new Blob([response.data], { type: "application/pdf" });
-        const url = window.URL.createObjectURL(blob);
-        window.open(url, "_blank");
-      } else {
-        // Fallback: open the endpoint directly
-        const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-        window.open(`${baseURL}/api/shipments/${shipmentId}/waybill`, "_blank");
-      }
+      await generateReceipt.mutateAsync({ id: shipmentId, waybillNumber });
     } catch (error) {
-      console.error("Failed to print waybill:", error);
+      // Error handled by hook
     }
   };
 
@@ -168,21 +196,50 @@ export default function ShipmentListPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
-              {t("shipment.list")}
+              {filters.nature === "courrier"
+                ? language === "fr"
+                  ? "Expéditions - Courrier"
+                  : "Shipments - Mail"
+                : filters.nature === "colis"
+                ? language === "fr"
+                  ? "Expéditions - Colis"
+                  : "Shipments - Parcel"
+                : t("shipment.list")}
             </h1>
             <p className="text-muted-foreground mt-1">
               {language === "fr"
-                ? "Gérez toutes vos expéditions"
+                ? filters.nature
+                  ? `Gérez toutes les expéditions de type ${filters.nature === "courrier" ? "courrier" : "colis"}`
+                  : "Gérez toutes vos expéditions"
+                : filters.nature
+                ? `Manage all ${filters.nature === "courrier" ? "mail" : "parcel"} shipments`
                 : "Manage all your shipments"}
             </p>
           </div>
           {hasPermission("create_shipment") && (
-            <Button onClick={() => navigate("/shipments/new")}>
+            <Button
+              onClick={() =>
+                navigate("/shipments/new", {
+                  state: filters.nature ? { nature: filters.nature } : undefined,
+                })
+              }
+            >
               <Plus className="mr-2 h-4 w-4" />
               {t("shipment.new")}
             </Button>
           )}
         </div>
+
+        {/* Statistics */}
+        <ShipmentStats
+          nature={
+            filters.nature === "colis" || filters.nature === "courrier"
+              ? filters.nature
+              : undefined
+          }
+          dateFrom={filters.dateFrom}
+          dateTo={filters.dateTo}
+        />
 
         {/* Filters */}
         <Card>
@@ -248,6 +305,17 @@ export default function ShipmentListPage() {
                   />
                 </div>
               </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 mt-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  {language === "fr" ? "Période" : "Period"}
+                </label>
+                <DateRangePicker
+                  value={dateRange}
+                  onChange={setDateRange}
+                />
+              </div>
               <div className="flex items-end">
                 <Button
                   variant="outline"
@@ -304,7 +372,10 @@ export default function ShipmentListPage() {
                       <TableHead>{t("shipment.sender")}</TableHead>
                       <TableHead>{t("shipment.receiver")}</TableHead>
                       <TableHead>{t("shipment.route")}</TableHead>
-                      <TableHead className="text-right">{t("common.amount")}</TableHead>
+                      <TableHead>{language === "fr" ? "Nature" : "Nature"}</TableHead>
+                      {user?.role !== "staff" && (
+                        <TableHead className="text-right">{t("common.amount")}</TableHead>
+                      )}
                       <TableHead>{t("shipment.status")}</TableHead>
                       <TableHead>{t("common.date")}</TableHead>
                       <TableHead className="w-12 text-right">
@@ -329,9 +400,18 @@ export default function ShipmentListPage() {
                             {shipment.route}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(shipment.price)} FCFA
+                        <TableCell>
+                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                            {shipment.nature === "colis"
+                              ? (language === "fr" ? "Colis" : "Parcel")
+                              : (language === "fr" ? "Courrier" : "Mail")}
+                          </span>
                         </TableCell>
+                        {user?.role !== "staff" && (
+                          <TableCell className="text-right font-medium">
+                            {shipment.price ? `${formatCurrency(shipment.price)} FCFA` : "-"}
+                          </TableCell>
+                        )}
                         <TableCell>
                           <ShipmentStatusBadge
                             status={shipment.status}
@@ -366,12 +446,15 @@ export default function ShipmentListPage() {
                               </DropdownMenuItem>
                               
                               {/* Print - Always visible */}
-                              <DropdownMenuItem
-                                onClick={() => handlePrintWaybill(shipment.id)}
-                              >
-                                <Printer className="mr-2 h-4 w-4" />
-                                {t("shipment.print") || (language === "fr" ? "Imprimer" : "Print")}
-                              </DropdownMenuItem>
+                              {hasPermission("print_receipt") && (
+                                <DropdownMenuItem
+                                  onClick={() => handlePrintReceipt(shipment.id, shipment.waybill_number)}
+                                  disabled={generateReceipt.isPending}
+                                >
+                                  <Printer className="mr-2 h-4 w-4" />
+                                  {language === "fr" ? "Imprimer Reçu" : "Print Receipt"}
+                                </DropdownMenuItem>
+                              )}
                               
                               {/* Delete - Always visible for now */}
                               <DropdownMenuSeparator />

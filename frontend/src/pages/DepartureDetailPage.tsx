@@ -9,7 +9,6 @@ import {
   Package,
   Loader2,
   X,
-  FileText,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,7 +56,6 @@ import { DepartureStatusBadge } from "@/components/departures/DepartureStatusBad
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { departureService } from "@/services/departure.service";
-import { shipmentService } from "@/services/shipment.service";
 
 export default function DepartureDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -71,7 +69,6 @@ export default function DepartureDetailPage() {
   const [shipmentToRemove, setShipmentToRemove] = useState<number | null>(null);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedShipments, setSelectedShipments] = useState<number[]>([]);
-  const [downloadingWaybills, setDownloadingWaybills] = useState(false);
 
   const departureId = id ? parseInt(id) : 0;
   const { data: departure, isLoading, error } = useDeparture(departureId);
@@ -88,16 +85,12 @@ export default function DepartureDetailPage() {
     limit: 1000, // Get all available shipments
   });
 
-  // TODO: When roles are implemented, uncomment the line below
-  // const isAgencyAdmin = user?.role === "agency_admin";
-  // For now, allow all authenticated users (roles not yet implemented)
-  const isAgencyAdmin = true;
-  const canEdit = departure && departure.status === "open";
-  const canSeal = isAgencyAdmin && departure && departure.status === "open";
-  const canClose = isAgencyAdmin && departure && departure.status === "sealed";
-  const canDownloadPDF = departure && (departure.status === "sealed" || departure.status === "closed");
-  const canAssignShipments = departure && departure.status === "open";
-  const canRemoveShipments = departure && departure.status === "open";
+  const canEdit = departure && departure.status === "open" && hasPermission("create_departure");
+  const canSeal = hasPermission("validate_departure") && departure && departure.status === "open";
+  const canClose = hasPermission("validate_departure") && departure && departure.status === "sealed";
+  const canDownloadPDF = departure && (departure.status === "sealed" || departure.status === "closed") && hasPermission("print_waybill");
+  const canAssignShipments = departure && departure.status === "open" && hasPermission("create_departure");
+  const canRemoveShipments = departure && departure.status === "open" && hasPermission("create_departure");
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(amount);
@@ -169,13 +162,13 @@ export default function DepartureDetailPage() {
   };
 
   // Filter available shipments: not cancelled, not already assigned to another departure
+  // Include shipments already assigned to THIS departure so they can be pre-selected
   const availableShipments = availableShipmentsData?.data?.filter((shipment: any) => {
     // Exclude cancelled shipments
     if (shipment.is_cancelled || shipment.status === "cancelled") return false;
     // Exclude shipments already assigned to another departure
     if (shipment.departure_id && shipment.departure_id !== departureId) return false;
-    // Exclude shipments already assigned to THIS departure (they're already in the list)
-    if (shipment.departure_id === departureId) return false;
+    // Include shipments already assigned to THIS departure (they will be pre-selected)
     // Show all shipments regardless of route (user can choose)
     // If you want to filter by route, uncomment the line below:
     // if (departure?.route && shipment.route !== departure.route) return false;
@@ -213,52 +206,6 @@ export default function DepartureDetailPage() {
     );
   };
 
-  const handleDownloadWaybills = async () => {
-    if (!departure || !departure.shipments || departure.shipments.length === 0) {
-      toast({
-        title: language === "fr" ? "Aucun colis" : "No shipments",
-        description: language === "fr"
-          ? "Aucun colis à télécharger"
-          : "No shipments to download",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setDownloadingWaybills(true);
-    try {
-      // Download waybills for all shipments in the departure
-      // Add a small delay between downloads to avoid browser blocking multiple downloads
-      for (let i = 0; i < departure.shipments.length; i++) {
-        const shipment = departure.shipments[i];
-        try {
-          await shipmentService.generateWaybill(shipment.id, shipment.waybill_number);
-          // Add a small delay between downloads (except for the last one)
-          if (i < departure.shipments.length - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-          }
-        } catch (error: any) {
-          console.error(`Error downloading waybill for shipment ${shipment.id}:`, error);
-          // Continue with other shipments even if one fails
-        }
-      }
-      toast({
-        title: language === "fr" ? "Téléchargement terminé" : "Download completed",
-        description: language === "fr"
-          ? `${departure.shipments.length} bordereau(x) téléchargé(s)`
-          : `${departure.shipments.length} waybill(s) downloaded`,
-      });
-    } catch (error: any) {
-      toast({
-        title: language === "fr" ? "Erreur" : "Error",
-        description: error.response?.data?.error || 
-          (language === "fr" ? "Impossible de télécharger les bordereaux" : "Failed to download waybills"),
-        variant: "destructive",
-      });
-    } finally {
-      setDownloadingWaybills(false);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -336,25 +283,6 @@ export default function DepartureDetailPage() {
                 {language === "fr" ? "Modifier" : "Edit"}
               </Button>
             )}
-            {shipments.length > 0 && (
-              <Button
-                variant="outline"
-                onClick={handleDownloadWaybills}
-                disabled={downloadingWaybills}
-              >
-                {downloadingWaybills ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {language === "fr" ? "Téléchargement..." : "Downloading..."}
-                  </>
-                ) : (
-                  <>
-                    <FileText className="mr-2 h-4 w-4" />
-                    {language === "fr" ? "Télécharger Bordereaux" : "Download Waybills"}
-                  </>
-                )}
-              </Button>
-            )}
             {canSeal && (
               <Button onClick={() => setSealDialogOpen(true)}>
                 <Lock className="mr-2 h-4 w-4" />
@@ -397,7 +325,9 @@ export default function DepartureDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {formatCurrency(summary.total_price)} FCFA
+                  {summary.total_price !== null && summary.total_price !== undefined
+                    ? `${formatCurrency(summary.total_price)} FCFA`
+                    : "-"}
                 </div>
               </CardContent>
             </Card>
@@ -421,7 +351,9 @@ export default function DepartureDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {formatCurrency(summary.total_declared_value)} FCFA
+                  {summary.total_declared_value !== null && summary.total_declared_value !== undefined
+                    ? `${formatCurrency(summary.total_declared_value)} FCFA`
+                    : "-"}
                 </div>
               </CardContent>
             </Card>
@@ -447,13 +379,21 @@ export default function DepartureDetailPage() {
                 <label className="text-sm font-medium text-muted-foreground">
                   {language === "fr" ? "Véhicule" : "Vehicle"}
                 </label>
-                <p className="text-lg">{departure.vehicle || "-"}</p>
+                <p className="text-lg">
+                  {departure.vehicle
+                    ? `${departure.vehicle.name} (${departure.vehicle.registration_number})`
+                    : "-"}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
                   {language === "fr" ? "Chauffeur" : "Driver"}
                 </label>
-                <p className="text-lg">{departure.driver_name || "-"}</p>
+                <p className="text-lg">
+                  {departure.driver
+                    ? `${departure.driver.first_name} ${departure.driver.last_name} (${departure.driver.phone})`
+                    : "-"}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
@@ -504,7 +444,14 @@ export default function DepartureDetailPage() {
             {canAssignShipments && (
               <Button
                 variant="outline"
-                onClick={() => setAssignDialogOpen(true)}
+                onClick={() => {
+                  // Pre-select already assigned shipments
+                  if (departure?.shipments) {
+                    const assignedIds = departure.shipments.map((s: any) => s.id);
+                    setSelectedShipments(assignedIds);
+                  }
+                  setAssignDialogOpen(true);
+                }}
               >
                 <Package className="mr-2 h-4 w-4" />
                 {language === "fr" ? "Assigner des colis" : "Assign Shipments"}
@@ -523,7 +470,14 @@ export default function DepartureDetailPage() {
                   <Button
                     variant="outline"
                     className="mt-4"
-                    onClick={() => setAssignDialogOpen(true)}
+                    onClick={() => {
+                      // Pre-select already assigned shipments
+                      if (departure?.shipments) {
+                        const assignedIds = departure.shipments.map((s: any) => s.id);
+                        setSelectedShipments(assignedIds);
+                      }
+                      setAssignDialogOpen(true);
+                    }}
                   >
                     <Package className="mr-2 h-4 w-4" />
                     {language === "fr" ? "Assigner des colis" : "Assign Shipments"}
@@ -557,7 +511,9 @@ export default function DepartureDetailPage() {
                           {parseFloat(shipment.weight.toString()).toFixed(2)} kg
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {formatCurrency(parseFloat(shipment.price.toString()))} FCFA
+                          {shipment.price !== null && shipment.price !== undefined
+                            ? `${formatCurrency(parseFloat(shipment.price.toString()))} FCFA`
+                            : "-"}
                         </TableCell>
                         {canRemoveShipments && (
                           <TableCell>
@@ -697,7 +653,21 @@ export default function DepartureDetailPage() {
       </AlertDialog>
 
       {/* Assign Shipments Dialog */}
-      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+      <Dialog 
+        open={assignDialogOpen} 
+        onOpenChange={(open) => {
+          setAssignDialogOpen(open);
+          if (!open) {
+            // Reset to pre-selected shipments (already assigned ones) when dialog closes
+            if (departure?.shipments) {
+              const assignedIds = departure.shipments.map((s: any) => s.id);
+              setSelectedShipments(assignedIds);
+            } else {
+              setSelectedShipments([]);
+            }
+          }
+        }}
+      >
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
@@ -759,7 +729,9 @@ export default function DepartureDetailPage() {
                             {parseFloat(shipment.weight.toString()).toFixed(2)} kg
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            {formatCurrency(parseFloat(shipment.price.toString()))} FCFA
+                            {shipment.price !== null && shipment.price !== undefined
+                              ? `${formatCurrency(parseFloat(shipment.price.toString()))} FCFA`
+                              : "-"}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -774,7 +746,6 @@ export default function DepartureDetailPage() {
               variant="outline"
               onClick={() => {
                 setAssignDialogOpen(false);
-                setSelectedShipments([]);
               }}
             >
               {language === "fr" ? "Annuler" : "Cancel"}

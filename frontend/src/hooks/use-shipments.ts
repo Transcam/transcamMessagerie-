@@ -5,6 +5,7 @@ import {
   CreateShipmentDTO,
   UpdateShipmentDTO,
   ShipmentFilters,
+  ShipmentStatistics,
 } from "@/services/shipment.service";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -154,6 +155,51 @@ export function useCancelShipment() {
         variant: "destructive",
       });
     },
+  });
+}
+
+// Generate receipt mutation
+export function useGenerateReceipt() {
+  const { toast } = useToast();
+  const { language } = useLanguage();
+
+  return useMutation({
+    mutationFn: ({ id, waybillNumber }: { id: number; waybillNumber?: string }) =>
+      shipmentService.downloadReceipt(id, waybillNumber),
+    onSuccess: () => {
+      toast({
+        title: language === "fr" ? "Téléchargement démarré" : "Download started",
+        description:
+          language === "fr"
+            ? "Le reçu est en cours de téléchargement"
+            : "Receipt is downloading",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === "fr" ? "Erreur" : "Error",
+        description:
+          error.response?.data?.error ||
+          (language === "fr"
+            ? "Impossible de télécharger le reçu"
+            : "Failed to download receipt"),
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+// Shipment statistics hook
+export function useShipmentStatistics(
+  nature?: "colis" | "courrier",
+  filters?: {
+    dateFrom?: string;
+    dateTo?: string;
+  }
+) {
+  return useQuery<ShipmentStatistics>({
+    queryKey: ["shipment-statistics", nature, filters],
+    queryFn: () => shipmentService.getStatistics(nature, filters),
   });
 }
 

@@ -104,12 +104,45 @@ export default function UserListPage() {
     return roleLabels[role]?.[language] || role;
   };
 
+  // Filter users: exclude ADMIN if current user is SUPERVISOR
+  const filteredUsersByRole = users?.filter((user) => {
+    if (currentUser?.role === UserRole.SUPERVISOR && user.role === UserRole.ADMIN) {
+      return false;
+    }
+    return true;
+  }) || [];
+
   const filteredUsers =
-    users?.filter(
+    filteredUsersByRole.filter(
       (user) =>
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
         getRoleLabel(user.role).toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
+
+  // Get available roles based on current user's role
+  const getAvailableRoles = (): UserRole[] => {
+    const allRoles = Object.values(UserRole);
+    // If current user is SUPERVISOR, exclude ADMIN role
+    if (currentUser?.role === UserRole.SUPERVISOR) {
+      return allRoles.filter((role) => role !== UserRole.ADMIN);
+    }
+    return allRoles;
+  };
+
+  // Check if current user can edit/delete a user
+  const canEditUser = (user: User): boolean => {
+    if (currentUser?.role === UserRole.SUPERVISOR && user.role === UserRole.ADMIN) {
+      return false;
+    }
+    return true;
+  };
+
+  const canDeleteUser = (user: User): boolean => {
+    if (currentUser?.role === UserRole.SUPERVISOR && user.role === UserRole.ADMIN) {
+      return false;
+    }
+    return true;
+  };
 
   const handleOpenCreate = () => {
     setEditingUser(null);
@@ -122,6 +155,10 @@ export default function UserListPage() {
   };
 
   const handleOpenEdit = (user: User) => {
+    // Prevent SUPERVISOR from editing ADMIN users
+    if (currentUser?.role === UserRole.SUPERVISOR && user.role === UserRole.ADMIN) {
+      return;
+    }
     setEditingUser(user);
     setFormData({
       username: user.username,
@@ -149,6 +186,17 @@ export default function UserListPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Additional validation: Prevent SUPERVISOR from creating/updating to ADMIN
+    if (currentUser?.role === UserRole.SUPERVISOR && formData.role === UserRole.ADMIN) {
+      return;
+    }
+    
+    // Prevent SUPERVISOR from modifying ADMIN users
+    if (editingUser && currentUser?.role === UserRole.SUPERVISOR && editingUser.role === UserRole.ADMIN) {
+      return;
+    }
+    
     if (editingUser) {
       const updateData: UpdateUserDTO = {
         username: formData.username,
@@ -294,6 +342,7 @@ export default function UserListPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
                                 onClick={() => handleOpenEdit(user)}
+                                disabled={!canEditUser(user)}
                               >
                                 <Edit className="mr-2 h-4 w-4" />
                                 {language === "fr" ? "Modifier" : "Edit"}
@@ -301,7 +350,7 @@ export default function UserListPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() => handleDelete(user)}
-                                disabled={currentUser?.id === user.id}
+                                disabled={currentUser?.id === user.id || !canDeleteUser(user)}
                                 className="text-destructive focus:text-destructive"
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
@@ -393,7 +442,7 @@ export default function UserListPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.values(UserRole).map((role) => (
+                      {getAvailableRoles().map((role) => (
                         <SelectItem key={role} value={role}>
                           {getRoleLabel(role)}
                         </SelectItem>

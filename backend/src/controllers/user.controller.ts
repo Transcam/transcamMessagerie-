@@ -15,6 +15,17 @@ export const createUser = async (req: Request, res: Response) => {
         .json({ message: "Username and password are required" });
     }
 
+    // Prevent SUPERVISOR from creating ADMIN users
+    if (
+      req.user &&
+      req.user.role === UserRole.SUPERVISOR &&
+      role === UserRole.ADMIN
+    ) {
+      return res.status(403).json({
+        message: "Supervisors cannot create admin accounts",
+      });
+    }
+
     const userRepo = AppDataSource.getRepository(User);
 
     const existingUser = await userRepo.findOne({ where: { username } });
@@ -47,7 +58,15 @@ export const listUsers = async (req: Request, res: Response) => {
       order: { created_at: "DESC" },
     });
 
-    const usersWithoutPasswords = users.map(({ password, ...user }) => user);
+    // Filter out ADMIN users if current user is SUPERVISOR
+    let filteredUsers = users;
+    if (req.user && req.user.role === UserRole.SUPERVISOR) {
+      filteredUsers = users.filter((user) => user.role !== UserRole.ADMIN);
+    }
+
+    const usersWithoutPasswords = filteredUsers.map(
+      ({ password, ...user }) => user
+    );
 
     res.json({ data: usersWithoutPasswords });
   } catch (error: any) {
@@ -83,6 +102,21 @@ export const updateUser = async (req: Request, res: Response) => {
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // Prevent SUPERVISOR from creating or updating users to ADMIN role
+    if (req.user && req.user.role === UserRole.SUPERVISOR) {
+      if (role === UserRole.ADMIN) {
+        return res.status(403).json({
+          message: "Supervisors cannot assign admin role",
+        });
+      }
+      // Prevent SUPERVISOR from modifying existing ADMIN users
+      if (user.role === UserRole.ADMIN) {
+        return res.status(403).json({
+          message: "Supervisors cannot modify admin accounts",
+        });
+      }
     }
 
     if (username && username !== user.username) {
@@ -130,6 +164,17 @@ export const deleteUser = async (req: Request, res: Response) => {
         .json({ message: "Cannot delete your own account" });
     }
 
+    // Prevent SUPERVISOR from deleting ADMIN accounts
+    if (
+      req.user &&
+      req.user.role === UserRole.SUPERVISOR &&
+      user.role === UserRole.ADMIN
+    ) {
+      return res.status(403).json({
+        message: "Supervisors cannot delete admin accounts",
+      });
+    }
+
     await userRepo.remove(user);
 
     res.json({ message: "User deleted successfully" });
@@ -147,6 +192,8 @@ export const loginUser = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: "Username and password are required" });
     }
+
+    console.log(req.body);
 
     const user = await AppDataSource.getRepository(User).findOne({
       where: { username },

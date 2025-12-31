@@ -6,6 +6,7 @@ import { authorize } from "../helpers/authorize";
 const router = Router();
 const controller = new ShipmentsController();
 
+router.get("/statistics", authenticate, authorize("view_shipments"), controller.getStatistics);
 router.get("/", authenticate, authorize("view_shipments"), controller.list);
 router.get("/:id", authenticate, authorize("view_shipments"), controller.getOne);
 router.post("/", authenticate, authorize("create_shipment"), controller.create);
@@ -16,5 +17,8 @@ router.get("/:id/waybill", authenticate, authorize("print_waybill"), controller.
 router.get("/:id/receipt", authenticate, authorize("print_receipt"), controller.generateReceipt);
 
 export default router;
+
+
+
 
 

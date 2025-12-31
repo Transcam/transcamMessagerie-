@@ -14,7 +14,10 @@
     "migration:revert": "npm run typeorm -- migration:revert -d ./data-source.ts",
     "migrate": "node dist/src/scripts/run-migrations.js",
     "migrate:auto": "node scripts/migrate-auto.js",
-    "seed:shipments": "ts-node scripts/insert-test-shipments.ts"
+    "seed:shipments": "ts-node scripts/insert-test-shipments.ts",
+    "seed:expenses": "ts-node scripts/insert-test-expenses.ts",
+    "seed:vehicles": "ts-node scripts/insert-test-vehicles.ts",
+    "seed:drivers": "ts-node scripts/insert-test-drivers.ts"
   },
   "keywords": [],
   "author": "",

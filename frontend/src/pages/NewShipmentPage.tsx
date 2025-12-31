@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,6 +26,7 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCreateShipment } from "@/hooks/use-shipments";
+import { SHIPMENT_TYPE_LABELS } from "@/services/shipment.service";
 
 const routes = [
   "Yaoundé → Douala",
@@ -46,14 +47,20 @@ const shipmentSchema = z.object({
   declared_value: z.number().min(0).optional(),
   price: z.number().min(1, "Price must be greater than 0"),
   route: z.string().min(1, "Route is required"),
+  nature: z.enum(["colis", "courrier"]).default("colis"),
+  type: z.enum(["express", "standard"]).default("standard"),
 });
 
 type ShipmentFormValues = z.infer<typeof shipmentSchema>;
 
 export default function NewShipmentPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, language } = useLanguage();
   const createShipment = useCreateShipment();
+
+  // Récupérer la nature depuis le state de navigation si disponible
+  const defaultNature = (location.state as { nature?: "colis" | "courrier" })?.nature || "colis";
 
   const form = useForm<ShipmentFormValues>({
     resolver: zodResolver(shipmentSchema),
@@ -67,6 +74,8 @@ export default function NewShipmentPage() {
       declared_value: 0,
       price: 0,
       route: "",
+      nature: defaultNature,
+      type: "standard",
     },
   });
 
@@ -76,8 +85,13 @@ export default function NewShipmentPage() {
         ...data,
         declared_value: data.declared_value || 0,
       });
-      // Navigate to shipment detail page
-      navigate(`/shipments/${shipment.id}`);
+      // Navigate back to the filtered list page if we came from one
+      const fromNature = (location.state as { nature?: "colis" | "courrier" })?.nature;
+      if (fromNature) {
+        navigate(`/shipments/${fromNature}`);
+      } else {
+        navigate(`/shipments/${shipment.id}`);
+      }
     } catch (error) {
       // Error handling is done in the hook
     }
@@ -196,6 +210,80 @@ export default function NewShipmentPage() {
                               {route}
                             </SelectItem>
                           ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="nature"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {language === "fr" ? "Nature" : "Nature"}
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                language === "fr"
+                                  ? "Sélectionner la nature"
+                                  : "Select nature"
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="colis">
+                            {language === "fr" ? "Colis" : "Parcel"}
+                          </SelectItem>
+                          <SelectItem value="courrier">
+                            {language === "fr" ? "Courrier" : "Mail"}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {language === "fr" ? "Type d'expédition" : "Shipment Type"}
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                language === "fr"
+                                  ? "Sélectionner le type"
+                                  : "Select type"
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="standard">
+                            {SHIPMENT_TYPE_LABELS.standard[language]}
+                          </SelectItem>
+                          <SelectItem value="express">
+                            {SHIPMENT_TYPE_LABELS.express[language]}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

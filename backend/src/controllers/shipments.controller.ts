@@ -1,7 +1,7 @@
 /// <reference path="../types/express.d.ts" />
 import { Request, Response } from "express";
 import { ShipmentService } from "../services/shipment.service";
-import { ShipmentStatus } from "../entities/shipment.entity";
+import { ShipmentStatus, ShipmentNature } from "../entities/shipment.entity";
 
 export class ShipmentsController {
   private service: ShipmentService;
@@ -22,6 +22,7 @@ export class ShipmentsController {
           ? new Date(req.query.dateTo as string)
           : undefined,
         waybillNumber: req.query.waybillNumber as string | undefined,
+        nature: req.query.nature as ShipmentNature | undefined,
         includeCancelled: req.query.includeCancelled === "true",
         page: req.query.page ? parseInt(req.query.page as string) : 1,
         limit: req.query.limit ? parseInt(req.query.limit as string) : 20,
@@ -29,8 +30,18 @@ export class ShipmentsController {
 
       const [shipments, total] = await this.service.list(filters);
 
+      // Remove price field for STAFF role
+      const userRole = req.user?.role;
+      const sanitizedShipments = shipments.map((shipment: any) => {
+        if (userRole === "staff") {
+          const { price, ...shipmentWithoutPrice } = shipment;
+          return shipmentWithoutPrice;
+        }
+        return shipment;
+      });
+
       res.json({
-        data: shipments,
+        data: sanitizedShipments,
         pagination: {
           total,
           page: filters.page,
@@ -47,7 +58,16 @@ export class ShipmentsController {
     try {
       const id = parseInt(req.params.id);
       const shipment = await this.service.getOne(id);
-      res.json({ data: shipment });
+
+      // Remove price field for STAFF role
+      const userRole = req.user?.role;
+      let sanitizedShipment = shipment;
+      if (userRole === "staff") {
+        const { price, ...shipmentWithoutPrice } = shipment as any;
+        sanitizedShipment = shipmentWithoutPrice;
+      }
+
+      res.json({ data: sanitizedShipment });
     } catch (error: any) {
       res.status(404).json({ error: error.message });
     }
@@ -67,6 +87,7 @@ export class ShipmentsController {
         weight,
         price,
         route,
+        nature,
       } = req.body;
 
       if (!sender_name || !sender_phone || !receiver_name || !receiver_phone) {
@@ -167,13 +188,55 @@ export class ShipmentsController {
   generateReceipt = async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const shipment = await this.service.getOne(id);
-      res.json({
-        message: "Receipt generation - to be implemented",
-        data: shipment,
-      });
+      const pdfBuffer = await this.service.generateReceiptPDF(id);
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="recu-${id}.pdf"`
+      );
+      res.send(pdfBuffer);
     } catch (error: any) {
       res.status(404).json({ error: error.message });
+    }
+  };
+
+  getStatistics = async (req: Request, res: Response) => {
+    try {
+      const filters: {
+        nature?: ShipmentNature;
+        dateFrom?: Date;
+        dateTo?: Date;
+      } = {
+        nature: req.query.nature as ShipmentNature | undefined,
+      };
+
+      // Add date filters if provided
+      if (req.query.dateFrom) {
+        filters.dateFrom = new Date(req.query.dateFrom as string);
+      }
+      if (req.query.dateTo) {
+        filters.dateTo = new Date(req.query.dateTo as string);
+      }
+
+      const statistics = await this.service.getStatistics(filters);
+
+      // Remove price-related fields for STAFF role
+      const userRole = req.user?.role;
+      let sanitizedStatistics = statistics;
+      if (userRole === "staff") {
+        const { totalPrice, monthRevenue, ...statsWithoutPrice } =
+          statistics as any;
+        sanitizedStatistics = {
+          ...statsWithoutPrice,
+          totalPrice: 0,
+          monthRevenue: 0,
+        };
+      }
+
+      res.json({ data: sanitizedStatistics });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   };
 }

@@ -1,5 +1,13 @@
 import { httpService } from "./http-service";
 
+export type ShipmentType = "express" | "standard";
+export type ShipmentNature = "colis" | "courrier";
+
+export const SHIPMENT_TYPE_LABELS: Record<ShipmentType, { fr: string; en: string }> = {
+  express: { fr: "Express", en: "Express" },
+  standard: { fr: "Standard", en: "Standard" },
+};
+
 export interface Shipment {
   id: number;
   waybill_number: string;
@@ -12,6 +20,8 @@ export interface Shipment {
   declared_value: number;
   price: number;
   route: string;
+  nature: ShipmentNature;
+  type: ShipmentType;
   status: "pending" | "confirmed" | "assigned" | "cancelled";
   is_confirmed: boolean;
   is_cancelled: boolean;
@@ -35,6 +45,8 @@ export interface CreateShipmentDTO {
   declared_value?: number;
   price: number;
   route: string;
+  nature?: ShipmentNature;
+  type?: ShipmentType;
 }
 
 export interface UpdateShipmentDTO {
@@ -47,6 +59,8 @@ export interface UpdateShipmentDTO {
   declared_value?: number;
   price?: number;
   route?: string;
+  nature?: ShipmentNature;
+  type?: ShipmentType;
 }
 
 export interface ShipmentFilters {
@@ -55,6 +69,7 @@ export interface ShipmentFilters {
   dateFrom?: string;
   dateTo?: string;
   waybillNumber?: string;
+  nature?: string;
   includeCancelled?: boolean;
   page?: number;
   limit?: number;
@@ -70,6 +85,17 @@ export interface ShipmentListResponse {
   };
 }
 
+export interface ShipmentStatistics {
+  total: number;
+  totalPrice: number;
+  totalWeight: number;
+  byStatus: { [key: string]: number };
+  byNature?: { colis: number; courrier: number };
+  todayCount: number;
+  monthCount: number;
+  monthRevenue: number;
+}
+
 export const shipmentService = {
   // List shipments with filters
   list: async (filters?: ShipmentFilters): Promise<ShipmentListResponse> => {
@@ -79,6 +105,7 @@ export const shipmentService = {
     if (filters?.dateFrom) params.append("dateFrom", filters.dateFrom);
     if (filters?.dateTo) params.append("dateTo", filters.dateTo);
     if (filters?.waybillNumber) params.append("waybillNumber", filters.waybillNumber);
+    if (filters?.nature) params.append("nature", filters.nature);
     if (filters?.includeCancelled) params.append("includeCancelled", "true");
     if (filters?.page) params.append("page", filters.page.toString());
     if (filters?.limit) params.append("limit", filters.limit.toString());
@@ -135,9 +162,33 @@ export const shipmentService = {
   },
 
   // Generate receipt (placeholder)
-  generateReceipt: async (id: number) => {
-    const response = await httpService.get(`/shipments/${id}/receipt`);
-    return response.data;
+  downloadReceipt: async (id: number, waybillNumber?: string): Promise<void> => {
+    const response = await httpService.get(`/shipments/${id}/receipt`, {
+      responseType: "blob",
+    } as any);
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `recu-${waybillNumber || id}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
+  getStatistics: async (
+    nature?: "colis" | "courrier",
+    filters?: {
+      dateFrom?: string;
+      dateTo?: string;
+    }
+  ): Promise<ShipmentStatistics> => {
+    const params = new URLSearchParams();
+    if (nature) params.append("nature", nature);
+    if (filters?.dateFrom) params.append("dateFrom", filters.dateFrom);
+    if (filters?.dateTo) params.append("dateTo", filters.dateTo);
+    const response = await httpService.get(`/shipments/statistics?${params.toString()}`);
+    return response.data.data;
   },
 };
 

@@ -1,9 +1,10 @@
 import "reflect-metadata";
 import { AppDataSource, initializeDatabase } from "../db";
-import { Shipment, ShipmentStatus } from "../src/entities/shipment.entity";
+import { Shipment, ShipmentStatus, ShipmentNature } from "../src/entities/shipment.entity";
 import { User } from "../src/entities/user.entity";
 import { Departure } from "../src/entities/departure.entity";
 import { WaybillService } from "../src/services/waybill.service";
+import { UserRole } from "../src/types/roles";
 
 // Sample data for generating varied shipments
 const senderNames = [
@@ -50,24 +51,21 @@ async function generateTestShipments() {
     const waybillService = new WaybillService();
 
     // Get or create test user
-    let testUser = await userRepo.findOne({
-      where: [
-        { email: "test@transcam.cm" },
-        { username: "test_user" }
-      ]
-    });
+        let testUser = await userRepo.findOne({
+          where: { username: "test_user" }
+        });
 
-    if (!testUser) {
-      testUser = userRepo.create({
-        username: "test_user",
-        email: "test@transcam.cm",
-        password: "test_password_hash",
-      });
-      testUser = await userRepo.save(testUser);
-      console.log("✅ Test user created");
-    } else {
-      console.log("✅ Test user found");
-    }
+        if (!testUser) {
+          testUser = userRepo.create({
+            username: "test_user",
+            password: "test_password_hash",
+            role: UserRole.STAFF,
+          });
+          testUser = await userRepo.save(testUser);
+          console.log("✅ Test user created");
+        } else {
+          console.log("✅ Test user found");
+        }
 
     // Get existing departure (optional - can assign shipments to it)
     const departure = await departureRepo.findOne({
@@ -80,11 +78,15 @@ async function generateTestShipments() {
       console.log("ℹ️  No departure found - shipments will be created without departure assignment");
     }
 
-    // Generate 40 shipments
+    // Generate shipments with both natures
     const shipments = [];
-    const count = 40;
+    const count = 40; // Total shipments
+    const colisCount = Math.floor(count * 0.6); // 60% colis
+    const courrierCount = count - colisCount; // 40% courrier
 
     console.log(`\n📦 Generating ${count} test shipments...`);
+    console.log(`   - Colis: ${colisCount}`);
+    console.log(`   - Courrier: ${courrierCount}`);
 
     // Get the last waybill number to start from the next one
     const lastShipment = await shipmentRepo
@@ -123,6 +125,9 @@ async function generateTestShipments() {
       // Generate sequential waybill number
       const waybillNumber = `${prefix}${(nextNumber + i).toString().padStart(4, "0")}`;
 
+      // Assign nature: first 60% are colis, rest are courrier
+      const nature = i < colisCount ? ShipmentNature.COLS : ShipmentNature.COURRIER;
+
       // Create shipment
       const isConfirmed = departure !== null && departure.status === "open";
       const shipment = shipmentRepo.create({
@@ -136,8 +141,12 @@ async function generateTestShipments() {
         declared_value: declaredValue,
         price: price,
         route: route,
-        status: isConfirmed ? ShipmentStatus.CONFIRMED : ShipmentStatus.PENDING,
-        is_confirmed: isConfirmed,
+        nature: nature,
+        status: ShipmentStatus.CONFIRMED,
+        is_confirmed: true,
+        confirmed_at: new Date(),
+        confirmed_by: testUser,
+        confirmed_by_id: testUser.id,
         created_by: testUser,
         created_by_id: testUser.id,
         departure_id: isConfirmed && departure ? departure.id : null,
@@ -154,6 +163,12 @@ async function generateTestShipments() {
     console.log("\n📊 Summary:");
     console.log(`   - Total shipments: ${savedShipments.length}`);
     
+    // Count by nature
+    const actualColisCount = savedShipments.filter((s: Shipment) => s.nature === ShipmentNature.COLS).length;
+    const actualCourrierCount = savedShipments.filter((s: Shipment) => s.nature === ShipmentNature.COURRIER).length;
+    console.log(`   - Colis: ${actualColisCount}`);
+    console.log(`   - Courrier: ${actualCourrierCount}`);
+    
     if (departure && departure.status === "open") {
       const assignedCount = savedShipments.filter((s: Shipment) => s.departure_id === departure.id).length;
       console.log(`   - Assigned to departure ${departure.id}: ${assignedCount}`);
@@ -165,7 +180,7 @@ async function generateTestShipments() {
     console.log("\n📋 Sample shipments (first 5):");
     savedShipments.slice(0, 5).forEach((shipment: Shipment, index: number) => {
       console.log(`   ${index + 1}. ${shipment.waybill_number} - ${shipment.sender_name} → ${shipment.receiver_name}`);
-      console.log(`      Route: ${shipment.route}, Weight: ${shipment.weight}kg, Price: ${shipment.price} FCFA`);
+      console.log(`      Nature: ${shipment.nature}, Route: ${shipment.route}, Weight: ${shipment.weight}kg, Price: ${shipment.price} FCFA`);
     });
 
     console.log("\n✨ Done!");

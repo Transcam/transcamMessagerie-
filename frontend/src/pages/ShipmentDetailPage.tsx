@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Printer,
-  CheckCircle,
   Edit,
   X,
   Loader2,
@@ -28,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useShipment, useConfirmShipment, useCancelShipment } from "@/hooks/use-shipments";
+import { useShipment, useCancelShipment, useGenerateReceipt } from "@/hooks/use-shipments";
 import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -44,17 +43,12 @@ export default function ShipmentDetailPage() {
 
   const shipmentId = id ? parseInt(id) : 0;
   const { data: shipment, isLoading, error } = useShipment(shipmentId);
-  const confirmShipment = useConfirmShipment();
   const cancelShipment = useCancelShipment();
+  const generateReceipt = useGenerateReceipt();
 
-  const isAdmin = user?.role === "admin";
-  const canEdit = isAdmin && shipment && !shipment.is_confirmed;
-  const canCancel = isAdmin && shipment && !shipment.is_cancelled;
-  const canConfirm =
-    hasPermission("create_shipment") &&
-    shipment &&
-    !shipment.is_confirmed &&
-    !shipment.is_cancelled;
+  const canEdit = hasPermission("edit_shipment") && shipment && !shipment.is_cancelled;
+  const canCancel = hasPermission("delete_shipment") && shipment && !shipment.is_cancelled;
+  const canPrintReceipt = hasPermission("print_receipt") && shipment;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(amount);
@@ -71,14 +65,6 @@ export default function ShipmentDetailPage() {
     });
   };
 
-  const handleConfirm = async () => {
-    if (!shipment) return;
-    try {
-      await confirmShipment.mutateAsync(shipment.id);
-    } catch (error) {
-      // Error handled in hook
-    }
-  };
 
   const handleCancel = async () => {
     if (!shipment || !cancelReason.trim()) {
@@ -159,10 +145,24 @@ export default function ShipmentDetailPage() {
               status={shipment.status}
               isCancelled={shipment.is_cancelled}
             />
-            {hasPermission("print_waybill") && (
-              <Button variant="outline" size="sm">
-                <Printer className="mr-2 h-4 w-4" />
-                {t("shipment.print")}
+            {canPrintReceipt && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => generateReceipt.mutate({ id: shipment.id, waybillNumber: shipment.waybill_number })}
+                disabled={generateReceipt.isPending}
+              >
+                {generateReceipt.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {language === "fr" ? "Téléchargement..." : "Downloading..."}
+                  </>
+                ) : (
+                  <>
+                    <Printer className="mr-2 h-4 w-4" />
+                    {language === "fr" ? "Imprimer Reçu" : "Print Receipt"}
+                  </>
+                )}
               </Button>
             )}
           </div>
@@ -170,24 +170,6 @@ export default function ShipmentDetailPage() {
 
         {/* Action Buttons */}
         <div className="flex gap-2 flex-wrap">
-          {canConfirm && (
-            <Button
-              onClick={handleConfirm}
-              disabled={confirmShipment.isPending}
-            >
-              {confirmShipment.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {language === "fr" ? "Confirmation..." : "Confirming..."}
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  {t("shipment.confirm")}
-                </>
-              )}
-            </Button>
-          )}
           {canEdit && (
             <Button
               variant="outline"
@@ -314,6 +296,16 @@ export default function ShipmentDetailPage() {
                 </p>
                 <p className="font-medium">{shipment.route}</p>
               </div>
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  {language === "fr" ? "Nature" : "Nature"}
+                </p>
+                <p className="font-medium">
+                  {shipment.nature === "colis"
+                    ? (language === "fr" ? "Colis" : "Parcel")
+                    : (language === "fr" ? "Courrier" : "Mail")}
+                </p>
+              </div>
               {shipment.description && (
                 <div>
                   <p className="text-sm text-muted-foreground">
@@ -337,14 +329,16 @@ export default function ShipmentDetailPage() {
                     {formatCurrency(shipment.declared_value)} FCFA
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    {t("shipment.price")}
-                  </p>
-                  <p className="font-medium font-semibold">
-                    {formatCurrency(shipment.price)} FCFA
-                  </p>
-                </div>
+                {user?.role !== "staff" && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {t("shipment.price")}
+                    </p>
+                    <p className="font-medium font-semibold">
+                      {formatCurrency(shipment.price)} FCFA
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -6,7 +6,10 @@ import dotenv from "dotenv";
 import shipmentsRoutes from "./routes/shipments.routes";
 import departuresRoutes from "./routes/departures.routes";
 import userRoutes from "./routes/user.routes";
-import { User } from "./entities/user.entity";
+import expensesRoutes from "./routes/expenses.routes";
+import vehiclesRoutes from "./routes/vehicles.routes";
+import driversRoutes from "./routes/drivers.routes";
+import distributionsRoutes from "./routes/distributions.routes";
 
 dotenv.config();
 
@@ -16,7 +19,7 @@ const PORT = process.env.PORT || 3000;
 // CORS middleware - must be before other middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:8080",
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
   })
 );
@@ -28,77 +31,16 @@ app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Transcam API Server" });
 });
 
-// TEMPORARY: Mock auth middleware for testing
-// TODO: Replace with your colleague's real auth middleware
-// This middleware ensures a test user exists in the database
-app.use("/api/shipments", async (req: Request, res: Response, next: any) => {
-  try {
-    const userRepo = AppDataSource.getRepository(User);
-
-    // Try to find existing test user by email or username
-    let testUser = await userRepo.findOne({
-      where: [{ username: "test_user" }],
-    });
-
-    if (!testUser) {
-      // Create test user if it doesn't exist
-      testUser = userRepo.create({
-        username: "test_user",
-        password: "test_password_hash", // This is just for testing
-      });
-      testUser = await userRepo.save(testUser);
-    }
-
-    // Add role property (will be added by colleague later)
-    (req as any).user = {
-      ...testUser,
-      role: "staff", // Change to "agency_admin" to test admin features
-    };
-
-    next();
-  } catch (error: any) {
-    console.error("Mock auth middleware error:", error);
-    res.status(500).json({ error: "Failed to initialize test user" });
-  }
-});
-
+// API Routes
+// All routes use authenticate middleware and role-based authorization
+// See individual route files for specific permission requirements
 app.use("/api/shipments", shipmentsRoutes);
-
-// TEMPORARY: Mock auth middleware for departures
-// TODO: Replace with your colleague's real auth middleware
-app.use("/api/departures", async (req: Request, res: Response, next: any) => {
-  try {
-    const userRepo = AppDataSource.getRepository(User);
-
-    // Try to find existing test user by email or username
-    let testUser = await userRepo.findOne({
-      where: [{ username: "test_user" }],
-    });
-
-    if (!testUser) {
-      // Create test user if it doesn't exist
-      testUser = userRepo.create({
-        username: "test_user",
-        password: "test_password_hash", // This is just for testing
-      });
-      testUser = await userRepo.save(testUser);
-    }
-
-    // Add role property (will be added by colleague later)
-    (req as any).user = {
-      ...testUser,
-      role: "agency_admin", // Change to "agency_admin" to test admin features (seal/close)
-    };
-
-    next();
-  } catch (error: any) {
-    console.error("Mock auth middleware error:", error);
-    res.status(500).json({ error: "Failed to initialize test user" });
-  }
-});
-
 app.use("/api/departures", departuresRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/expenses", expensesRoutes);
+app.use("/api/vehicles", vehiclesRoutes);
+app.use("/api/drivers", driversRoutes);
+app.use("/api/distributions", distributionsRoutes);
 
 // Test route with database
 // app.get("/", async (req: Request, res: Response) => {

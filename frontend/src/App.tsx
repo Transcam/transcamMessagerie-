@@ -15,6 +15,19 @@ import DepartureListPage from "./pages/DepartureListPage";
 import DepartureDetailPage from "./pages/DepartureDetailPage";
 import NewDeparturePage from "./pages/NewDeparturePage";
 import UserListPage from "./pages/UserListPage";
+import ExpenseListPage from "./pages/ExpenseListPage";
+import ExpenseDetailPage from "./pages/ExpenseDetailPage";
+import NewExpensePage from "./pages/NewExpensePage";
+import EditExpensePage from "./pages/EditExpensePage";
+import VehicleListPage from "./pages/VehicleListPage";
+import VehicleDetailPage from "./pages/VehicleDetailPage";
+import NewVehiclePage from "./pages/NewVehiclePage";
+import EditVehiclePage from "./pages/EditVehiclePage";
+import DriverListPage from "./pages/DriverListPage";
+import DriverDetailPage from "./pages/DriverDetailPage";
+import NewDriverPage from "./pages/NewDriverPage";
+import EditDriverPage from "./pages/EditDriverPage";
+import DistributionPage from "./pages/DistributionPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -69,6 +82,22 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/shipments/courrier"
+        element={
+          <ProtectedRoute>
+            <ShipmentListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shipments/colis"
+        element={
+          <ProtectedRoute>
+            <ShipmentListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/shipments"
         element={
           <ProtectedRoute>
@@ -109,10 +138,106 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/vehicles/new"
+        element={
+          <ProtectedRoute>
+            <NewVehiclePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vehicles/:id/edit"
+        element={
+          <ProtectedRoute>
+            <EditVehiclePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vehicles/:id"
+        element={
+          <ProtectedRoute>
+            <VehicleDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vehicles"
+        element={
+          <ProtectedRoute>
+            <VehicleListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/drivers/new"
+        element={
+          <ProtectedRoute>
+            <NewDriverPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/drivers/:id/edit"
+        element={
+          <ProtectedRoute>
+            <EditDriverPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/drivers/:id"
+        element={
+          <ProtectedRoute>
+            <DriverDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/drivers"
+        element={
+          <ProtectedRoute>
+            <DriverListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/users"
         element={
           <ProtectedRoute>
             <UserListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/expenses/new"
+        element={
+          <ProtectedRoute>
+            <NewExpensePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/expenses/:id/edit"
+        element={
+          <ProtectedRoute>
+            <EditExpensePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/expenses/:id"
+        element={
+          <ProtectedRoute>
+            <ExpenseDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/expenses"
+        element={
+          <ProtectedRoute>
+            <ExpenseListPage />
           </ProtectedRoute>
         }
       />
@@ -136,7 +261,7 @@ function AppRoutes() {
         path="/distribution"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <DistributionPage />
           </ProtectedRoute>
         }
       />

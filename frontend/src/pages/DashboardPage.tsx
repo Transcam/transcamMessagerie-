@@ -35,10 +35,12 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useShipments } from "@/hooks/use-shipments";
+import { useShipments, useGenerateReceipt } from "@/hooks/use-shipments";
 import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DateRange, getDateRangeForPreset, parseInputDate } from "@/lib/date-utils";
 
 interface StatCard {
   titleKey: string;
@@ -59,14 +61,19 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const { user, hasPermission } = useAuth();
+  const isStaff = user?.role === "staff";
+  
+  const [dateRange, setDateRange] = useState<DateRange>(getDateRangeForPreset("today"));
 
-  // Fetch recent shipments (last 20, not cancelled)
+  // Fetch shipments with date filters
   const { data: shipmentsData, isLoading } = useShipments({
-    limit: 20,
+    dateFrom: dateRange.startDate,
+    dateTo: dateRange.endDate,
     includeCancelled: false,
   });
+  const generateReceipt = useGenerateReceipt();
 
-  // Calculate stats from real data
+  // Calculate stats from real data filtered by date range
   const stats = useMemo(() => {
     if (!shipmentsData?.data) {
       return [
@@ -102,47 +109,39 @@ export default function DashboardPage() {
     }
 
     const shipments = shipmentsData.data;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const startDate = parseInputDate(dateRange.startDate);
+    const endDate = parseInputDate(dateRange.endDate);
+    endDate.setHours(23, 59, 59, 999); // Include the full end date
 
-    const todayShipments = shipments.filter((s) => {
+    // Filter shipments by date range
+    const filteredShipments = shipments.filter((s) => {
       const createdDate = new Date(s.created_at);
-      createdDate.setHours(0, 0, 0, 0);
-      return createdDate.getTime() === today.getTime();
+      return createdDate >= startDate && createdDate <= endDate;
     });
 
-    const thisMonth = new Date();
-    thisMonth.setDate(1);
-    thisMonth.setHours(0, 0, 0, 0);
-
-    const monthShipments = shipments.filter((s) => {
-      const createdDate = new Date(s.created_at);
-      return createdDate >= thisMonth;
-    });
-
-    const totalRevenue = shipments
+    const totalRevenue = filteredShipments
       .filter((s) => !s.is_cancelled)
       .reduce((sum, s) => sum + Number(s.price), 0);
 
     return [
       {
         titleKey: "dashboard.todayShipments",
-        value: todayShipments.length.toString(),
-        change: 0, // TODO: Calculate change from previous day
+        value: filteredShipments.length.toString(),
+        change: 0,
         icon: Package,
         color: "primary" as const,
       },
       {
         titleKey: "dashboard.monthShipments",
-        value: monthShipments.length.toString(),
-        change: 0, // TODO: Calculate change from previous month
+        value: filteredShipments.filter((s) => !s.is_cancelled).length.toString(),
+        change: 0,
         icon: TrendingUp,
         color: "success" as const,
       },
       {
         titleKey: "dashboard.totalRevenue",
         value: totalRevenue.toString(),
-        change: 0, // TODO: Calculate change from previous period
+        change: 0,
         icon: DollarSign,
         color: "warning" as const,
       },
@@ -193,6 +192,26 @@ export default function DashboardPage() {
             </Button>
           )}
         </div>
+
+        {/* Date Range Filter */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{language === "fr" ? "Filtre de période" : "Date Range Filter"}</CardTitle>
+            <CardDescription>
+              {language === "fr" 
+                ? "Sélectionnez une période pour voir les statistiques correspondantes"
+                : "Select a date range to view corresponding statistics"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="max-w-md">
+              <DateRangePicker
+                value={dateRange}
+                onChange={setDateRange}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -303,9 +322,11 @@ export default function DashboardPage() {
                       <TableHead>{t("shipment.sender")}</TableHead>
                       <TableHead>{t("shipment.receiver")}</TableHead>
                       <TableHead>{t("shipment.route")}</TableHead>
-                      <TableHead className="text-right">
-                        {t("common.amount")}
-                      </TableHead>
+                      {!isStaff && (
+                        <TableHead className="text-right">
+                          {t("common.amount")}
+                        </TableHead>
+                      )}
                       <TableHead>{t("shipment.status")}</TableHead>
                       <TableHead>{t("common.date")}</TableHead>
                       <TableHead className="w-12"></TableHead>
@@ -329,9 +350,11 @@ export default function DashboardPage() {
                             {shipment.route}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(shipment.price)} FCFA
-                        </TableCell>
+                        {!isStaff && (
+                          <TableCell className="text-right font-medium">
+                            {shipment.price ? `${formatCurrency(shipment.price)} FCFA` : "-"}
+                          </TableCell>
+                        )}
                         <TableCell>
                           <ShipmentStatusBadge
                             status={shipment.status}
@@ -357,15 +380,13 @@ export default function DashboardPage() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 {t("common.view")}
                               </DropdownMenuItem>
-                              {hasPermission("print_waybill") && (
+                              {hasPermission("print_receipt") && (
                                 <DropdownMenuItem
-                                  onClick={() => {
-                                    // TODO: Implement print waybill
-                                    console.log("Print waybill", shipment.id);
-                                  }}
+                                  onClick={() => generateReceipt.mutate({ id: shipment.id, waybillNumber: shipment.waybill_number })}
+                                  disabled={generateReceipt.isPending}
                                 >
                                   <Printer className="mr-2 h-4 w-4" />
-                                  {t("shipment.print")}
+                                  {language === "fr" ? "Imprimer Reçu" : "Print Receipt"}
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>

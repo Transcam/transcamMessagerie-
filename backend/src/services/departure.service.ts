@@ -5,18 +5,19 @@ import { Shipment, ShipmentStatus } from "../entities/shipment.entity";
 import { User } from "../entities/user.entity";
 import { AuditLog } from "../entities/audit-log.entity";
 import { GeneralWaybillService } from "./general-waybill.service";
+import { UserRole } from "../types/roles";
 
 export interface CreateDepartureDTO {
   route?: string;
-  vehicle?: string;
-  driver_name?: string;
+  vehicle_id?: number;
+  driver_id?: number;
   notes?: string;
 }
 
 export interface UpdateDepartureDTO {
   route?: string;
-  vehicle?: string;
-  driver_name?: string;
+  vehicle_id?: number;
+  driver_id?: number;
   notes?: string;
 }
 
@@ -43,15 +44,6 @@ export class DepartureService {
     this.generalWaybillService = new GeneralWaybillService();
   }
 
-  /**
-   * Check if user is Agency Admin
-   */
-  private isAgencyAdmin(user: User): boolean {
-    // TODO: When roles are implemented, uncomment the line below
-    // return (user as any).role === "agency_admin";
-    // For now, allow all authenticated users to seal/close (roles not yet implemented)
-    return true;
-  }
 
   /**
    * Create a new departure
@@ -73,11 +65,12 @@ export class DepartureService {
   /**
    * Get single departure with shipments
    */
-  async getOne(id: number): Promise<Departure> {
+  async getOne(id: number, user?: User): Promise<Departure> {
     const departure = await this.departureRepo.findOne({
       where: { id },
       relations: [
         "shipments",
+        "vehicle",
         "created_by",
         "sealed_by",
         "closed_by",
@@ -88,18 +81,28 @@ export class DepartureService {
       throw new Error("Departure not found");
     }
 
+    // Mask shipment prices for STAFF role
+    if (user?.role === UserRole.STAFF && departure.shipments) {
+      departure.shipments.forEach((shipment) => {
+        (shipment as any).price = null;
+        (shipment as any).declared_value = null;
+      });
+    }
+
     return departure;
   }
 
   /**
    * List departures with filters
    */
-  async list(filters: DepartureFiltersDTO): Promise<[Departure[], number]> {
+  async list(filters: DepartureFiltersDTO, user?: User): Promise<[Departure[], number]> {
     const query = this.departureRepo
       .createQueryBuilder("departure")
       .leftJoinAndSelect("departure.created_by", "created_by")
       .leftJoinAndSelect("departure.sealed_by", "sealed_by")
       .leftJoinAndSelect("departure.closed_by", "closed_by")
+      .leftJoinAndSelect("departure.vehicle", "vehicle")
+      .leftJoinAndSelect("departure.driver", "driver")
       .leftJoinAndSelect("departure.shipments", "shipments");
 
     if (filters.status) {
@@ -267,18 +270,18 @@ export class DepartureService {
   /**
    * Seal departure and generate General Waybill
    */
+  /**
+   * Seal departure - generates General Waybill and locks shipments
+   * Authorization is handled at route level with authorize("validate_departure")
+   */
   async seal(departureId: number, user: User): Promise<{
     departure: Departure;
     general_waybill_number: string;
     pdf_path: string;
   }> {
-    if (!this.isAgencyAdmin(user)) {
-      throw new Error("Only Agency Admin can seal departures");
-    }
-
     const departure = await this.departureRepo.findOne({
       where: { id: departureId },
-      relations: ["shipments"],
+      relations: ["shipments", "vehicle", "driver"],
     });
 
     if (!departure) {
@@ -340,12 +343,9 @@ export class DepartureService {
 
   /**
    * Close departure
+   * Authorization is handled at route level with authorize("validate_departure")
    */
   async close(departureId: number, user: User): Promise<Departure> {
-    if (!this.isAgencyAdmin(user)) {
-      throw new Error("Only Agency Admin can close departures");
-    }
-
     const departure = await this.departureRepo.findOne({
       where: { id: departureId },
     });
@@ -374,22 +374,26 @@ export class DepartureService {
   /**
    * Get departure summary with totals
    */
-  async getSummary(id: number): Promise<{
+  async getSummary(id: number, user?: User): Promise<{
     departure: Departure;
     shipment_count: number;
-    total_price: number;
+    total_price: number | null;
     total_weight: number;
-    total_declared_value: number;
+    total_declared_value: number | null;
   }> {
-    const departure = await this.getOne(id);
+    const departure = await this.getOne(id, user);
 
     const shipments = departure.shipments || [];
 
     const totals = shipments.reduce(
       (acc, shipment) => {
-        acc.total_price += parseFloat(shipment.price.toString());
+        if (user?.role !== UserRole.STAFF && shipment.price !== null && shipment.price !== undefined) {
+          acc.total_price += parseFloat(shipment.price.toString());
+        }
+        if (user?.role !== UserRole.STAFF && shipment.declared_value !== null && shipment.declared_value !== undefined) {
+          acc.total_declared_value += parseFloat(shipment.declared_value.toString());
+        }
         acc.total_weight += parseFloat(shipment.weight.toString());
-        acc.total_declared_value += parseFloat(shipment.declared_value.toString());
         return acc;
       },
       { total_price: 0, total_weight: 0, total_declared_value: 0 }
@@ -398,7 +402,9 @@ export class DepartureService {
     return {
       departure,
       shipment_count: shipments.length,
-      ...totals,
+      total_price: user?.role === UserRole.STAFF ? null : totals.total_price,
+      total_weight: totals.total_weight,
+      total_declared_value: user?.role === UserRole.STAFF ? null : totals.total_declared_value,
     };
   }
 
@@ -410,7 +416,7 @@ export class DepartureService {
     
     const departure = await this.departureRepo.findOne({
       where: { id },
-      relations: ["shipments"],
+      relations: ["shipments", "vehicle", "driver"],
     });
 
     if (!departure) {

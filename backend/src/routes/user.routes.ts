@@ -15,7 +15,7 @@ const router = Router();
 router.post("/login", loginUser);
 router.get("/", authenticate, authorize("manage_users"), listUsers);
 router.get("/:id", authenticate, authorize("manage_users"), getUser);
-router.post("/", authenticate, authorize("manage_users"), createUser);
+router.post("/",authenticate, authorize("manage_users"), createUser);
 router.patch("/:id", authenticate, authorize("manage_users"), updateUser);
 router.delete("/:id", authenticate, authorize("manage_users"), deleteUser);
 
