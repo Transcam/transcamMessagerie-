@@ -276,23 +276,8 @@ export class ReceiptService {
         align: "center",
         width: contentWidth,
       });
-      yPos += 10;
 
-      doc.text("le suivi de votre expédition", margin, yPos, {
-        align: "center",
-        width: contentWidth,
-      });
-      yPos += 5;
-
-      // Final separator
-      doc
-        .moveTo(margin, yPos)
-        .lineTo(ticketWidth - margin, yPos)
-        .strokeColor("#000000")
-        .lineWidth(1)
-        .stroke();
-
-      // Finalize PDF - no extra space after last line
+      // Finalize PDF - no extra space or separator after last line
       doc.end();
     });
   }
