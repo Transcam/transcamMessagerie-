@@ -15,7 +15,7 @@ export class ReceiptService {
 
       const doc = new PDFDocument({
         size: [ticketWidth, 600], // Width fixed, height will adjust
-        margins: { top: 15, bottom: 15, left: margin, right: margin },
+        margins: { top: 5, bottom: 5, left: margin, right: margin },
       });
 
       const chunks: Buffer[] = [];
@@ -23,14 +23,13 @@ export class ReceiptService {
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", reject);
 
-      let yPos = 15;
+      let yPos = 5;
 
       // Helper function to format currency
       const formatCurrency = (amount: number): string => {
-        return new Intl.NumberFormat("fr-FR", {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        }).format(amount);
+        // Format manuel avec espaces pour éviter les problèmes de rendu PDF
+        const formatted = Math.round(amount).toString();
+        return formatted.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
       };
 
       // Helper function to format date
@@ -254,7 +253,7 @@ export class ReceiptService {
         width: contentWidth,
         align: "left",
       });
-      yPos += 50;
+      yPos += 35;
 
       // Separator line
       doc
@@ -283,7 +282,7 @@ export class ReceiptService {
         align: "center",
         width: contentWidth,
       });
-      yPos += 15;
+      yPos += 5;
 
       // Final separator
       doc
@@ -293,7 +292,7 @@ export class ReceiptService {
         .lineWidth(1)
         .stroke();
 
-      // Finalize PDF
+      // Finalize PDF - no extra space after last line
       doc.end();
     });
   }
