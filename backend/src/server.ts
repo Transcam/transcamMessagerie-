@@ -19,7 +19,24 @@ const PORT = process.env.PORT || 3000;
 // CORS middleware - must be before other middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
+      
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://transcam-messagerie-git-main-transcams-projects.vercel.app",
+        "https://transcamcm.com",
+        process.env.FRONTEND_URL, // Add any custom URL from env
+      ].filter(Boolean); // Remove undefined values
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
