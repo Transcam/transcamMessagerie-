@@ -200,14 +200,20 @@ export class ShipmentService {
     }
 
     if (filters.dateFrom) {
+      // Set to start of day to include all shipments created on this date
+      const startOfDay = new Date(filters.dateFrom);
+      startOfDay.setHours(0, 0, 0, 0);
       query.andWhere("shipment.created_at >= :dateFrom", {
-        dateFrom: filters.dateFrom,
+        dateFrom: startOfDay,
       });
     }
 
     if (filters.dateTo) {
+      // Set to end of day to include all shipments created on this date
+      const endOfDay = new Date(filters.dateTo);
+      endOfDay.setHours(23, 59, 59, 999);
       query.andWhere("shipment.created_at <= :dateTo", {
-        dateTo: filters.dateTo,
+        dateTo: endOfDay,
       });
     }
 
@@ -254,15 +260,19 @@ export class ShipmentService {
 
     // Apply date filters if provided
     if (filters?.dateFrom) {
+      // Set to start of day to include all shipments created on this date
+      const startOfDay = new Date(filters.dateFrom);
+      startOfDay.setHours(0, 0, 0, 0);
       query.andWhere("shipment.created_at >= :dateFrom", {
-        dateFrom: filters.dateFrom,
+        dateFrom: startOfDay,
       });
     }
     if (filters?.dateTo) {
-      const endDate = new Date(filters.dateTo);
-      endDate.setHours(23, 59, 59, 999); // Include the full end date
+      // Set to end of day to include all shipments created on this date
+      const endOfDay = new Date(filters.dateTo);
+      endOfDay.setHours(23, 59, 59, 999);
       query.andWhere("shipment.created_at <= :dateTo", {
-        dateTo: endDate,
+        dateTo: endOfDay,
       });
     }
 
