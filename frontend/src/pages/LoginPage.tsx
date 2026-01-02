@@ -33,7 +33,7 @@ export default function LoginPage() {
       // Trim whitespace from username and password
       const trimmedUsername = username.trim();
       const trimmedPassword = password.trim();
-      
+
       const success = await login(trimmedUsername, trimmedPassword);
       if (success) {
         toast({
@@ -96,17 +96,17 @@ export default function LoginPage() {
       >
         <CardHeader className="text-center space-y-4">
           {/* Logo */}
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl gradient-primary shadow-glow">
+          {/* <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl gradient-primary shadow-glow">
             <Package className="h-8 w-8 text-primary-foreground" />
           </div>
           <div>
             <CardTitle className="text-2xl">
               <span className="text-gradient">Transcam</span>
-            </CardTitle>
-            <CardDescription className="mt-2">
-              {t("login.subtitle")}
-            </CardDescription>
-          </div>
+            </CardTitle> */}
+          <CardDescription className="mt-2">
+            {t("login.subtitle")}
+          </CardDescription>
+          {/* </div> */}
         </CardHeader>
 
         <CardContent>
