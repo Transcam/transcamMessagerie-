@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import logo from "../../../public/assets/images/Logo-Transcam.png";
 
 interface NavItem {
   icon: React.ElementType;
@@ -130,11 +131,19 @@ export function AppSidebar() {
   const SidebarContent = () => (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       {/* Logo */}
-      <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
+      <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4 py-10">
         <Link to="/dashboard" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg">
-            T
-          </div>
+          {!isCollapsed && (
+            <div>
+              <img
+                src={logo}
+                alt="Transcam"
+                width={75}
+                height={75}
+                className="object-cover rounded-lg"
+              />
+            </div>
+          )}
           {!isCollapsed && (
             <span className="text-xl font-bold text-sidebar-primary-foreground">
               Transcam
