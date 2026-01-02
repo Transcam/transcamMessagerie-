@@ -74,7 +74,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center gradient-hero p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       {/* Background Pattern */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
@@ -85,7 +85,7 @@ export default function LoginPage() {
       <Button
         variant="ghost"
         size="sm"
-        className="absolute top-4 right-4 text-muted-foreground hover:text-primary-foreground"
+        className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm text-foreground hover:text-primary hover:bg-primary/10 border border-border/50 shadow-md font-medium px-4 py-2 z-20"
         onClick={() => setLanguage(language === "fr" ? "en" : "fr")}
       >
         {language === "fr" ? "English" : "Français"}

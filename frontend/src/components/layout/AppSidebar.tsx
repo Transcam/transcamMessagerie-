@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Package,
-  PlusCircle,
   Truck,
   PieChart,
   BarChart3,
