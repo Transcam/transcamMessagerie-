@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import logo from "../../public/assets/images/Logo-Transcam.png";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -33,7 +34,7 @@ export default function LoginPage() {
       // Trim whitespace from username and password
       const trimmedUsername = username.trim();
       const trimmedPassword = password.trim();
-      
+
       const success = await login(trimmedUsername, trimmedPassword);
       if (success) {
         toast({
@@ -95,20 +96,19 @@ export default function LoginPage() {
         className="w-full max-w-md relative z-10 animate-fade-in"
       >
         <CardHeader className="text-center space-y-4">
-          {/* Logo */}
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl gradient-primary shadow-glow">
-            <Package className="h-8 w-8 text-primary-foreground" />
-          </div>
           <div>
-            <CardTitle className="text-2xl">
-              <span className="text-gradient">Transcam</span>
-            </CardTitle>
-            <CardDescription className="mt-2">
-              {t("login.subtitle")}
-            </CardDescription>
+            <img
+              src={logo}
+              alt="Transcam"
+              width={200}
+              height={200}
+              className="mx-auto bg-rose-500"
+            />
           </div>
+          <CardDescription className="mt-2">
+            {t("login.subtitle")}
+          </CardDescription>
         </CardHeader>
-
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
