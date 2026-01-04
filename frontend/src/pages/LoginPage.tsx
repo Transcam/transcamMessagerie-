@@ -45,29 +45,46 @@ export default function LoginPage() {
               : "Welcome to Transcam",
         });
         navigate("/dashboard");
+      }
+    } catch (err: unknown) {
+      const error = err as {
+        response?: {
+          status?: number;
+          data?: { error?: string; message?: string };
+        };
+        message?: string;
+      };
+
+      // Check if it's a rate limit error (429)
+      if (error?.response?.status === 429) {
+        const rateLimitMessage =
+          error?.response?.data?.error ||
+          error?.response?.data?.message ||
+          (language === "fr"
+            ? "Trop de tentatives de connexion. Veuillez réessayer dans 15 minutes."
+            : "Too many login attempts. Please try again in 15 minutes.");
+
+        toast({
+          title: language === "fr" ? "Trop de tentatives" : "Too many attempts",
+          description: rateLimitMessage,
+          variant: "destructive",
+        });
       } else {
+        // Regular login error
+        const errorMessage =
+          error?.response?.data?.error ||
+          error?.response?.data?.message ||
+          error?.message ||
+          (language === "fr"
+            ? "Nom d'utilisateur ou mot de passe incorrect"
+            : "Invalid username or password");
+
         toast({
           title: language === "fr" ? "Erreur de connexion" : "Login error",
-          description:
-            language === "fr"
-              ? "Nom d'utilisateur ou mot de passe incorrect"
-              : "Invalid username or password",
+          description: errorMessage,
           variant: "destructive",
         });
       }
-    } catch (err) {
-      const error = err as {
-        response?: { data?: { message?: string } };
-        message?: string;
-      };
-      const errorMessage = error?.response?.data?.message || error?.message;
-      toast({
-        title: language === "fr" ? "Erreur" : "Error",
-        description:
-          errorMessage ||
-          (language === "fr" ? "Une erreur est survenue" : "An error occurred"),
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }

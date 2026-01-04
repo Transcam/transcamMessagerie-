@@ -153,9 +153,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       localStorage.setItem("auth_user", JSON.stringify(userData));
       setUser(userData);
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Login error:", error);
-      return false;
+      // Re-throw the error so the caller can check the status code
+      throw error;
     }
   };
 

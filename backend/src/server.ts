@@ -29,7 +29,6 @@ app.use(
   })
 );
 
-// CORS middleware - must be before other middleware
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
@@ -37,25 +36,23 @@ app.use(
   })
 );
 
-// General API rate limiter - applies to all routes
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: {
     error: "Too many requests from this IP, please try again later.",
   },
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
-// Stricter rate limiter for login endpoint
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 login attempts per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 5,
   message: {
     error: "Too many login attempts, please try again after 15 minutes.",
   },
-  skipSuccessfulRequests: true, // Don't count successful logins
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -69,12 +66,9 @@ app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Transcam API Server" });
 });
 
-// Apply stricter limiter to login route BEFORE mounting user routes
 app.use("/api/users/login", loginLimiter);
 
 // API Routes
-// All routes use authenticate middleware and role-based authorization
-// See individual route files for specific permission requirements
 app.use("/api/shipments", shipmentsRoutes);
 app.use("/api/departures", departuresRoutes);
 app.use("/api/users", userRoutes);
