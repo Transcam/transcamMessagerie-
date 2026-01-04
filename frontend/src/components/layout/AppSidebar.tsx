@@ -137,11 +137,16 @@ export function AppSidebar() {
           {!isCollapsed && (
             <div>
               <img
-                src={settings?.company_logo_url || logo}
+                key={settings?.company_logo_url || 'default-logo'}
+                src={`${settings?.company_logo_url || logo}${settings?.company_logo_url && settings.updated_at ? `?v=${new Date(settings.updated_at).getTime()}` : ''}`}
                 alt="Transcam"
                 width={75}
                 height={75}
                 className="object-cover rounded-lg"
+                onError={(e) => {
+                  // Fallback si l'image ne charge pas
+                  (e.target as HTMLImageElement).src = logo;
+                }}
               />
             </div>
           )}

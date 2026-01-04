@@ -53,7 +53,8 @@ export function useUploadLogo() {
   return useMutation({
     mutationFn: (file: File) => settingsService.uploadLogo(file),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: settingsKeys.all });
+      // Utiliser refetchQueries pour forcer le rechargement immédiat
+      queryClient.refetchQueries({ queryKey: settingsKeys.all });
       toast({
         title: language === "fr" ? "Logo téléchargé" : "Logo uploaded",
         description:

@@ -59,6 +59,10 @@ export const uploadLogo = async (req: Request, res: Response) => {
 
     const settingsRepo = AppDataSource.getRepository(Settings);
     
+    // Récupérer les settings AVANT de déplacer le fichier
+    let settings = await settingsRepo.findOne({ where: { id: "company" } });
+    const oldLogoUrl = settings?.company_logo_url;
+    
     // Path to frontend public images directory
     const frontendPublicPath = path.join(process.cwd(), "..", "frontend", "public", "assets", "images");
     
@@ -76,13 +80,9 @@ export const uploadLogo = async (req: Request, res: Response) => {
     fs.renameSync(req.file.path, destinationPath);
 
     // Delete old logo if exists (except default logo)
-    let settings = await settingsRepo.findOne({ where: { id: "company" } });
-    if (settings && settings.company_logo_url) {
-      const oldLogoPath = path.join(process.cwd(), "..", "frontend", "public", settings.company_logo_url);
-      if (
-        fs.existsSync(oldLogoPath) && 
-        settings.company_logo_url !== "/assets/images/Logo-Transcam.png"
-      ) {
+    if (oldLogoUrl && oldLogoUrl !== "/assets/images/Logo-Transcam.png") {
+      const oldLogoPath = path.join(process.cwd(), "..", "frontend", "public", oldLogoUrl);
+      if (fs.existsSync(oldLogoPath)) {
         try {
           fs.unlinkSync(oldLogoPath);
           console.log(`🗑️  [SETTINGS] Ancien logo supprimé: ${oldLogoPath}`);
