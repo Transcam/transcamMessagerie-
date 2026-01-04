@@ -25,7 +25,10 @@ export class ReceiptService {
   /**
    * Calculate total height needed for the receipt PDF
    */
-  private calculateTotalHeight(shipment: Shipment, hasLogo: boolean = false): number {
+  private calculateTotalHeight(
+    shipment: Shipment,
+    hasLogo: boolean = false
+  ): number {
     let height = 10; // Initial yPos
 
     // Logo height if present
@@ -75,11 +78,20 @@ export class ReceiptService {
     return new Promise(async (resolve, reject) => {
       try {
         // Récupérer les settings pour le logo
-        let settings = await this.settingsRepo.findOne({ where: { id: "company" } });
-        const logoUrl = settings?.company_logo_url || "/assets/images/Logo-Transcam.png";
+        let settings = await this.settingsRepo.findOne({
+          where: { id: "company" },
+        });
+        const logoUrl =
+          settings?.company_logo_url || "/assets/images/LogoTranscam.jpg";
 
         // Chemin physique du logo
-        const logoPath = path.join(process.cwd(), "..", "frontend", "public", logoUrl);
+        const logoPath = path.join(
+          process.cwd(),
+          "..",
+          "frontend",
+          "public",
+          logoUrl
+        );
         const logoExists = fs.existsSync(logoPath);
 
         // Ticket 80mm format: 80mm width = 226.77 points
@@ -88,7 +100,10 @@ export class ReceiptService {
         const pageWidth = ticketWidth - margin * 2; // 206.77 points usable width
 
         // Calculate dynamic height (ajusté pour logo si présent)
-        const calculatedHeight = this.calculateTotalHeight(shipment, logoExists);
+        const calculatedHeight = this.calculateTotalHeight(
+          shipment,
+          logoExists
+        );
 
         const doc = new PDFDocument({
           margin: margin,
@@ -135,231 +150,233 @@ export class ReceiptService {
         });
         yPos += 18;
 
-      // Company address and contact
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text("Siège social: Mvan B.P 5633 Yaoundé", margin, yPos, {
-        align: "center",
-        width: pageWidth,
-      });
-      yPos += 12;
-
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text("Tel: 677 891 404 / 697 06 63 50", margin, yPos, {
-        align: "center",
-        width: pageWidth,
-      });
-      yPos += 12;
-
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text("N° contribuable: M0818164445-46P", margin, yPos, {
-        align: "center",
-        width: pageWidth,
-      });
-      yPos += 15;
-
-      // Horizontal line
-      doc
-        .moveTo(margin, yPos)
-        .lineTo(margin + pageWidth, yPos)
-        .stroke();
-      yPos += 12;
-
-      // ============================================
-      // RECEIPT NUMBER
-      // ============================================
-
-      doc.fontSize(10).font("Helvetica-Bold").fillColor("#000000");
-      doc.text("RECU EXPEDITION N°", margin, yPos, {
-        align: "center",
-        width: pageWidth,
-      });
-      yPos += 15;
-
-      doc.fontSize(11).font("Helvetica-Bold").fillColor("#000000");
-      doc.text(shipment.waybill_number, margin, yPos, {
-        align: "center",
-        width: pageWidth,
-      });
-      yPos += 15;
-
-      // Horizontal line
-      doc
-        .moveTo(margin, yPos)
-        .lineTo(margin + pageWidth, yPos)
-        .stroke();
-      yPos += 12;
-
-      // ============================================
-      // SENDER INFORMATION
-      // ============================================
-
-      doc.fontSize(8).font("Helvetica-Bold").fillColor("#000000");
-      doc.text("EXPEDITEUR:", margin, yPos);
-      yPos += 12;
-
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text(`Nom: ${shipment.sender_name}`, margin, yPos);
-      yPos += 11;
-
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text(`Tel: ${shipment.sender_phone}`, margin, yPos);
-      yPos += 12;
-
-      // Horizontal line
-      doc
-        .moveTo(margin, yPos)
-        .lineTo(margin + pageWidth, yPos)
-        .stroke();
-      yPos += 12;
-
-      // ============================================
-      // RECEIVER INFORMATION
-      // ============================================
-
-      doc.fontSize(8).font("Helvetica-Bold").fillColor("#000000");
-      doc.text("DESTINATAIRE:", margin, yPos);
-      yPos += 12;
-
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text(`Nom: ${shipment.receiver_name}`, margin, yPos);
-      yPos += 11;
-
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text(`Tel: ${shipment.receiver_phone}`, margin, yPos);
-      yPos += 12;
-
-      // Horizontal line
-      doc
-        .moveTo(margin, yPos)
-        .lineTo(margin + pageWidth, yPos)
-        .stroke();
-      yPos += 12;
-
-      // ============================================
-      // SHIPMENT DETAILS
-      // ============================================
-
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text(`TRAJET: ${shipment.route}`, margin, yPos);
-      yPos += 11;
-
-      const natureLabel = shipment.nature === "colis" ? "Colis" : "Courrier";
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text(`NATURE: ${natureLabel}`, margin, yPos);
-      yPos += 11;
-
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text(
-        `POIDS: ${parseFloat(shipment.weight.toString()).toFixed(2)} kg`,
-        margin,
-        yPos
-      );
-      yPos += 11;
-
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text(
-        `VALEUR DECLAREE: ${parseFloat(shipment.declared_value.toString()).toFixed(2)} FCFA`,
-        margin,
-        yPos
-      );
-      yPos += 11;
-
-      doc.fontSize(7).font("Helvetica-Bold").fillColor("#000000");
-      doc.text(
-        `MONTANT: ${parseFloat(shipment.price.toString()).toFixed(2)} FCFA`,
-        margin,
-        yPos
-      );
-      yPos += 11;
-
-      if (shipment.description) {
+        // Company address and contact
         doc.fontSize(7).font("Helvetica").fillColor("#000000");
-        doc.text(`DESCRIPTION: ${shipment.description}`, margin, yPos, {
+        doc.text("Siège social: Mvan B.P 5633 Yaoundé", margin, yPos, {
+          align: "center",
           width: pageWidth,
         });
+        yPos += 12;
+
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text("Tel: 677 891 404 / 697 06 63 50", margin, yPos, {
+          align: "center",
+          width: pageWidth,
+        });
+        yPos += 12;
+
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text("N° contribuable: M0818164445-46P", margin, yPos, {
+          align: "center",
+          width: pageWidth,
+        });
+        yPos += 15;
+
+        // Horizontal line
+        doc
+          .moveTo(margin, yPos)
+          .lineTo(margin + pageWidth, yPos)
+          .stroke();
+        yPos += 12;
+
+        // ============================================
+        // RECEIPT NUMBER
+        // ============================================
+
+        doc.fontSize(10).font("Helvetica-Bold").fillColor("#000000");
+        doc.text("RECU EXPEDITION N°", margin, yPos, {
+          align: "center",
+          width: pageWidth,
+        });
+        yPos += 15;
+
+        doc.fontSize(11).font("Helvetica-Bold").fillColor("#000000");
+        doc.text(shipment.waybill_number, margin, yPos, {
+          align: "center",
+          width: pageWidth,
+        });
+        yPos += 15;
+
+        // Horizontal line
+        doc
+          .moveTo(margin, yPos)
+          .lineTo(margin + pageWidth, yPos)
+          .stroke();
+        yPos += 12;
+
+        // ============================================
+        // SENDER INFORMATION
+        // ============================================
+
+        doc.fontSize(8).font("Helvetica-Bold").fillColor("#000000");
+        doc.text("EXPEDITEUR:", margin, yPos);
+        yPos += 12;
+
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text(`Nom: ${shipment.sender_name}`, margin, yPos);
         yPos += 11;
-      }
 
-      // Horizontal line
-      doc
-        .moveTo(margin, yPos)
-        .lineTo(margin + pageWidth, yPos)
-        .stroke();
-      yPos += 12;
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text(`Tel: ${shipment.sender_phone}`, margin, yPos);
+        yPos += 12;
 
-      // ============================================
-      // DATE AND STATUS INFORMATION
-      // ============================================
+        // Horizontal line
+        doc
+          .moveTo(margin, yPos)
+          .lineTo(margin + pageWidth, yPos)
+          .stroke();
+        yPos += 12;
 
-      const createdDate = shipment.created_at
-        ? new Date(shipment.created_at).toLocaleDateString("fr-FR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-          })
-        : "N/A";
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text(`Date de depart: ${createdDate}`, margin, yPos);
-      yPos += 11;
+        // ============================================
+        // RECEIVER INFORMATION
+        // ============================================
 
-      const createdByUsername = shipment.created_by?.username || "N/A";
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text(`Créé par: ${createdByUsername}`, margin, yPos);
-      yPos += 11;
+        doc.fontSize(8).font("Helvetica-Bold").fillColor("#000000");
+        doc.text("DESTINATAIRE:", margin, yPos);
+        yPos += 12;
 
-      const statusLabels: { [key: string]: string } = {
-        pending: "En attente",
-        confirmed: "Confirmé",
-        assigned: "Assigné",
-        cancelled: "Annulé",
-      };
-      const statusLabel = statusLabels[shipment.status] || shipment.status;
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text(`Statut: ${statusLabel}`, margin, yPos);
-      yPos += 12;
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text(`Nom: ${shipment.receiver_name}`, margin, yPos);
+        yPos += 11;
 
-      // Horizontal line
-      doc
-        .moveTo(margin, yPos)
-        .lineTo(margin + pageWidth, yPos)
-        .stroke();
-      yPos += 12;
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text(`Tel: ${shipment.receiver_phone}`, margin, yPos);
+        yPos += 12;
 
-      // ============================================
-      // GENERAL CONDITIONS
-      // ============================================
+        // Horizontal line
+        doc
+          .moveTo(margin, yPos)
+          .lineTo(margin + pageWidth, yPos)
+          .stroke();
+        yPos += 12;
 
-      doc.fontSize(7).font("Helvetica-Bold").fillColor("#000000");
-      doc.text("CONDITIONS GENERALES:", margin, yPos);
-      yPos += 12;
+        // ============================================
+        // SHIPMENT DETAILS
+        // ============================================
 
-      doc.fontSize(6).font("Helvetica").fillColor("#000000");
-      GENERAL_CONDITIONS_LINES.forEach((line) => {
-        doc.text(line, margin, yPos, {
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text(`TRAJET: ${shipment.route}`, margin, yPos);
+        yPos += 11;
+
+        const natureLabel = shipment.nature === "colis" ? "Colis" : "Courrier";
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text(`NATURE: ${natureLabel}`, margin, yPos);
+        yPos += 11;
+
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text(
+          `POIDS: ${parseFloat(shipment.weight.toString()).toFixed(2)} kg`,
+          margin,
+          yPos
+        );
+        yPos += 11;
+
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text(
+          `VALEUR DECLAREE: ${parseFloat(
+            shipment.declared_value.toString()
+          ).toFixed(2)} FCFA`,
+          margin,
+          yPos
+        );
+        yPos += 11;
+
+        doc.fontSize(7).font("Helvetica-Bold").fillColor("#000000");
+        doc.text(
+          `MONTANT: ${parseFloat(shipment.price.toString()).toFixed(2)} FCFA`,
+          margin,
+          yPos
+        );
+        yPos += 11;
+
+        if (shipment.description) {
+          doc.fontSize(7).font("Helvetica").fillColor("#000000");
+          doc.text(`DESCRIPTION: ${shipment.description}`, margin, yPos, {
+            width: pageWidth,
+          });
+          yPos += 11;
+        }
+
+        // Horizontal line
+        doc
+          .moveTo(margin, yPos)
+          .lineTo(margin + pageWidth, yPos)
+          .stroke();
+        yPos += 12;
+
+        // ============================================
+        // DATE AND STATUS INFORMATION
+        // ============================================
+
+        const createdDate = shipment.created_at
+          ? new Date(shipment.created_at).toLocaleDateString("fr-FR", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })
+          : "N/A";
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text(`Date de depart: ${createdDate}`, margin, yPos);
+        yPos += 11;
+
+        const createdByUsername = shipment.created_by?.username || "N/A";
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text(`Créé par: ${createdByUsername}`, margin, yPos);
+        yPos += 11;
+
+        const statusLabels: { [key: string]: string } = {
+          pending: "En attente",
+          confirmed: "Confirmé",
+          assigned: "Assigné",
+          cancelled: "Annulé",
+        };
+        const statusLabel = statusLabels[shipment.status] || shipment.status;
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text(`Statut: ${statusLabel}`, margin, yPos);
+        yPos += 12;
+
+        // Horizontal line
+        doc
+          .moveTo(margin, yPos)
+          .lineTo(margin + pageWidth, yPos)
+          .stroke();
+        yPos += 12;
+
+        // ============================================
+        // GENERAL CONDITIONS
+        // ============================================
+
+        doc.fontSize(7).font("Helvetica-Bold").fillColor("#000000");
+        doc.text("CONDITIONS GENERALES:", margin, yPos);
+        yPos += 12;
+
+        doc.fontSize(6).font("Helvetica").fillColor("#000000");
+        GENERAL_CONDITIONS_LINES.forEach((line) => {
+          doc.text(line, margin, yPos, {
+            width: pageWidth,
+          });
+          yPos += 10;
+        });
+
+        // ============================================
+        // THANK YOU MESSAGE
+        // ============================================
+
+        doc.fontSize(8).font("Helvetica-Bold").fillColor("#000000");
+        doc.text("Merci de votre confiance!", margin, yPos, {
+          align: "center",
           width: pageWidth,
         });
-        yPos += 10;
-      });
+        yPos += 12;
 
-      // ============================================
-      // THANK YOU MESSAGE
-      // ============================================
+        doc.fontSize(7).font("Helvetica").fillColor("#000000");
+        doc.text("Conserver ce reçu pour référence.", margin, yPos, {
+          align: "center",
+          width: pageWidth,
+        });
 
-      doc.fontSize(8).font("Helvetica-Bold").fillColor("#000000");
-      doc.text("Merci de votre confiance!", margin, yPos, {
-        align: "center",
-        width: pageWidth,
-      });
-      yPos += 12;
-
-      doc.fontSize(7).font("Helvetica").fillColor("#000000");
-      doc.text("Conserver ce reçu pour référence.", margin, yPos, {
-        align: "center",
-        width: pageWidth,
-      });
-
-      // Finalize PDF
-      doc.end();
+        // Finalize PDF
+        doc.end();
       } catch (error) {
         reject(error);
       }

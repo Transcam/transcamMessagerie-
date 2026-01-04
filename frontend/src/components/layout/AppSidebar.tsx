@@ -22,7 +22,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import logo from "../../../public/assets/images/Logo-Transcam.png";
+// import logo from "../../../public/assets/images/LogoTranscam.jpg";
+import logo from "../../../public/assets/images/LogoTranscam.jpg";
 import { useSettings } from "@/hooks/use-settings";
 
 interface NavItem {
@@ -148,7 +149,6 @@ export function AppSidebar() {
                 height={50}
                 className="object-cover rounded-lg"
                 onError={(e) => {
-                  // Fallback si l'image ne charge pas
                   (e.target as HTMLImageElement).src = logo;
                 }}
               />

@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +15,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCreateUser } from "@/hooks/use-users";
 import { useSettings, useUploadLogo } from "@/hooks/use-settings";
 import { UserRole } from "@/types/role";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Upload, UserPlus } from "lucide-react";
 
@@ -82,13 +94,18 @@ export default function SettingsPage() {
     });
   };
 
-  const currentLogoUrl = logoPreview || settings?.company_logo_url || "/assets/images/Logo-Transcam.png";
+  const currentLogoUrl =
+    logoPreview ||
+    settings?.company_logo_url ||
+    "/assets/images/LogoTranscam.jpg";
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("nav.settings")}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t("nav.settings")}
+          </h1>
           <p className="text-muted-foreground mt-1">
             {language === "fr"
               ? "Gérer les paramètres de l'entreprise et créer des utilisateurs"
@@ -125,7 +142,9 @@ export default function SettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="logo-upload">
-                      {language === "fr" ? "Sélectionner un nouveau logo" : "Select a new logo"}
+                      {language === "fr"
+                        ? "Sélectionner un nouveau logo"
+                        : "Select a new logo"}
                     </Label>
                     <Input
                       id="logo-upload"
@@ -142,8 +161,12 @@ export default function SettingsPage() {
                     >
                       <Upload className="mr-2 h-4 w-4" />
                       {uploadLogo.isPending
-                        ? language === "fr" ? "Téléchargement..." : "Uploading..."
-                        : language === "fr" ? "Télécharger le logo" : "Upload Logo"}
+                        ? language === "fr"
+                          ? "Téléchargement..."
+                          : "Uploading..."
+                        : language === "fr"
+                        ? "Télécharger le logo"
+                        : "Upload Logo"}
                     </Button>
                   )}
                 </>
@@ -173,7 +196,10 @@ export default function SettingsPage() {
                     id="username"
                     value={userFormData.username}
                     onChange={(e) =>
-                      setUserFormData({ ...userFormData, username: e.target.value })
+                      setUserFormData({
+                        ...userFormData,
+                        username: e.target.value,
+                      })
                     }
                     required
                   />
@@ -187,7 +213,10 @@ export default function SettingsPage() {
                     type="password"
                     value={userFormData.password}
                     onChange={(e) =>
-                      setUserFormData({ ...userFormData, password: e.target.value })
+                      setUserFormData({
+                        ...userFormData,
+                        password: e.target.value,
+                      })
                     }
                     required
                   />
@@ -199,7 +228,10 @@ export default function SettingsPage() {
                   <Select
                     value={userFormData.role}
                     onValueChange={(value) =>
-                      setUserFormData({ ...userFormData, role: value as UserRole })
+                      setUserFormData({
+                        ...userFormData,
+                        role: value as UserRole,
+                      })
                     }
                   >
                     <SelectTrigger>
@@ -214,12 +246,20 @@ export default function SettingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="submit" disabled={createUser.isPending} className="w-full">
+                <Button
+                  type="submit"
+                  disabled={createUser.isPending}
+                  className="w-full"
+                >
                   <UserPlus className="mr-2 h-4 w-4" />
                   {createUser.isPending
-                    ? language === "fr" ? "Création..." : "Creating..."
-                    : language === "fr" ? "Créer l'utilisateur" : "Create User"}
-                  </Button>
+                    ? language === "fr"
+                      ? "Création..."
+                      : "Creating..."
+                    : language === "fr"
+                    ? "Créer l'utilisateur"
+                    : "Create User"}
+                </Button>
               </form>
             </CardContent>
           </Card>
@@ -228,4 +268,3 @@ export default function SettingsPage() {
     </DashboardLayout>
   );
 }
-
