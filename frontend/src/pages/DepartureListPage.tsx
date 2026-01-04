@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Filter, Eye, Lock, LockOpen, Download, MoreHorizontal, Edit } from "lucide-react";
+import { Plus, Search, Filter, Eye, Lock, LockOpen, Download, Printer, MoreHorizontal, Edit } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,6 +127,14 @@ export default function DepartureListPage() {
       await departureService.downloadPDF(id);
     } catch (error: any) {
       console.error("Failed to download PDF:", error);
+    }
+  };
+
+  const handlePrintPDF = async (id: number) => {
+    try {
+      await departureService.printPDF(id);
+    } catch (error: any) {
+      console.error("Failed to print PDF:", error);
     }
   };
 
@@ -396,6 +404,12 @@ export default function DepartureListPage() {
                                     >
                                       <Download className="mr-2 h-4 w-4" />
                                       {language === "fr" ? "Télécharger PDF" : "Download PDF"}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => handlePrintPDF(departure.id)}
+                                    >
+                                      <Printer className="mr-2 h-4 w-4" />
+                                      {language === "fr" ? "Imprimer Bordereau" : "Print Waybill"}
                                     </DropdownMenuItem>
                                   </>
                                 )}

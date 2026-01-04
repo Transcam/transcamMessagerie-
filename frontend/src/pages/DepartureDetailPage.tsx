@@ -5,6 +5,7 @@ import {
   Lock,
   LockOpen,
   Download,
+  Printer,
   Edit,
   Package,
   Loader2,
@@ -142,6 +143,26 @@ export default function DepartureDetailPage() {
         title: language === "fr" ? "Erreur" : "Error",
         description: error.response?.data?.error || 
           (language === "fr" ? "Impossible de télécharger le PDF" : "Failed to download PDF"),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePrintPDF = async () => {
+    if (!departure) return;
+    try {
+      await departureService.printPDF(departure.id);
+      toast({
+        title: language === "fr" ? "Impression démarrée" : "Print started",
+        description: language === "fr"
+          ? "Le bordereau est en cours d'impression"
+          : "Waybill is printing",
+      });
+    } catch (error: any) {
+      toast({
+        title: language === "fr" ? "Erreur" : "Error",
+        description: error.response?.data?.error || 
+          (language === "fr" ? "Impossible d'imprimer le bordereau" : "Failed to print waybill"),
         variant: "destructive",
       });
     }
@@ -296,10 +317,16 @@ export default function DepartureDetailPage() {
               </Button>
             )}
             {canDownloadPDF && (
-              <Button variant="outline" onClick={handleDownloadPDF}>
-                <Download className="mr-2 h-4 w-4" />
-                {language === "fr" ? "Télécharger PDF" : "Download PDF"}
-              </Button>
+              <>
+                <Button variant="outline" onClick={handleDownloadPDF}>
+                  <Download className="mr-2 h-4 w-4" />
+                  {language === "fr" ? "Télécharger PDF" : "Download PDF"}
+                </Button>
+                <Button variant="outline" onClick={handlePrintPDF}>
+                  <Printer className="mr-2 h-4 w-4" />
+                  {language === "fr" ? "Imprimer Bordereau" : "Print Waybill"}
+                </Button>
+              </>
             )}
           </div>
         </div>

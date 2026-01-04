@@ -141,5 +141,65 @@ export const departureService = {
     link.remove();
     window.URL.revokeObjectURL(url);
   },
+
+  // Print General Waybill PDF directly (ouvre le dialogue d'impression)
+  printPDF: async (id: number): Promise<void> => {
+    try {
+      const response = await httpService.get(`/departures/${id}/general-waybill`, {
+        responseType: "blob",
+      });
+      
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Open PDF in new window
+      const printWindow = window.open(url, '_blank');
+      
+      if (printWindow) {
+        // Wait for PDF to load, then trigger print dialog
+        setTimeout(() => {
+          try {
+            if (printWindow && !printWindow.closed) {
+              printWindow.print();
+              window.URL.revokeObjectURL(url);
+            }
+          } catch (error) {
+            console.error("Error printing:", error);
+            window.URL.revokeObjectURL(url);
+          }
+        }, 500);
+      } else {
+        // Popup blocked - use iframe fallback
+        const iframe = document.createElement("iframe");
+        iframe.style.position = "fixed";
+        iframe.style.right = "0";
+        iframe.style.bottom = "0";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "none";
+        iframe.src = url;
+        document.body.appendChild(iframe);
+        
+        iframe.onload = () => {
+          setTimeout(() => {
+            try {
+              iframe.contentWindow?.print();
+            } catch (error) {
+              console.error("Error printing via iframe:", error);
+            }
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+              window.URL.revokeObjectURL(url);
+            }, 1000);
+          }, 500);
+        };
+      }
+    } catch (error) {
+      console.error("Error downloading waybill:", error);
+      throw error;
+    }
+  },
 };
 
