@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import logo from "../../../public/assets/images/Logo-Transcam.png";
+import logo from "../../../public/assets/images/Logo-Transcam.jpg";
 
 interface NavItem {
   icon: React.ElementType;
@@ -137,8 +137,8 @@ export function AppSidebar() {
               <img
                 src={logo}
                 alt="Transcam"
-                width={75}
-                height={75}
+                width={50}
+                height={50}
                 className="object-cover rounded-lg"
               />
             </div>

@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import logo from "../../public/assets/images/Logo-Transcam.png";
+import logo from "../../public/assets/images/Logo-Transcam.jpg";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
