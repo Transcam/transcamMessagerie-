@@ -6,11 +6,28 @@ import dotenv from "dotenv";
 import shipmentsRoutes from "./routes/shipments.routes";
 import departuresRoutes from "./routes/departures.routes";
 import userRoutes from "./routes/user.routes";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.use(
+  helmet({
+    // Allow CORS to work with Helmet
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
+    },
+  })
+);
 
 // CORS middleware - must be before other middleware
 app.use(
@@ -20,12 +37,40 @@ app.use(
   })
 );
 
+// General API rate limiter - applies to all routes
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    error: "Too many requests from this IP, please try again later.",
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// Stricter rate limiter for login endpoint
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 login attempts per windowMs
+  message: {
+    error: "Too many login attempts, please try again after 15 minutes.",
+  },
+  skipSuccessfulRequests: true, // Don't count successful logins
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use("/api/", generalLimiter);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Transcam API Server" });
 });
+
+// Apply stricter limiter to login route BEFORE mounting user routes
+app.use("/api/users/login", loginLimiter);
 
 // API Routes
 // All routes use authenticate middleware and role-based authorization
