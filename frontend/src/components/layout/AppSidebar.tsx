@@ -22,8 +22,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSettings } from "@/hooks/use-settings";
 import logo from "../../../public/assets/images/Logo-Transcam.png";
+import { useSettings } from "@/hooks/use-settings";
 
 interface NavItem {
   icon: React.ElementType;
@@ -137,11 +137,15 @@ export function AppSidebar() {
           {!isCollapsed && (
             <div>
               <img
-                key={settings?.company_logo_url || 'default-logo'}
-                src={`${settings?.company_logo_url || logo}${settings?.company_logo_url && settings.updated_at ? `?v=${new Date(settings.updated_at).getTime()}` : ''}`}
+                key={settings?.company_logo_url || "default-logo"}
+                src={`${settings?.company_logo_url || logo}${
+                  settings?.company_logo_url && settings.updated_at
+                    ? `?v=${new Date(settings.updated_at).getTime()}`
+                    : ""
+                }`}
                 alt="Transcam"
-                width={75}
-                height={75}
+                width={50}
+                height={50}
                 className="object-cover rounded-lg"
                 onError={(e) => {
                   // Fallback si l'image ne charge pas

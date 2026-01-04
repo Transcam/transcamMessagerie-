@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import shipmentsRoutes from "./routes/shipments.routes";
 import departuresRoutes from "./routes/departures.routes";
 import userRoutes from "./routes/user.routes";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import settingsRoutes from "./routes/settings.routes";
 
 dotenv.config();
@@ -13,13 +15,50 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS middleware - must be before other middleware
+app.use(
+  helmet({
+    // Allow CORS to work with Helmet
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
+    },
+  })
+);
+
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
   })
 );
+
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    error: "Too many requests from this IP, please try again later.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: {
+    error: "Too many login attempts, please try again after 15 minutes.",
+  },
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use("/api/", generalLimiter);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -28,9 +67,9 @@ app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Transcam API Server" });
 });
 
+app.use("/api/users/login", loginLimiter);
+
 // API Routes
-// All routes use authenticate middleware and role-based authorization
-// See individual route files for specific permission requirements
 app.use("/api/shipments", shipmentsRoutes);
 app.use("/api/departures", departuresRoutes);
 app.use("/api/users", userRoutes);
