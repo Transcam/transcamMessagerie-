@@ -9,6 +9,10 @@ import userRoutes from "./routes/user.routes";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import settingsRoutes from "./routes/settings.routes";
+import vehiclesRoutes from "./routes/vehicles.routes";
+import driversRoutes from "./routes/drivers.routes";
+import expensesRoutes from "./routes/expenses.routes";
+import distributionRoutes from "./routes/distributions.routes";
 
 dotenv.config();
 
@@ -74,6 +78,10 @@ app.use("/api/shipments", shipmentsRoutes);
 app.use("/api/departures", departuresRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/vehicles", vehiclesRoutes);
+app.use("/api/drivers", driversRoutes);
+app.use("/api/expenses", expensesRoutes);
+app.use("/api/distribution", distributionRoutes);
 
 // Test route with database
 // app.get("/", async (req: Request, res: Response) => {

@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Filter, MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -38,11 +44,7 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  useExpenses,
-  useDeleteExpense,
-  Expense,
-} from "@/hooks/use-expenses";
+import { useExpenses, useDeleteExpense, Expense } from "@/hooks/use-expenses";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExpenseStats } from "@/components/expenses/ExpenseStats";
 import {
@@ -50,7 +52,11 @@ import {
   EXPENSE_CATEGORY_LABELS,
 } from "@/services/expense.service";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { DateRange, getDateRangeForPreset, formatDateDisplay } from "@/lib/date-utils";
+import {
+  DateRange,
+  getDateRangeForPreset,
+  formatDateDisplay,
+} from "@/lib/date-utils";
 
 export default function ExpenseListPage() {
   const navigate = useNavigate();
@@ -59,7 +65,7 @@ export default function ExpenseListPage() {
 
   const [filters, setFilters] = useState({
     category: "" as ExpenseCategory | "",
-    dateRange: getDateRangeForPreset("today"),
+    dateRange: getDateRangeForPreset("thisMonth"),
     page: 1,
     limit: 20,
   });
@@ -69,6 +75,7 @@ export default function ExpenseListPage() {
 
   const { data, isLoading, error } = useExpenses({
     ...filters,
+    category: filters.category || undefined,
     dateFrom: filters.dateRange.startDate,
     dateTo: filters.dateRange.endDate,
   });
@@ -89,7 +96,7 @@ export default function ExpenseListPage() {
   const clearFilters = () => {
     setFilters({
       category: "",
-      dateRange: getDateRangeForPreset("today"),
+      dateRange: getDateRangeForPreset("thisMonth"),
       page: 1,
       limit: 20,
     });
@@ -190,13 +197,13 @@ export default function ExpenseListPage() {
                     <SelectItem value="all">
                       {language === "fr" ? "Toutes" : "All"}
                     </SelectItem>
-                    {(Object.keys(EXPENSE_CATEGORY_LABELS) as ExpenseCategory[]).map(
-                      (category) => (
-                        <SelectItem key={category} value={category}>
-                          {EXPENSE_CATEGORY_LABELS[category]}
-                        </SelectItem>
-                      )
-                    )}
+                    {(
+                      Object.keys(EXPENSE_CATEGORY_LABELS) as ExpenseCategory[]
+                    ).map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {EXPENSE_CATEGORY_LABELS[category]}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -210,7 +217,11 @@ export default function ExpenseListPage() {
                 />
               </div>
               <div className="flex items-end">
-                <Button variant="outline" onClick={clearFilters} className="w-full">
+                <Button
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="w-full"
+                >
                   {language === "fr" ? "Effacer" : "Clear"}
                 </Button>
               </div>
@@ -309,23 +320,34 @@ export default function ExpenseListPage() {
                         <TableCell className="text-muted-foreground">
                           {expense.created_by?.username || "-"}
                         </TableCell>
-                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <TableCell
+                          className="text-right"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => navigate(`/expenses/${expense.id}`)}
+                                onClick={() =>
+                                  navigate(`/expenses/${expense.id}`)
+                                }
                               >
                                 <Eye className="mr-2 h-4 w-4" />
                                 {language === "fr" ? "Voir" : "View"}
                               </DropdownMenuItem>
                               {canEdit && (
                                 <DropdownMenuItem
-                                  onClick={() => navigate(`/expenses/${expense.id}/edit`)}
+                                  onClick={() =>
+                                    navigate(`/expenses/${expense.id}/edit`)
+                                  }
                                 >
                                   <Edit className="mr-2 h-4 w-4" />
                                   {language === "fr" ? "Modifier" : "Edit"}
@@ -428,4 +450,3 @@ export default function ExpenseListPage() {
     </DashboardLayout>
   );
 }
-

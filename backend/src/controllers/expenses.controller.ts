@@ -13,14 +13,23 @@ export class ExpensesController {
 
   list = async (req: Request, res: Response) => {
     try {
+      let dateFrom: Date | undefined;
+      let dateTo: Date | undefined;
+
+      if (req.query.dateFrom) {
+        dateFrom = new Date(req.query.dateFrom as string);
+        dateFrom.setHours(0, 0, 0, 0); // Start of day
+      }
+
+      if (req.query.dateTo) {
+        dateTo = new Date(req.query.dateTo as string);
+        dateTo.setHours(23, 59, 59, 999); // End of day
+      }
+
       const filters = {
         category: req.query.category as ExpenseCategory | undefined,
-        dateFrom: req.query.dateFrom
-          ? new Date(req.query.dateFrom as string)
-          : undefined,
-        dateTo: req.query.dateTo
-          ? new Date(req.query.dateTo as string)
-          : undefined,
+        dateFrom,
+        dateTo,
         page: req.query.page ? parseInt(req.query.page as string) : 1,
         limit: req.query.limit ? parseInt(req.query.limit as string) : 20,
       };
@@ -120,9 +129,7 @@ export class ExpensesController {
 
       // Validate amount if provided
       if (amount !== undefined && amount <= 0) {
-        return res
-          .status(400)
-          .json({ error: "Amount must be greater than 0" });
+        return res.status(400).json({ error: "Amount must be greater than 0" });
       }
 
       // Validate category if provided
@@ -160,13 +167,22 @@ export class ExpensesController {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
+      let dateFrom: Date | undefined;
+      let dateTo: Date | undefined;
+
+      if (req.query.dateFrom) {
+        dateFrom = new Date(req.query.dateFrom as string);
+        dateFrom.setHours(0, 0, 0, 0); // Start of day
+      }
+
+      if (req.query.dateTo) {
+        dateTo = new Date(req.query.dateTo as string);
+        dateTo.setHours(23, 59, 59, 999); // End of day
+      }
+
       const filters = {
-        dateFrom: req.query.dateFrom
-          ? new Date(req.query.dateFrom as string)
-          : undefined,
-        dateTo: req.query.dateTo
-          ? new Date(req.query.dateTo as string)
-          : undefined,
+        dateFrom,
+        dateTo,
       };
 
       const statistics = await this.service.getStatistics(filters, req.user);
@@ -190,5 +206,3 @@ export class ExpensesController {
     }
   };
 }
-
-
