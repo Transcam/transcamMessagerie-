@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Printer,
+  Download,
   Edit,
   X,
   Loader2,
@@ -27,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useShipment, useCancelShipment, useGenerateReceipt } from "@/hooks/use-shipments";
+import { useShipment, useCancelShipment, useGenerateReceipt, useDownloadReceipt } from "@/hooks/use-shipments";
 import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +46,7 @@ export default function ShipmentDetailPage() {
   const { data: shipment, isLoading, error } = useShipment(shipmentId);
   const cancelShipment = useCancelShipment();
   const generateReceipt = useGenerateReceipt();
+  const downloadReceipt = useDownloadReceipt();
 
   const canEdit = hasPermission("edit_shipment") && shipment && !shipment.is_cancelled;
   const canCancel = hasPermission("delete_shipment") && shipment && !shipment.is_cancelled;
@@ -146,24 +148,44 @@ export default function ShipmentDetailPage() {
               isCancelled={shipment.is_cancelled}
             />
             {canPrintReceipt && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => generateReceipt.mutate({ id: shipment.id, waybillNumber: shipment.waybill_number })}
-                disabled={generateReceipt.isPending}
-              >
-                {generateReceipt.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {language === "fr" ? "Téléchargement..." : "Downloading..."}
-                  </>
-                ) : (
-                  <>
-                    <Printer className="mr-2 h-4 w-4" />
-                    {language === "fr" ? "Imprimer Reçu" : "Print Receipt"}
-                  </>
-                )}
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadReceipt.mutate({ id: shipment.id, waybillNumber: shipment.waybill_number })}
+                  disabled={downloadReceipt.isPending}
+                >
+                  {downloadReceipt.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {language === "fr" ? "Téléchargement..." : "Downloading..."}
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2 h-4 w-4" />
+                      {language === "fr" ? "Télécharger Reçu" : "Download Receipt"}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => generateReceipt.mutate({ id: shipment.id, waybillNumber: shipment.waybill_number })}
+                  disabled={generateReceipt.isPending}
+                >
+                  {generateReceipt.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {language === "fr" ? "Impression..." : "Printing..."}
+                    </>
+                  ) : (
+                    <>
+                      <Printer className="mr-2 h-4 w-4" />
+                      {language === "fr" ? "Imprimer Reçu" : "Print Receipt"}
+                    </>
+                  )}
+                </Button>
+              </>
             )}
           </div>
         </div>

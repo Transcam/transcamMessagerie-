@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSettings } from "@/hooks/use-settings";
 import logo from "../../../public/assets/images/Logo-Transcam.png";
 
 interface NavItem {
@@ -109,6 +110,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { t, language, setLanguage } = useLanguage();
   const { user, logout, hasPermission } = useAuth();
+  const { data: settings } = useSettings();
 
   const toggleExpanded = (href: string) => {
     setExpandedItems((prev) =>
@@ -135,7 +137,7 @@ export function AppSidebar() {
           {!isCollapsed && (
             <div>
               <img
-                src={logo}
+                src={settings?.company_logo_url || logo}
                 alt="Transcam"
                 width={75}
                 height={75}

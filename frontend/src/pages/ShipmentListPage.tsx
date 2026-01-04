@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Plus, Search, Filter, Eye, Printer, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, Eye, Printer, Download, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useShipments, useCancelShipment, useGenerateReceipt } from "@/hooks/use-shipments";
+import { useShipments, useCancelShipment, useGenerateReceipt, useDownloadReceipt } from "@/hooks/use-shipments";
 import { shipmentService } from "@/services/shipment.service";
 import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -105,6 +105,7 @@ export default function ShipmentListPage() {
   const { data, isLoading, error } = useShipments(filters);
   const cancelShipment = useCancelShipment();
   const generateReceipt = useGenerateReceipt();
+  const downloadReceipt = useDownloadReceipt();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(amount);
@@ -155,6 +156,14 @@ export default function ShipmentListPage() {
       setDeleteDialogOpen(false);
       setShipmentToDelete(null);
       setDeleteReason("");
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleDownloadReceipt = async (shipmentId: number, waybillNumber?: string) => {
+    try {
+      await downloadReceipt.mutateAsync({ id: shipmentId, waybillNumber });
     } catch (error) {
       // Error handled by hook
     }
@@ -445,7 +454,17 @@ export default function ShipmentListPage() {
                                 {language === "fr" ? "Modifier" : "Edit"}
                               </DropdownMenuItem>
                               
-                              {/* Print - Always visible */}
+                              {/* Download Receipt - Always visible */}
+                              {hasPermission("print_receipt") && (
+                                <DropdownMenuItem
+                                  onClick={() => handleDownloadReceipt(shipment.id, shipment.waybill_number)}
+                                  disabled={downloadReceipt.isPending}
+                                >
+                                  <Download className="mr-2 h-4 w-4" />
+                                  {language === "fr" ? "Télécharger Reçu" : "Download Receipt"}
+                                </DropdownMenuItem>
+                              )}
+                              {/* Print Receipt - Always visible */}
                               {hasPermission("print_receipt") && (
                                 <DropdownMenuItem
                                   onClick={() => handlePrintReceipt(shipment.id, shipment.waybill_number)}

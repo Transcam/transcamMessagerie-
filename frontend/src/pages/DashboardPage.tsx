@@ -8,6 +8,7 @@ import {
   ArrowDownRight,
   Eye,
   Printer,
+  Download,
   MoreHorizontal,
 } from "lucide-react";
 import {
@@ -35,7 +36,7 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useShipments, useGenerateReceipt } from "@/hooks/use-shipments";
+import { useShipments, useGenerateReceipt, useDownloadReceipt } from "@/hooks/use-shipments";
 import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo, useState } from "react";
@@ -72,6 +73,7 @@ export default function DashboardPage() {
     includeCancelled: false,
   });
   const generateReceipt = useGenerateReceipt();
+  const downloadReceipt = useDownloadReceipt();
 
   // Calculate stats from real data filtered by date range
   const stats = useMemo(() => {
@@ -380,6 +382,15 @@ export default function DashboardPage() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 {t("common.view")}
                               </DropdownMenuItem>
+                              {hasPermission("print_receipt") && (
+                                <DropdownMenuItem
+                                  onClick={() => downloadReceipt.mutate({ id: shipment.id, waybillNumber: shipment.waybill_number })}
+                                  disabled={downloadReceipt.isPending}
+                                >
+                                  <Download className="mr-2 h-4 w-4" />
+                                  {language === "fr" ? "Télécharger Reçu" : "Download Receipt"}
+                                </DropdownMenuItem>
+                              )}
                               {hasPermission("print_receipt") && (
                                 <DropdownMenuItem
                                   onClick={() => generateReceipt.mutate({ id: shipment.id, waybillNumber: shipment.waybill_number })}

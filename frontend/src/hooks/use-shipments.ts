@@ -161,14 +161,14 @@ export function useCancelShipment() {
   });
 }
 
-// Generate receipt mutation
-export function useGenerateReceipt() {
+// Download receipt mutation (télécharge le PDF)
+export function useDownloadReceipt() {
   const { toast } = useToast();
   const { language } = useLanguage();
 
   return useMutation({
     mutationFn: ({ id, waybillNumber }: { id: number; waybillNumber?: string }) =>
-      shipmentService.downloadReceipt(id, waybillNumber),
+      shipmentService.generateWaybill(id, waybillNumber),
     onSuccess: () => {
       toast({
         title: language === "fr" ? "Téléchargement démarré" : "Download started",
@@ -186,6 +186,37 @@ export function useGenerateReceipt() {
           (language === "fr"
             ? "Impossible de télécharger le reçu"
             : "Failed to download receipt"),
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+// Generate receipt mutation (imprime directement)
+export function useGenerateReceipt() {
+  const { toast } = useToast();
+  const { language } = useLanguage();
+
+  return useMutation({
+    mutationFn: ({ id, waybillNumber }: { id: number; waybillNumber?: string }) =>
+      shipmentService.downloadReceipt(id, waybillNumber),
+    onSuccess: () => {
+      toast({
+        title: language === "fr" ? "Impression démarrée" : "Print started",
+        description:
+          language === "fr"
+            ? "Le reçu est en cours d'impression"
+            : "Receipt is printing",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === "fr" ? "Erreur" : "Error",
+        description:
+          error.response?.data?.error ||
+          (language === "fr"
+            ? "Impossible d'imprimer le reçu"
+            : "Failed to print receipt"),
         variant: "destructive",
       });
     },

@@ -28,7 +28,9 @@ import DriverDetailPage from "./pages/DriverDetailPage";
 import NewDriverPage from "./pages/NewDriverPage";
 import EditDriverPage from "./pages/EditDriverPage";
 import DistributionPage from "./pages/DistributionPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
+import { useFavicon } from "./hooks/use-favicon";
 
 const queryClient = new QueryClient();
 
@@ -277,7 +279,7 @@ function AppRoutes() {
         path="/settings"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <SettingsPage />
           </ProtectedRoute>
         }
       />
@@ -286,17 +288,25 @@ function AppRoutes() {
   );
 }
 
+const AppContent = () => {
+  useFavicon();
+  
+  return (
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </TooltipProvider>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
+        <AppContent />
       </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>

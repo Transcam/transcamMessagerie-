@@ -1,16 +1,19 @@
 import { Repository } from "typeorm";
 import { AppDataSource } from "../../db";
 import { Departure } from "../entities/departure.entity";
+import { Settings } from "../entities/settings.entity";
 import PDFDocument from "pdfkit";
 import * as fs from "fs";
 import * as path from "path";
 
 export class GeneralWaybillService {
   private departureRepo: Repository<Departure>;
+  private settingsRepo: Repository<Settings>;
   private storagePath: string;
 
   constructor() {
     this.departureRepo = AppDataSource.getRepository(Departure);
+    this.settingsRepo = AppDataSource.getRepository(Settings);
     // Storage path for PDFs
     this.storagePath = path.join(process.cwd(), "storage", "waybills");
     
@@ -66,6 +69,25 @@ export class GeneralWaybillService {
       }
     }
     
+    // Récupérer le logo depuis les settings
+    let logoPath: string | null = null;
+    let logoExists = false;
+    
+    try {
+      const settings = await this.settingsRepo.findOne({ where: { id: "company" } });
+      const logoUrl = settings?.company_logo_url || "/assets/images/Logo-Transcam.png";
+      
+      // Chemin physique du logo
+      logoPath = path.join(process.cwd(), "..", "frontend", "public", logoUrl);
+      logoExists = fs.existsSync(logoPath);
+      
+      if (!logoExists) {
+        console.warn(`⚠️ [PDF] Logo non trouvé à: ${logoPath}`);
+      }
+    } catch (error) {
+      console.warn("⚠️ [PDF] Erreur lors de la récupération des settings:", error);
+    }
+    
     const doc = new PDFDocument({ margin: 50, size: "A4" });
     const filename = `general-waybill-${departure.id}-${Date.now()}.pdf`;
     const filepath = path.join(this.storagePath, filename);
@@ -83,6 +105,26 @@ export class GeneralWaybillService {
 
     // 1. COMPANY IDENTITY (Top Center)
     const pageWidth = 500; // A4 width minus margins (50*2 each side)
+    
+    // Logo (si disponible)
+    if (logoExists && logoPath) {
+      try {
+        // Logo centré, dimensions adaptées pour format A4
+        const logoWidth = 80;
+        const logoHeight = 60; // Ratio 4:3 approximatif
+        const logoX = 50 + (pageWidth / 2) - (logoWidth / 2); // Centré horizontalement
+        
+        doc.image(logoPath, logoX, yPos, {
+          width: logoWidth,
+          height: logoHeight,
+          fit: [logoWidth, logoHeight], // Conserver proportions
+        });
+        yPos += logoHeight + 10; // Espace après le logo
+      } catch (error) {
+        console.warn("⚠️ [PDF] Erreur lors du chargement du logo:", error);
+        // Continue sans logo si erreur
+      }
+    }
     
     // Company name in uppercase, centered, bold
     doc.fontSize(18).font("Helvetica-Bold").fillColor("#000000");

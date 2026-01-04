@@ -261,6 +261,7 @@ export class ShipmentService {
   async generateWaybillPDF(shipmentId: number): Promise<Buffer> {
     const shipment = await this.shipmentRepo.findOne({
       where: { id: shipmentId },
+      relations: ["created_by"],
     });
 
     if (!shipment) {
@@ -276,6 +277,7 @@ export class ShipmentService {
   async generateReceiptPDF(shipmentId: number): Promise<Buffer> {
     const shipment = await this.shipmentRepo.findOne({
       where: { id: shipmentId },
+      relations: ["created_by"],
     });
 
     if (!shipment) {
