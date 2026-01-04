@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { settingsService, UpdateSettingsDTO } from "@/services/settings.service";
+import {
+  settingsService,
+  UpdateSettingsDTO,
+} from "@/services/settings.service";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -38,7 +41,9 @@ export function useUpdateSettings() {
         description:
           error.response?.data?.error ||
           error.response?.data?.message ||
-          (language === "fr" ? "Impossible de mettre à jour les paramètres" : "Failed to update settings"),
+          (language === "fr"
+            ? "Impossible de mettre à jour les paramètres"
+            : "Failed to update settings"),
         variant: "destructive",
       });
     },
@@ -53,7 +58,8 @@ export function useUploadLogo() {
   return useMutation({
     mutationFn: (file: File) => settingsService.uploadLogo(file),
     onSuccess: () => {
-      // Utiliser refetchQueries pour forcer le rechargement immédiat
+      // Invalider le cache et forcer le rechargement immédiat
+      queryClient.invalidateQueries({ queryKey: settingsKeys.all });
       queryClient.refetchQueries({ queryKey: settingsKeys.all });
       toast({
         title: language === "fr" ? "Logo téléchargé" : "Logo uploaded",
@@ -69,10 +75,11 @@ export function useUploadLogo() {
         description:
           error.response?.data?.error ||
           error.response?.data?.message ||
-          (language === "fr" ? "Impossible de télécharger le logo" : "Failed to upload logo"),
+          (language === "fr"
+            ? "Impossible de télécharger le logo"
+            : "Failed to upload logo"),
         variant: "destructive",
       });
     },
   });
 }
-

@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/hooks/use-settings";
 import logo from "../../public/assets/images/LogoTranscam.jpg";
 
 export default function LoginPage() {
@@ -25,6 +26,7 @@ export default function LoginPage() {
   const { t, language, setLanguage } = useLanguage();
   const { login } = useAuth();
   const { toast } = useToast();
+  const { data: settings } = useSettings();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,11 +117,22 @@ export default function LoginPage() {
         <CardHeader className="text-center space-y-4">
           <div>
             <img
-              src={logo}
+              src={
+                settings?.company_logo_url
+                  ? `${settings.company_logo_url}${
+                      settings.updated_at
+                        ? `?v=${new Date(settings.updated_at).getTime()}`
+                        : ""
+                    }`
+                  : logo
+              }
               alt="Transcam"
               width={200}
               height={200}
               className="mx-auto bg-rose-500"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = logo;
+              }}
             />
           </div>
           <CardDescription className="mt-2">

@@ -94,10 +94,15 @@ export default function SettingsPage() {
     });
   };
 
-  const currentLogoUrl =
-    logoPreview ||
-    settings?.company_logo_url ||
-    "/assets/images/LogoTranscam.jpg";
+  const currentLogoUrl = logoPreview
+    ? logoPreview
+    : settings?.company_logo_url
+    ? `${settings.company_logo_url}${
+        settings.updated_at
+          ? `?v=${new Date(settings.updated_at).getTime()}`
+          : ""
+      }`
+    : "/assets/images/LogoTranscam.jpg";
 
   return (
     <DashboardLayout>
