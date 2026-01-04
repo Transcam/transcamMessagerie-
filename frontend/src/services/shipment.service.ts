@@ -161,19 +161,39 @@ export const shipmentService = {
     window.URL.revokeObjectURL(url);
   },
 
-  // Generate receipt (placeholder)
+  // Generate receipt and print directly
   downloadReceipt: async (id: number, waybillNumber?: string): Promise<void> => {
     const response = await httpService.get(`/shipments/${id}/receipt`, {
       responseType: "blob",
     } as any);
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `recu-${waybillNumber || id}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
+    
+    const blob = new Blob([response.data], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+    
+    // Create an iframe to load the PDF
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "none";
+    iframe.src = url;
+    
+    document.body.appendChild(iframe);
+    
+    // Wait for PDF to load, then trigger print
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow?.print();
+        
+        // Clean up after printing (with a delay to allow print dialog to open)
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+      }, 250);
+    };
   },
 
   getStatistics: async (

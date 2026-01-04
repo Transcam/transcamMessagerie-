@@ -70,3 +70,4 @@ export class Vehicle {
   updated_at!: Date;
 }
 
+

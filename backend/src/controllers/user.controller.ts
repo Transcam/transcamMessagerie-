@@ -7,10 +7,7 @@ import { UserRole } from "../types/roles";
 
 export const createUser = async (req: Request, res: Response) => {
   try {
-    // Trim whitespace from username and password
-    const username = req.body.username?.trim();
-    const password = req.body.password?.trim();
-    const role = req.body.role;
+    const { username, password, role } = req.body;
 
     if (!username || !password) {
       return res
@@ -98,10 +95,7 @@ export const getUser = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // Trim whitespace from username and password if provided
-    const username = req.body.username?.trim();
-    const password = req.body.password?.trim();
-    const role = req.body.role;
+    const { username, password, role } = req.body;
     const userRepo = AppDataSource.getRepository(User);
 
     const user = await userRepo.findOne({ where: { id: parseInt(id) } });
@@ -191,9 +185,7 @@ export const deleteUser = async (req: Request, res: Response) => {
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
-    // Trim whitespace from username and password
-    const username = req.body.username?.trim();
-    const password = req.body.password?.trim();
+    const { username, password } = req.body;
 
     if (!username || !password) {
       return res
@@ -201,7 +193,7 @@ export const loginUser = async (req: Request, res: Response) => {
         .json({ message: "Username and password are required" });
     }
 
-    console.log({ username, password });
+    console.log(req.body);
 
     const user = await AppDataSource.getRepository(User).findOne({
       where: { username },

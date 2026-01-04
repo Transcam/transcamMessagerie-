@@ -69,3 +69,4 @@ export class Driver {
   updated_at!: Date;
 }
 
+

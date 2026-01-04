@@ -35,8 +35,14 @@ export const authenticate = async (
 
     req.user = user;
     next();
-  } catch (error) {
-    // Handle JWT verification errors or database errors
+  } catch (error: any) {
+    // Distinguish between expired tokens (expected) and other errors
+    if (error.name === "TokenExpiredError") {
+      // Token expired - this is expected, don't log as error
+      return res.status(401).json({ message: "Token expired" });
+    }
+    
+    // Handle other JWT verification errors or database errors
     console.error("Authentication error:", error);
     return res.status(401).json({ message: "Invalid token" });
   }

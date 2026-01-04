@@ -6,10 +6,6 @@ import dotenv from "dotenv";
 import shipmentsRoutes from "./routes/shipments.routes";
 import departuresRoutes from "./routes/departures.routes";
 import userRoutes from "./routes/user.routes";
-import expensesRoutes from "./routes/expenses.routes";
-import vehiclesRoutes from "./routes/vehicles.routes";
-import driversRoutes from "./routes/drivers.routes";
-import distributionsRoutes from "./routes/distributions.routes";
 
 dotenv.config();
 
@@ -19,24 +15,7 @@ const PORT = process.env.PORT || 3000;
 // CORS middleware - must be before other middleware
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, Postman, etc.)
-      if (!origin) return callback(null, true);
-      
-      const allowedOrigins = [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://transcam-messagerie-git-main-transcams-projects.vercel.app",
-        "https://transcamcm.com",
-        process.env.FRONTEND_URL, // Add any custom URL from env
-      ].filter(Boolean); // Remove undefined values
-      
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
   })
 );
@@ -54,10 +33,6 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api/shipments", shipmentsRoutes);
 app.use("/api/departures", departuresRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/expenses", expensesRoutes);
-app.use("/api/vehicles", vehiclesRoutes);
-app.use("/api/drivers", driversRoutes);
-app.use("/api/distributions", distributionsRoutes);
 
 // Test route with database
 // app.get("/", async (req: Request, res: Response) => {

@@ -4,7 +4,6 @@ import {
   Shipment,
   ShipmentStatus,
   ShipmentNature,
-  ShipmentType,
 } from "../entities/shipment.entity";
 import { User } from "../entities/user.entity";
 import { AuditLog } from "../entities/audit-log.entity";
@@ -24,7 +23,6 @@ export interface CreateShipmentDTO {
   price: number;
   route: string;
   nature?: ShipmentNature;
-  type?: ShipmentType;
 }
 
 export interface UpdateShipmentDTO {
@@ -38,7 +36,6 @@ export interface UpdateShipmentDTO {
   price?: number;
   route?: string;
   nature?: ShipmentNature;
-  type?: ShipmentType;
 }
 
 export interface ShipmentFiltersDTO {
@@ -47,7 +44,6 @@ export interface ShipmentFiltersDTO {
   dateFrom?: Date;
   dateTo?: Date;
   waybillNumber?: string;
-  nature?: ShipmentNature;
   includeCancelled?: boolean;
   page?: number;
   limit?: number;
@@ -75,7 +71,6 @@ export class ShipmentService {
       ...data,
       waybill_number: waybillNumber,
       nature: data.nature || ShipmentNature.COLS,
-      type: data.type || ShipmentType.STANDARD,
       status: ShipmentStatus.CONFIRMED,
       is_confirmed: true,
       confirmed_at: new Date(),
@@ -195,25 +190,15 @@ export class ShipmentService {
       query.andWhere("shipment.route = :route", { route: filters.route });
     }
 
-    if (filters.nature) {
-      query.andWhere("shipment.nature = :nature", { nature: filters.nature });
-    }
-
     if (filters.dateFrom) {
-      // Set to start of day to include all shipments created on this date
-      const startOfDay = new Date(filters.dateFrom);
-      startOfDay.setHours(0, 0, 0, 0);
       query.andWhere("shipment.created_at >= :dateFrom", {
-        dateFrom: startOfDay,
+        dateFrom: filters.dateFrom,
       });
     }
 
     if (filters.dateTo) {
-      // Set to end of day to include all shipments created on this date
-      const endOfDay = new Date(filters.dateTo);
-      endOfDay.setHours(23, 59, 59, 999);
       query.andWhere("shipment.created_at <= :dateTo", {
-        dateTo: endOfDay,
+        dateTo: filters.dateTo,
       });
     }
 
@@ -233,116 +218,6 @@ export class ShipmentService {
     query.orderBy("shipment.created_at", "DESC");
 
     return query.getManyAndCount();
-  }
-
-  async getStatistics(filters?: {
-    nature?: ShipmentNature;
-    dateFrom?: Date;
-    dateTo?: Date;
-  }): Promise<{
-    total: number;
-    totalPrice: number;
-    totalWeight: number;
-    byStatus: { [key: string]: number };
-    byNature?: { colis: number; courrier: number };
-    todayCount: number;
-    monthCount: number;
-    monthRevenue: number;
-  }> {
-    const query = this.shipmentRepo
-      .createQueryBuilder("shipment")
-      .where("shipment.is_cancelled = :isCancelled", { isCancelled: false });
-
-    // Apply nature filter if provided
-    if (filters?.nature) {
-      query.andWhere("shipment.nature = :nature", { nature: filters.nature });
-    }
-
-    // Apply date filters if provided
-    if (filters?.dateFrom) {
-      // Set to start of day to include all shipments created on this date
-      const startOfDay = new Date(filters.dateFrom);
-      startOfDay.setHours(0, 0, 0, 0);
-      query.andWhere("shipment.created_at >= :dateFrom", {
-        dateFrom: startOfDay,
-      });
-    }
-    if (filters?.dateTo) {
-      // Set to end of day to include all shipments created on this date
-      const endOfDay = new Date(filters.dateTo);
-      endOfDay.setHours(23, 59, 59, 999);
-      query.andWhere("shipment.created_at <= :dateTo", {
-        dateTo: endOfDay,
-      });
-    }
-
-    // Get all shipments matching the filter
-    const shipments = await query.getMany();
-
-    // Calculate statistics
-    const total = shipments.length;
-    const totalPrice = shipments.reduce(
-      (sum, s) => sum + parseFloat(s.price.toString()),
-      0
-    );
-    const totalWeight = shipments.reduce(
-      (sum, s) => sum + parseFloat(s.weight.toString()),
-      0
-    );
-
-    // Group by status
-    const byStatus: { [key: string]: number } = {};
-    shipments.forEach((s) => {
-      const status = s.status;
-      byStatus[status] = (byStatus[status] || 0) + 1;
-    });
-
-    // Group by nature (only if nature filter is not applied)
-    let byNature: { colis: number; courrier: number } | undefined;
-    if (!filters?.nature) {
-      byNature = {
-        colis: shipments.filter((s) => s.nature === ShipmentNature.COLS).length,
-        courrier: shipments.filter((s) => s.nature === ShipmentNature.COURRIER)
-          .length,
-      };
-    }
-
-    // Calculate today's statistics
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayShipments = shipments.filter((s) => {
-      const createdDate = new Date(s.created_at);
-      createdDate.setHours(0, 0, 0, 0);
-      return createdDate.getTime() === today.getTime();
-    });
-    const todayCount = todayShipments.length;
-    const todayRevenue = todayShipments.reduce(
-      (sum, s) => sum + parseFloat(s.price.toString()),
-      0
-    );
-
-    // Calculate month's statistics
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    const monthShipments = shipments.filter((s) => {
-      const createdDate = new Date(s.created_at);
-      return createdDate >= monthStart;
-    });
-    const monthCount = monthShipments.length;
-    const monthRevenue = monthShipments.reduce(
-      (sum, s) => sum + parseFloat(s.price.toString()),
-      0
-    );
-
-    return {
-      total,
-      totalPrice,
-      totalWeight,
-      byStatus,
-      byNature,
-      todayCount,
-      monthCount,
-      monthRevenue,
-    };
   }
 
   async getOne(id: number): Promise<Shipment> {
@@ -396,13 +271,123 @@ export class ShipmentService {
   }
 
   /**
-   * Generate Receipt PDF (Ticket format)
+   * Generate Receipt PDF
    */
   async generateReceiptPDF(shipmentId: number): Promise<Buffer> {
-    const shipment = await this.getOne(shipmentId);
+    const shipment = await this.shipmentRepo.findOne({
+      where: { id: shipmentId },
+    });
+
     if (!shipment) {
       throw new Error("Shipment not found");
     }
+
     return await this.receiptService.generatePDF(shipment);
+  }
+
+  /**
+   * Get shipment statistics
+   */
+  async getStatistics(filters: {
+    nature?: ShipmentNature;
+    dateFrom?: Date;
+    dateTo?: Date;
+  }): Promise<{
+    total: number;
+    totalPrice: number;
+    totalWeight: number;
+    byStatus: { [key: string]: number };
+    byNature?: { colis: number; courrier: number };
+    todayCount: number;
+    monthCount: number;
+    monthRevenue: number;
+  }> {
+    const query = this.shipmentRepo.createQueryBuilder("shipment");
+
+    // Exclude cancelled shipments by default
+    query.andWhere("shipment.is_cancelled = false");
+
+    // Apply filters
+    if (filters.nature) {
+      query.andWhere("shipment.nature = :nature", { nature: filters.nature });
+    }
+
+    if (filters.dateFrom) {
+      query.andWhere("shipment.created_at >= :dateFrom", {
+        dateFrom: filters.dateFrom,
+      });
+    }
+
+    if (filters.dateTo) {
+      query.andWhere("shipment.created_at <= :dateTo", {
+        dateTo: filters.dateTo,
+      });
+    }
+
+    const shipments = await query.getMany();
+
+    // Calculate totals
+    const total = shipments.length;
+    const totalPrice = shipments.reduce(
+      (sum, s) => sum + parseFloat(s.price.toString()),
+      0
+    );
+    const totalWeight = shipments.reduce(
+      (sum, s) => sum + parseFloat(s.weight.toString()),
+      0
+    );
+
+    // Group by status
+    const byStatus: { [key: string]: number } = {};
+    shipments.forEach((s) => {
+      const status = s.status;
+      byStatus[status] = (byStatus[status] || 0) + 1;
+    });
+
+    // Group by nature
+    const byNature: { colis: number; courrier: number } = {
+      colis: 0,
+      courrier: 0,
+    };
+    shipments.forEach((s) => {
+      if (s.nature === ShipmentNature.COLS) {
+        byNature.colis += 1;
+      } else if (s.nature === ShipmentNature.COURRIER) {
+        byNature.courrier += 1;
+      }
+    });
+
+    // Calculate today's statistics
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayShipments = shipments.filter((s) => {
+      const createdDate = new Date(s.created_at);
+      createdDate.setHours(0, 0, 0, 0);
+      return createdDate.getTime() === today.getTime();
+    });
+    const todayCount = todayShipments.length;
+
+    // Calculate month's statistics
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthShipments = shipments.filter((s) => {
+      const createdDate = new Date(s.created_at);
+      return createdDate >= monthStart;
+    });
+    const monthCount = monthShipments.length;
+    const monthRevenue = monthShipments.reduce(
+      (sum, s) => sum + parseFloat(s.price.toString()),
+      0
+    );
+
+    return {
+      total,
+      totalPrice,
+      totalWeight,
+      byStatus,
+      byNature,
+      todayCount,
+      monthCount,
+      monthRevenue,
+    };
   }
 }

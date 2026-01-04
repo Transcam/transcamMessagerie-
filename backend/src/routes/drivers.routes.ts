@@ -15,3 +15,4 @@ router.delete("/:id", authenticate, authorize("delete_driver"), controller.delet
 
 export default router;
 
+

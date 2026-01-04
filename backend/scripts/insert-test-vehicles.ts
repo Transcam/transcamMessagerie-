@@ -149,3 +149,4 @@ async function insertTestVehicles() {
 // Run the script
 insertTestVehicles();
 
+

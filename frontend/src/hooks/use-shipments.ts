@@ -45,7 +45,10 @@ export function useCreateShipment() {
   return useMutation({
     mutationFn: (data: CreateShipmentDTO) => shipmentService.create(data),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: shipmentKeys.lists() });
+      // Invalider toutes les queries de shipments (comme les autres mutations)
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.all });
+      // Invalider aussi les statistiques
+      queryClient.invalidateQueries({ queryKey: ["shipment-statistics"] });
       toast({
         title: language === "fr" ? "Expédition créée" : "Shipment created",
         description:

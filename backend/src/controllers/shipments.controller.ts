@@ -12,15 +12,25 @@ export class ShipmentsController {
 
   list = async (req: Request, res: Response) => {
     try {
+      // Parse dateFrom (start of day)
+      let dateFrom: Date | undefined;
+      if (req.query.dateFrom) {
+        dateFrom = new Date(req.query.dateFrom as string);
+        dateFrom.setHours(0, 0, 0, 0);
+      }
+
+      // Parse dateTo (end of day - 23:59:59.999)
+      let dateTo: Date | undefined;
+      if (req.query.dateTo) {
+        dateTo = new Date(req.query.dateTo as string);
+        dateTo.setHours(23, 59, 59, 999);
+      }
+
       const filters = {
         status: req.query.status as ShipmentStatus | undefined,
         route: req.query.route as string | undefined,
-        dateFrom: req.query.dateFrom
-          ? new Date(req.query.dateFrom as string)
-          : undefined,
-        dateTo: req.query.dateTo
-          ? new Date(req.query.dateTo as string)
-          : undefined,
+        dateFrom,
+        dateTo,
         waybillNumber: req.query.waybillNumber as string | undefined,
         nature: req.query.nature as ShipmentNature | undefined,
         includeCancelled: req.query.includeCancelled === "true",
@@ -213,10 +223,14 @@ export class ShipmentsController {
 
       // Add date filters if provided
       if (req.query.dateFrom) {
-        filters.dateFrom = new Date(req.query.dateFrom as string);
+        const date = new Date(req.query.dateFrom as string);
+        date.setHours(0, 0, 0, 0); // Start of day
+        filters.dateFrom = date;
       }
       if (req.query.dateTo) {
-        filters.dateTo = new Date(req.query.dateTo as string);
+        const date = new Date(req.query.dateTo as string);
+        date.setHours(23, 59, 59, 999); // End of day
+        filters.dateTo = date;
       }
 
       const statistics = await this.service.getStatistics(filters);
