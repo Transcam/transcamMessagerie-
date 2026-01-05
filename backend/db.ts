@@ -43,14 +43,6 @@ export const initializeDatabase = async () => {
     
     // En production, surveiller la connexion et reconnecter automatiquement si nécessaire
     if (process.env.NODE_ENV === "production") {
-      // Écouter les erreurs du pool
-      if (AppDataSource.driver.pool) {
-        AppDataSource.driver.pool.on("error", (err: Error) => {
-          console.error("❌ [DB] Erreur de pool détectée:", err.message);
-          // Le pool gère automatiquement la reconnexion, mais on log pour monitoring
-        });
-      }
-      
       // Vérifier périodiquement que la connexion est toujours active
       // Utiliser une fonction wrapper pour éviter les problèmes avec setInterval et async
       const checkConnection = () => {
