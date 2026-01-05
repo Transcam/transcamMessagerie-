@@ -85,6 +85,29 @@ app.use("/api/", generalLimiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Request logging middleware - logs all HTTP requests with user info
+app.use((req: Request, res: Response, next) => {
+  const start = Date.now();
+  const timestamp = new Date().toISOString();
+  
+  // Log request
+  console.log(`[${timestamp}] ${req.method} ${req.path} - IP: ${req.ip}`);
+  
+  // Log user if authenticated
+  if (req.user) {
+    console.log(`  └─ User: ${req.user.username} (ID: ${req.user.id}, Role: ${req.user.role})`);
+  }
+  
+  // Log response when finished
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const statusColor = res.statusCode >= 400 ? '❌' : res.statusCode >= 300 ? '⚠️' : '✅';
+    console.log(`[${timestamp}] ${statusColor} ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
+  });
+  
+  next();
+});
+
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Transcam API Server" });
 });
