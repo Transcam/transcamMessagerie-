@@ -55,6 +55,10 @@ const translations: Translations = {
   },
   "dashboard.totalRevenue": { fr: "Recettes totales", en: "Total Revenue" },
   "dashboard.totalDepartures": { fr: "Total départs", en: "Total Departures" },
+  "dashboard.driverDistribution": { fr: "À verser aux chauffeurs", en: "Driver Distribution" },
+  "dashboard.ministryDistribution": { fr: "À verser au ministère", en: "Ministry Distribution" },
+  "dashboard.globalRevenue": { fr: "Chiffre d'affaire global", en: "Global Revenue" },
+  "dashboard.totalExpenses": { fr: "Total des dépenses", en: "Total Expenses" },
   "dashboard.recentShipments": {
     fr: "Expéditions récentes",
     en: "Recent Shipments",

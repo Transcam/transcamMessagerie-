@@ -10,6 +10,9 @@ import {
   Printer,
   Download,
   MoreHorizontal,
+  Users,
+  Building2,
+  Receipt,
 } from "lucide-react";
 import {
   Card,
@@ -37,6 +40,9 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useShipments, useGenerateReceipt, useDownloadReceipt } from "@/hooks/use-shipments";
+import { useDepartures } from "@/hooks/use-departures";
+import { useDistributionSummary } from "@/hooks/use-distributions";
+import { useExpenseStatistics } from "@/hooks/use-expenses";
 import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo, useState } from "react";
@@ -72,11 +78,35 @@ export default function DashboardPage() {
     dateTo: dateRange.endDate,
     includeCancelled: false,
   });
+
+  // Fetch departures with date filters
+  const { data: departuresData } = useDepartures({
+    dateFrom: dateRange.startDate,
+    dateTo: dateRange.endDate,
+  });
+
+  // Fetch distribution summary with date filters
+  const filters = {
+    dateFrom: dateRange.startDate,
+    dateTo: dateRange.endDate,
+  };
+  const { data: distributionSummary } = useDistributionSummary(filters);
+
+  // Fetch expense statistics with date filters
+  const { data: expenseStatistics } = useExpenseStatistics(filters);
+
   const generateReceipt = useGenerateReceipt();
   const downloadReceipt = useDownloadReceipt();
 
   // Calculate stats from real data filtered by date range
   const stats = useMemo(() => {
+    const totalDepartures = departuresData?.pagination?.total || 0;
+    const driverDistributionTotal = distributionSummary?.total_driver_distributions || 0;
+    const ministryDistributionTotal = distributionSummary?.total_ministry_distribution || 0;
+    const globalRevenue = distributionSummary?.total_revenue_concerned || 0;
+    const totalExpenses = expenseStatistics?.totalAmount || 0;
+    const canSeeAmount = user?.role !== "staff";
+
     if (!shipmentsData?.data) {
       return [
         {
@@ -102,9 +132,37 @@ export default function DashboardPage() {
         },
         {
           titleKey: "dashboard.totalDepartures",
-          value: "0",
+          value: totalDepartures.toString(),
           change: 0,
           icon: Truck,
+          color: "info" as const,
+        },
+        {
+          titleKey: "dashboard.driverDistribution",
+          value: canSeeAmount ? driverDistributionTotal.toString() : "0",
+          change: 0,
+          icon: Users,
+          color: "primary" as const,
+        },
+        {
+          titleKey: "dashboard.ministryDistribution",
+          value: canSeeAmount ? ministryDistributionTotal.toString() : "0",
+          change: 0,
+          icon: Building2,
+          color: "success" as const,
+        },
+        {
+          titleKey: "dashboard.globalRevenue",
+          value: canSeeAmount ? globalRevenue.toString() : "0",
+          change: 0,
+          icon: DollarSign,
+          color: "warning" as const,
+        },
+        {
+          titleKey: "dashboard.totalExpenses",
+          value: canSeeAmount ? totalExpenses.toString() : "0",
+          change: 0,
+          icon: Receipt,
           color: "info" as const,
         },
       ];
@@ -149,13 +207,41 @@ export default function DashboardPage() {
       },
       {
         titleKey: "dashboard.totalDepartures",
-        value: "0", // TODO: Calculate from departures when implemented
+        value: totalDepartures.toString(),
         change: 0,
         icon: Truck,
         color: "info" as const,
       },
+      {
+        titleKey: "dashboard.driverDistribution",
+        value: canSeeAmount ? driverDistributionTotal.toString() : "0",
+        change: 0,
+        icon: Users,
+        color: "primary" as const,
+      },
+      {
+        titleKey: "dashboard.ministryDistribution",
+        value: canSeeAmount ? ministryDistributionTotal.toString() : "0",
+        change: 0,
+        icon: Building2,
+        color: "success" as const,
+      },
+      {
+        titleKey: "dashboard.globalRevenue",
+        value: canSeeAmount ? globalRevenue.toString() : "0",
+        change: 0,
+        icon: DollarSign,
+        color: "warning" as const,
+      },
+      {
+        titleKey: "dashboard.totalExpenses",
+        value: canSeeAmount ? totalExpenses.toString() : "0",
+        change: 0,
+        icon: Receipt,
+        color: "info" as const,
+      },
     ];
-  }, [shipmentsData]);
+  }, [shipmentsData, departuresData, distributionSummary, expenseStatistics, dateRange, user]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(
@@ -238,7 +324,9 @@ export default function DashboardPage() {
                   <div className="flex items-end justify-between">
                     <div>
                       <p className="text-2xl font-bold">
-                        {stat.titleKey.includes("Revenue") ? (
+                        {stat.titleKey.includes("Revenue") || 
+                         stat.titleKey.includes("Distribution") || 
+                         stat.titleKey.includes("Expenses") ? (
                           <>
                             {formatCurrency(parseInt(stat.value) || 0)}
                             <span className="text-sm font-normal text-muted-foreground ml-1">

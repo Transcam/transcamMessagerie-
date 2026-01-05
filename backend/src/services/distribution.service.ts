@@ -331,12 +331,34 @@ export class DistributionService {
     // Get agency distribution
     const agencyDistribution = await this.calculateAgencyDistribution(filters);
 
+    // Calculate total revenue based on created_at (for accounting purposes)
+    const revenueQuery = this.shipmentRepo
+      .createQueryBuilder("shipment")
+      .where("shipment.is_cancelled = false");
+
+    if (filters.dateFrom) {
+      revenueQuery.andWhere("shipment.created_at >= :dateFrom", {
+        dateFrom: filters.dateFrom,
+      });
+    }
+    if (filters.dateTo) {
+      revenueQuery.andWhere("shipment.created_at <= :dateTo", {
+        dateTo: filters.dateTo,
+      });
+    }
+
+    const allShipments = await revenueQuery.getMany();
+    const totalRevenueConcerned = allShipments.reduce(
+      (sum, shipment) => sum + parseFloat(shipment.price.toString()),
+      0
+    );
+
     return {
       total_driver_distributions: totalDriverDistributions,
       total_ministry_distribution: ministryDistribution.ministry_amount,
       total_agency_amount: agencyDistribution.agency_amount,
-      total_revenue_concerned: agencyDistribution.total_revenue,
-      total_shipments_concerned: agencyDistribution.shipment_count,
+      total_revenue_concerned: totalRevenueConcerned,
+      total_shipments_concerned: allShipments.length,
     };
   }
 }

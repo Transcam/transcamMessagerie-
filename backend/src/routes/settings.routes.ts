@@ -12,3 +12,4 @@ router.post("/logo", authenticate, authorize("manage_users"), uploadMiddleware.s
 
 export default router;
 
+

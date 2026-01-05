@@ -14,15 +14,27 @@ export class DeparturesController {
 
   list = async (req: Request, res: Response) => {
     try {
+      // Parse dateFrom (start of day in local timezone)
+      let dateFrom: Date | undefined;
+      if (req.query.dateFrom) {
+        const dateStr = req.query.dateFrom as string;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        dateFrom = new Date(year, month - 1, day, 0, 0, 0, 0);
+      }
+
+      // Parse dateTo (end of day in local timezone)
+      let dateTo: Date | undefined;
+      if (req.query.dateTo) {
+        const dateStr = req.query.dateTo as string;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        dateTo = new Date(year, month - 1, day, 23, 59, 59, 999);
+      }
+
       const filters = {
         status: req.query.status as DepartureStatus | undefined,
         route: req.query.route as string | undefined,
-        dateFrom: req.query.dateFrom
-          ? new Date(req.query.dateFrom as string)
-          : undefined,
-        dateTo: req.query.dateTo
-          ? new Date(req.query.dateTo as string)
-          : undefined,
+        dateFrom,
+        dateTo,
         generalWaybillNumber: req.query.generalWaybillNumber as string | undefined,
         page: req.query.page ? parseInt(req.query.page as string) : 1,
         limit: req.query.limit ? parseInt(req.query.limit as string) : 20,

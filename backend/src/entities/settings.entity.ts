@@ -17,3 +17,4 @@ export class Settings {
   updated_at!: Date;
 }
 
+

@@ -41,25 +41,43 @@ app.use(
   })
 );
 
+// Check if we're in development/test mode
+const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+
+// General rate limiter - tracks by user ID for authenticated requests, IP for unauthenticated
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX || (isDevelopment ? '1000' : '100')),
   message: {
-    error: "Too many requests from this IP, please try again later.",
+    error: "Too many requests, please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // Track by user ID if authenticated, otherwise by IP
+  keyGenerator: (req: Request) => {
+    // Use user ID if authenticated (from auth middleware)
+    if (req.user?.id) {
+      return `user:${req.user.id}`;
+    }
+    // Fall back to IP for unauthenticated requests
+    return req.ip || req.socket.remoteAddress || 'unknown';
+  },
+  // Optionally disable in development if needed
+  skip: () => process.env.DISABLE_RATE_LIMIT === 'true',
 });
 
+// Login rate limiter - keeps IP-based since user isn't authenticated yet
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX || (isDevelopment ? '20' : '5')),
   message: {
     error: "Too many login attempts, please try again after 15 minutes.",
   },
   skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
+  // Keep IP-based for login (user not authenticated yet)
+  // No keyGenerator needed - defaults to IP
 });
 
 app.use("/api/", generalLimiter);
@@ -81,7 +99,7 @@ app.use("/api/settings", settingsRoutes);
 app.use("/api/vehicles", vehiclesRoutes);
 app.use("/api/drivers", driversRoutes);
 app.use("/api/expenses", expensesRoutes);
-app.use("/api/distribution", distributionRoutes);
+app.use("/api/distributions", distributionRoutes);
 
 // Test route with database
 // app.get("/", async (req: Request, res: Response) => {

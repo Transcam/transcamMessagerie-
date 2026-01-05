@@ -14,10 +14,26 @@ export class DistributionsController {
    */
   listDrivers = async (req: Request, res: Response) => {
     try {
+      // Parse dateFrom (start of day in local timezone)
+      let dateFrom: Date | undefined;
+      if (req.query.dateFrom) {
+        const dateStr = req.query.dateFrom as string;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        dateFrom = new Date(year, month - 1, day, 0, 0, 0, 0);
+      }
+
+      // Parse dateTo (end of day in local timezone)
+      let dateTo: Date | undefined;
+      if (req.query.dateTo) {
+        const dateStr = req.query.dateTo as string;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        dateTo = new Date(year, month - 1, day, 23, 59, 59, 999);
+      }
+
       const filters: DistributionFiltersDTO = {
         driverId: req.query.driverId ? parseInt(req.query.driverId as string) : undefined,
-        dateFrom: req.query.dateFrom ? new Date(req.query.dateFrom as string) : undefined,
-        dateTo: req.query.dateTo ? new Date(req.query.dateTo as string) : undefined,
+        dateFrom,
+        dateTo,
       };
 
       const distributions = await this.service.calculateDriverDistribution(filters);
@@ -33,9 +49,25 @@ export class DistributionsController {
    */
   getMinistry = async (req: Request, res: Response) => {
     try {
+      // Parse dateFrom (start of day in local timezone)
+      let dateFrom: Date | undefined;
+      if (req.query.dateFrom) {
+        const dateStr = req.query.dateFrom as string;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        dateFrom = new Date(year, month - 1, day, 0, 0, 0, 0);
+      }
+
+      // Parse dateTo (end of day in local timezone)
+      let dateTo: Date | undefined;
+      if (req.query.dateTo) {
+        const dateStr = req.query.dateTo as string;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        dateTo = new Date(year, month - 1, day, 23, 59, 59, 999);
+      }
+
       const filters: DistributionFiltersDTO = {
-        dateFrom: req.query.dateFrom ? new Date(req.query.dateFrom as string) : undefined,
-        dateTo: req.query.dateTo ? new Date(req.query.dateTo as string) : undefined,
+        dateFrom,
+        dateTo,
       };
 
       const distribution = await this.service.calculateMinistryDistribution(filters);
@@ -51,9 +83,25 @@ export class DistributionsController {
    */
   getAgency = async (req: Request, res: Response) => {
     try {
+      // Parse dateFrom (start of day in local timezone)
+      let dateFrom: Date | undefined;
+      if (req.query.dateFrom) {
+        const dateStr = req.query.dateFrom as string;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        dateFrom = new Date(year, month - 1, day, 0, 0, 0, 0);
+      }
+
+      // Parse dateTo (end of day in local timezone)
+      let dateTo: Date | undefined;
+      if (req.query.dateTo) {
+        const dateStr = req.query.dateTo as string;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        dateTo = new Date(year, month - 1, day, 23, 59, 59, 999);
+      }
+
       const filters: DistributionFiltersDTO = {
-        dateFrom: req.query.dateFrom ? new Date(req.query.dateFrom as string) : undefined,
-        dateTo: req.query.dateTo ? new Date(req.query.dateTo as string) : undefined,
+        dateFrom,
+        dateTo,
       };
 
       const distribution = await this.service.calculateAgencyDistribution(filters);
@@ -69,9 +117,25 @@ export class DistributionsController {
    */
   getSummary = async (req: Request, res: Response) => {
     try {
+      // Parse dateFrom (start of day in local timezone)
+      let dateFrom: Date | undefined;
+      if (req.query.dateFrom) {
+        const dateStr = req.query.dateFrom as string;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        dateFrom = new Date(year, month - 1, day, 0, 0, 0, 0);
+      }
+
+      // Parse dateTo (end of day in local timezone)
+      let dateTo: Date | undefined;
+      if (req.query.dateTo) {
+        const dateStr = req.query.dateTo as string;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        dateTo = new Date(year, month - 1, day, 23, 59, 59, 999);
+      }
+
       const filters: DistributionFiltersDTO = {
-        dateFrom: req.query.dateFrom ? new Date(req.query.dateFrom as string) : undefined,
-        dateTo: req.query.dateTo ? new Date(req.query.dateTo as string) : undefined,
+        dateFrom,
+        dateTo,
       };
 
       const summary = await this.service.getDistributionSummary(filters);

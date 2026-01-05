@@ -24,6 +24,8 @@ export enum DepartureStatus {
 @Index(["status"])
 @Index(["general_waybill_number"], { unique: true, where: '"general_waybill_number" IS NOT NULL' })
 @Index(["created_at"])
+@Index(["sealed_at"])
+@Index(["status", "sealed_at"])
 export class Departure {
   @PrimaryGeneratedColumn()
   id!: number;

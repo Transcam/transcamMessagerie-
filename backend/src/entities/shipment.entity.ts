@@ -33,6 +33,9 @@ export enum ShipmentType {
 @Index(["status"])
 @Index(["created_at"])
 @Index(["departure_id"])
+@Index(["is_cancelled"])
+@Index(["departure_id", "is_cancelled", "nature"])
+@Index(["departure_id", "is_cancelled", "nature", "weight"])
 export class Shipment {
   @PrimaryGeneratedColumn()
   id!: number;
