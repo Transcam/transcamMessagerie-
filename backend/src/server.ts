@@ -108,8 +108,51 @@ app.use((req: Request, res: Response, next) => {
   next();
 });
 
-app.get("/", (req: Request, res: Response) => {
-  res.json({ message: "Transcam API Server" });
+// Route de health check pour Render
+app.get("/health", async (req: Request, res: Response) => {
+  try {
+    // Vérifier que la base de données est connectée
+    if (AppDataSource.isInitialized) {
+      // Test simple de connexion (requête rapide)
+      await AppDataSource.query("SELECT 1");
+      res.status(200).json({ 
+        status: "healthy", 
+        database: "connected",
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.status(503).json({ 
+        status: "unhealthy", 
+        database: "disconnected" 
+      });
+    }
+  } catch (error: any) {
+    console.error("❌ [HEALTH] Health check failed:", error);
+    res.status(503).json({ 
+      status: "unhealthy", 
+      database: "error",
+      error: error.message 
+    });
+  }
+});
+
+// Route racine améliorée
+app.get("/", async (req: Request, res: Response) => {
+  try {
+    const dbStatus = AppDataSource.isInitialized ? "connected" : "disconnected";
+    res.json({ 
+      message: "Transcam API Server",
+      status: "running",
+      database: dbStatus,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      message: "Transcam API Server",
+      status: "error",
+      error: error.message 
+    });
+  }
 });
 
 app.use("/api/users/login", loginLimiter);
