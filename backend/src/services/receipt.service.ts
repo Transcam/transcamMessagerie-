@@ -84,15 +84,22 @@ export class ReceiptService {
         const logoUrl =
           settings?.company_logo_url || "/assets/images/LogoTranscam.jpg";
 
+        // Retirer le "/" initial du logoUrl pour éviter les problèmes avec path.join
+        const logoUrlClean = logoUrl.startsWith("/") ? logoUrl.substring(1) : logoUrl;
+
         // Chemin physique du logo
         const logoPath = path.join(
           process.cwd(),
           "..",
           "frontend",
           "public",
-          logoUrl
+          logoUrlClean
         );
         const logoExists = fs.existsSync(logoPath);
+
+        if (!logoExists) {
+          console.warn(`⚠️ [PDF] Logo non trouvé à: ${logoPath}`);
+        }
 
         // Ticket 80mm format: 80mm width = 226.77 points
         const ticketWidth = 226.77; // 80mm in points

@@ -81,8 +81,11 @@ export class GeneralWaybillService {
       const logoUrl =
         settings?.company_logo_url || "/assets/images/LogoTranscam.jpg";
 
+      // Retirer le "/" initial du logoUrl pour éviter les problèmes avec path.join
+      const logoUrlClean = logoUrl.startsWith("/") ? logoUrl.substring(1) : logoUrl;
+
       // Chemin physique du logo
-      logoPath = path.join(process.cwd(), "..", "frontend", "public", logoUrl);
+      logoPath = path.join(process.cwd(), "..", "frontend", "public", logoUrlClean);
       logoExists = fs.existsSync(logoPath);
 
       if (!logoExists) {

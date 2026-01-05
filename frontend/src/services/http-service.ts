@@ -6,6 +6,8 @@ const getBaseURL = () => {
 
 const axiosInstance = axios.create({
   baseURL: getBaseURL(),
+  // Timeouts plus longs en production pour gérer la latence réseau
+  timeout: import.meta.env.PROD ? 30000 : 10000, // 30s en prod, 10s en dev
 });
 
 axiosInstance.interceptors.request.use((config) => {

@@ -6,6 +6,14 @@ import * as path from "path";
 
 export const getSettings = async (req: Request, res: Response) => {
   try {
+    // Vérifier que la connexion à la base de données est active
+    if (!AppDataSource.isInitialized) {
+      console.error("❌ [SETTINGS] Base de données non initialisée");
+      return res.status(503).json({
+        error: "Database not initialized. Please try again later.",
+      });
+    }
+
     const settingsRepo = AppDataSource.getRepository(Settings);
     let settings = await settingsRepo.findOne({ where: { id: "company" } });
 
@@ -19,12 +27,54 @@ export const getSettings = async (req: Request, res: Response) => {
 
     res.json({ data: settings });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error("❌ [SETTINGS] Erreur getSettings:", error);
+
+    // Gérer les erreurs de connexion spécifiquement
+    if (
+      error.code === "ECONNREFUSED" ||
+      error.code === "ETIMEDOUT" ||
+      error.code === "ENOTFOUND"
+    ) {
+      return res.status(503).json({
+        error: "Database connection error. Please try again later.",
+      });
+    }
+
+    // Gérer les erreurs de timeout de connexion
+    if (
+      error.message?.includes("timeout") ||
+      error.message?.includes("Connection timed out")
+    ) {
+      return res.status(503).json({
+        error: "Database connection timeout. Please try again.",
+      });
+    }
+
+    // Gérer les erreurs de pool de connexions épuisé
+    if (
+      error.message?.includes("pool") ||
+      error.message?.includes("connection")
+    ) {
+      return res.status(503).json({
+        error:
+          "Database temporarily unavailable. Please try again in a moment.",
+      });
+    }
+
+    res.status(500).json({ error: error.message || "Internal server error" });
   }
 };
 
 export const updateSettings = async (req: Request, res: Response) => {
   try {
+    // Vérifier que la connexion à la base de données est active
+    if (!AppDataSource.isInitialized) {
+      console.error("❌ [SETTINGS] Base de données non initialisée");
+      return res.status(503).json({
+        error: "Database not initialized. Please try again later.",
+      });
+    }
+
     const { company_logo_url } = req.body;
     const settingsRepo = AppDataSource.getRepository(Settings);
 
@@ -47,7 +97,32 @@ export const updateSettings = async (req: Request, res: Response) => {
       message: "Settings updated successfully",
     });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error("❌ [SETTINGS] Erreur updateSettings:", error);
+
+    // Gérer les erreurs de connexion spécifiquement
+    if (
+      error.code === "ECONNREFUSED" ||
+      error.code === "ETIMEDOUT" ||
+      error.code === "ENOTFOUND"
+    ) {
+      return res.status(503).json({
+        error: "Database connection error. Please try again later.",
+      });
+    }
+
+    // Gérer les erreurs de timeout de connexion
+    if (
+      error.message?.includes("timeout") ||
+      error.message?.includes("Connection timed out")
+    ) {
+      return res.status(503).json({
+        error: "Database connection timeout. Please try again.",
+      });
+    }
+
+    res
+      .status(400)
+      .json({ error: error.message || "Failed to update settings" });
   }
 };
 
