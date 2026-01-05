@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ClientErrorHandler } from "./components/ClientErrorHandler";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import NewShipmentPage from "./pages/NewShipmentPage";
@@ -32,7 +34,16 @@ import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 import { useFavicon } from "./hooks/use-favicon";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (anciennement cacheTime)
+      refetchOnWindowFocus: false, // Éviter les refetches au focus
+      refetchOnReconnect: true,
+    },
+  },
+});
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -296,7 +307,9 @@ const AppContent = () => {
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppRoutes />
+        <ErrorBoundary>
+          <AppRoutes />
+        </ErrorBoundary>
       </BrowserRouter>
     </TooltipProvider>
   );
@@ -306,7 +319,9 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
-        <AppContent />
+        <ClientErrorHandler>
+          <AppContent />
+        </ClientErrorHandler>
       </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>
