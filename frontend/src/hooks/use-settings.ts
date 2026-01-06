@@ -30,7 +30,10 @@ export function useSettings() {
     retryDelay: (attemptIndex) => {
       // En production, délais plus longs pour la latence réseau
       const baseDelay = import.meta.env.PROD ? 2000 : 1000;
-      return Math.min(baseDelay * 2 ** attemptIndex, import.meta.env.PROD ? 10000 : 3000);
+      return Math.min(
+        baseDelay * 2 ** attemptIndex,
+        import.meta.env.PROD ? 10000 : 3000
+      );
     },
     staleTime: 5 * 60 * 1000, // Considérer les données comme fraîches pendant 5 minutes
     // En production, garder les données en cache plus longtemps même si elles sont considérées comme stale
@@ -40,10 +43,12 @@ export function useSettings() {
       // Les erreurs 503 (Service Unavailable) sont gérées automatiquement par React Query
       if (error.response?.status === 503) {
         // Erreur de connexion à la base de données - React Query va réessayer automatiquement
-        console.warn("⚠️ [SETTINGS] Service temporairement indisponible, nouvelle tentative en cours...");
+        console.warn(
+          "⚠️ [SETTINGS] Service temporairement indisponible, nouvelle tentative en cours..."
+        );
         return;
       }
-      
+
       // Pour les autres erreurs, afficher un message seulement après tous les retries
       if (error.response?.status !== 404 && error.response?.status !== 401) {
         // Attendre un peu avant d'afficher l'erreur pour éviter le spam pendant les retries
@@ -104,7 +109,6 @@ export function useUploadLogo() {
   return useMutation({
     mutationFn: (file: File) => settingsService.uploadLogo(file),
     onSuccess: () => {
-      // Invalider le cache et forcer le rechargement immédiat
       queryClient.invalidateQueries({ queryKey: settingsKeys.all });
       queryClient.refetchQueries({ queryKey: settingsKeys.all });
       toast({
