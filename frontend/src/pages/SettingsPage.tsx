@@ -37,7 +37,7 @@ const roleLabels: Record<UserRole, { fr: string; en: string }> = {
 
 export default function SettingsPage() {
   const { t, language } = useLanguage();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, hasPermission } = useAuth();
   const { data: settings, isLoading: settingsLoading } = useSettings();
   const uploadLogo = useUploadLogo();
   const createUser = useCreateUser();
@@ -145,34 +145,45 @@ export default function SettingsPage() {
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="logo-upload">
+                  {hasPermission("upload_logo") && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="logo-upload">
+                          {language === "fr"
+                            ? "Sélectionner un nouveau logo"
+                            : "Select a new logo"}
+                        </Label>
+                        <Input
+                          id="logo-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoChange}
+                        />
+                      </div>
+                      {logoFile && (
+                        <Button
+                          onClick={handleLogoUpload}
+                          disabled={uploadLogo.isPending}
+                          className="w-full"
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          {uploadLogo.isPending
+                            ? language === "fr"
+                              ? "Téléchargement..."
+                              : "Uploading..."
+                            : language === "fr"
+                            ? "Télécharger le logo"
+                            : "Upload Logo"}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  {!hasPermission("upload_logo") && (
+                    <p className="text-sm text-muted-foreground text-center">
                       {language === "fr"
-                        ? "Sélectionner un nouveau logo"
-                        : "Select a new logo"}
-                    </Label>
-                    <Input
-                      id="logo-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoChange}
-                    />
-                  </div>
-                  {logoFile && (
-                    <Button
-                      onClick={handleLogoUpload}
-                      disabled={uploadLogo.isPending}
-                      className="w-full"
-                    >
-                      <Upload className="mr-2 h-4 w-4" />
-                      {uploadLogo.isPending
-                        ? language === "fr"
-                          ? "Téléchargement..."
-                          : "Uploading..."
-                        : language === "fr"
-                        ? "Télécharger le logo"
-                        : "Upload Logo"}
-                    </Button>
+                        ? "Seul le superviseur peut modifier le logo de l'entreprise."
+                        : "Only the supervisor can modify the company logo."}
+                    </p>
                   )}
                 </>
               )}

@@ -36,18 +36,23 @@ app.use(
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: [
+      process.env.FRONTEND_URL || "http://localhost:5173",
+      "http://localhost:5173",
+      "http://10.5.0.2:5173",
+    ],
     credentials: true,
   })
 );
 
 // Check if we're in development/test mode
-const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+const isDevelopment =
+  process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
 
 // General rate limiter - tracks by user ID for authenticated requests, IP for unauthenticated
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX || (isDevelopment ? '1000' : '100')),
+  max: parseInt(process.env.RATE_LIMIT_MAX || (isDevelopment ? "1000" : "100")),
   message: {
     error: "Too many requests, please try again later.",
   },
@@ -60,16 +65,18 @@ const generalLimiter = rateLimit({
       return `user:${req.user.id}`;
     }
     // Fall back to IP for unauthenticated requests
-    return req.ip || req.socket.remoteAddress || 'unknown';
+    return req.ip || req.socket.remoteAddress || "unknown";
   },
   // Optionally disable in development if needed
-  skip: () => process.env.DISABLE_RATE_LIMIT === 'true',
+  skip: () => process.env.DISABLE_RATE_LIMIT === "true",
 });
 
 // Login rate limiter - keeps IP-based since user isn't authenticated yet
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX || (isDevelopment ? '20' : '5')),
+  max: parseInt(
+    process.env.LOGIN_RATE_LIMIT_MAX || (isDevelopment ? "20" : "5")
+  ),
   message: {
     error: "Too many login attempts, please try again after 15 minutes.",
   },
@@ -89,22 +96,27 @@ app.use(express.urlencoded({ extended: true }));
 app.use((req: Request, res: Response, next) => {
   const start = Date.now();
   const timestamp = new Date().toISOString();
-  
+
   // Log request
   console.log(`[${timestamp}] ${req.method} ${req.path} - IP: ${req.ip}`);
-  
+
   // Log user if authenticated
   if (req.user) {
-    console.log(`  └─ User: ${req.user.username} (ID: ${req.user.id}, Role: ${req.user.role})`);
+    console.log(
+      `  └─ User: ${req.user.username} (ID: ${req.user.id}, Role: ${req.user.role})`
+    );
   }
-  
+
   // Log response when finished
-  res.on('finish', () => {
+  res.on("finish", () => {
     const duration = Date.now() - start;
-    const statusColor = res.statusCode >= 400 ? '❌' : res.statusCode >= 300 ? '⚠️' : '✅';
-    console.log(`[${timestamp}] ${statusColor} ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
+    const statusColor =
+      res.statusCode >= 400 ? "❌" : res.statusCode >= 300 ? "⚠️" : "✅";
+    console.log(
+      `[${timestamp}] ${statusColor} ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`
+    );
   });
-  
+
   next();
 });
 
@@ -115,23 +127,23 @@ app.get("/health", async (req: Request, res: Response) => {
     if (AppDataSource.isInitialized) {
       // Test simple de connexion (requête rapide)
       await AppDataSource.query("SELECT 1");
-      res.status(200).json({ 
-        status: "healthy", 
+      res.status(200).json({
+        status: "healthy",
         database: "connected",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } else {
-      res.status(503).json({ 
-        status: "unhealthy", 
-        database: "disconnected" 
+      res.status(503).json({
+        status: "unhealthy",
+        database: "disconnected",
       });
     }
   } catch (error: any) {
     console.error("❌ [HEALTH] Health check failed:", error);
-    res.status(503).json({ 
-      status: "unhealthy", 
+    res.status(503).json({
+      status: "unhealthy",
       database: "error",
-      error: error.message 
+      error: error.message,
     });
   }
 });
@@ -140,17 +152,17 @@ app.get("/health", async (req: Request, res: Response) => {
 app.get("/", async (req: Request, res: Response) => {
   try {
     const dbStatus = AppDataSource.isInitialized ? "connected" : "disconnected";
-    res.json({ 
+    res.json({
       message: "Transcam API Server",
       status: "running",
       database: dbStatus,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Transcam API Server",
       status: "error",
-      error: error.message 
+      error: error.message,
     });
   }
 });

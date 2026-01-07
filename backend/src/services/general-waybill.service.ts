@@ -404,15 +404,18 @@ export class GeneralWaybillService {
     // Table headers with better spacing
     const tableTop = yPos;
     const colWidths = {
-      waybill: 90,
-      sender: 115,
-      receiver: 115,
-      description: 110,
-      weight: 70, // Increased for "XX.XX kg" text
+      waybill: 70,
+      sender: 85,
+      senderPhone: 70,
+      receiver: 85,
+      receiverPhone: 70,
+      description: 85,
+      weight: 65, // Reduced for better centering
     };
 
-    const tableStartX = 50;
-    const tableWidth = 500; // Total width: 90+115+115+110+70 = 500
+    const tableWidth = 530; // Total width: 70+85+70+85+70+85+65 = 530
+    // Center the table in the available page width (500)
+    const tableStartX = 50 + (pageWidth - tableWidth) / 2; // = 35
     const padding = 5;
 
     // Draw table header background (gray) with borders
@@ -436,7 +439,17 @@ export class GeneralWaybillService {
       .moveTo(colX, tableTop - 5)
       .lineTo(colX, tableTop + 13)
       .stroke();
+    colX += colWidths.senderPhone;
+    doc
+      .moveTo(colX, tableTop - 5)
+      .lineTo(colX, tableTop + 13)
+      .stroke();
     colX += colWidths.receiver;
+    doc
+      .moveTo(colX, tableTop - 5)
+      .lineTo(colX, tableTop + 13)
+      .stroke();
+    colX += colWidths.receiverPhone;
     doc
       .moveTo(colX, tableTop - 5)
       .lineTo(colX, tableTop + 13)
@@ -470,12 +483,24 @@ export class GeneralWaybillService {
     });
 
     colStartX += colWidths.sender;
+    doc.text("Tél.EXP", colStartX + padding, tableTop, {
+      width: colWidths.senderPhone - padding * 2,
+      align: "center",
+    });
+
+    colStartX += colWidths.senderPhone;
     doc.text("Destinataire", colStartX + padding, tableTop, {
       width: colWidths.receiver - padding * 2,
       align: "center",
     });
 
     colStartX += colWidths.receiver;
+    doc.text("Tél.DEST", colStartX + padding, tableTop, {
+      width: colWidths.receiverPhone - padding * 2,
+      align: "center",
+    });
+
+    colStartX += colWidths.receiverPhone;
     doc.text("Description", colStartX + padding, tableTop, {
       width: colWidths.description - padding * 2,
       align: "center",
@@ -501,7 +526,11 @@ export class GeneralWaybillService {
     };
 
     for (const shipment of shipments) {
-      if (yPos > 680) {
+      const rowHeight = 15;
+      
+      // Vérifier si la ligne complète tiendra sur la page actuelle
+      // Si non, créer une nouvelle page avant de dessiner la ligne
+      if (yPos + rowHeight > 680) {
         // New page if needed
         doc.addPage();
         yPos = 50;
@@ -528,7 +557,17 @@ export class GeneralWaybillService {
           .moveTo(colX, newTableTop - 5)
           .lineTo(colX, newTableTop + 13)
           .stroke();
+        colX += colWidths.senderPhone;
+        doc
+          .moveTo(colX, newTableTop - 5)
+          .lineTo(colX, newTableTop + 13)
+          .stroke();
         colX += colWidths.receiver;
+        doc
+          .moveTo(colX, newTableTop - 5)
+          .lineTo(colX, newTableTop + 13)
+          .stroke();
+        colX += colWidths.receiverPhone;
         doc
           .moveTo(colX, newTableTop - 5)
           .lineTo(colX, newTableTop + 13)
@@ -561,12 +600,24 @@ export class GeneralWaybillService {
         });
 
         newColStartX += colWidths.sender;
+        doc.text("Tél.EXP", newColStartX + padding, newTableTop, {
+          width: colWidths.senderPhone - padding * 2,
+          align: "center",
+        });
+
+        newColStartX += colWidths.senderPhone;
         doc.text("Destinataire", newColStartX + padding, newTableTop, {
           width: colWidths.receiver - padding * 2,
           align: "center",
         });
 
         newColStartX += colWidths.receiver;
+        doc.text("Tél.DEST", newColStartX + padding, newTableTop, {
+          width: colWidths.receiverPhone - padding * 2,
+          align: "center",
+        });
+
+        newColStartX += colWidths.receiverPhone;
         doc.text("Description", newColStartX + padding, newTableTop, {
           width: colWidths.description - padding * 2,
           align: "center",
@@ -588,7 +639,6 @@ export class GeneralWaybillService {
       parcelCount++;
 
       const rowY = yPos;
-      const rowHeight = 15;
 
       // Draw row background (alternating gray for better readability)
       if (parcelCount % 2 === 0) {
@@ -611,7 +661,17 @@ export class GeneralWaybillService {
         .moveTo(colX, rowY - 3)
         .lineTo(colX, rowY + rowHeight - 3)
         .stroke();
+      colX += colWidths.senderPhone;
+      doc
+        .moveTo(colX, rowY - 3)
+        .lineTo(colX, rowY + rowHeight - 3)
+        .stroke();
       colX += colWidths.receiver;
+      doc
+        .moveTo(colX, rowY - 3)
+        .lineTo(colX, rowY + rowHeight - 3)
+        .stroke();
+      colX += colWidths.receiverPhone;
       doc
         .moveTo(colX, rowY - 3)
         .lineTo(colX, rowY + rowHeight - 3)
@@ -645,12 +705,24 @@ export class GeneralWaybillService {
       });
 
       dataColStartX += colWidths.sender;
+      doc.text(shipment.sender_phone || "N/A", dataColStartX + padding, rowY, {
+        width: colWidths.senderPhone - padding * 2,
+        align: "center",
+      });
+
+      dataColStartX += colWidths.senderPhone;
       doc.text(shipment.receiver_name || "N/A", dataColStartX + padding, rowY, {
         width: colWidths.receiver - padding * 2,
         align: "center",
       });
 
       dataColStartX += colWidths.receiver;
+      doc.text(shipment.receiver_phone || "N/A", dataColStartX + padding, rowY, {
+        width: colWidths.receiverPhone - padding * 2,
+        align: "center",
+      });
+
+      dataColStartX += colWidths.receiverPhone;
       doc.text(shipment.description || "-", dataColStartX + padding, rowY, {
         width: colWidths.description - padding * 2,
         align: "center",

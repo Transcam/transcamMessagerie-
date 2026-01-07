@@ -17,6 +17,7 @@ import ShipmentDetailPage from "./pages/ShipmentDetailPage";
 import DepartureListPage from "./pages/DepartureListPage";
 import DepartureDetailPage from "./pages/DepartureDetailPage";
 import NewDeparturePage from "./pages/NewDeparturePage";
+import EditDeparturePage from "./pages/EditDeparturePage";
 import UserListPage from "./pages/UserListPage";
 import ExpenseListPage from "./pages/ExpenseListPage";
 import ExpenseDetailPage from "./pages/ExpenseDetailPage";
@@ -132,6 +133,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <NewDeparturePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/departures/:id/edit"
+        element={
+          <ProtectedRoute>
+            <EditDeparturePage />
           </ProtectedRoute>
         }
       />

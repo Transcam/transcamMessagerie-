@@ -8,7 +8,7 @@ const router = Router();
 
 router.get("/", authenticate, getSettings);
 router.patch("/", authenticate, authorize("manage_users"), updateSettings);
-router.post("/logo", authenticate, authorize("manage_users"), uploadMiddleware.single("logo"), uploadLogo);
+router.post("/logo", authenticate, authorize("upload_logo"), uploadMiddleware.single("logo"), uploadLogo);
 
 export default router;
 

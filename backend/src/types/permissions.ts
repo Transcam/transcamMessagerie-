@@ -7,6 +7,7 @@ export type Permission =
   | "delete_shipment"
   | "view_shipments"
   | "create_departure"
+  | "delete_departure"
   | "validate_departure"
   | "view_finance"
   | "view_distribution"
@@ -14,6 +15,7 @@ export type Permission =
   | "view_reports"
   | "export_data"
   | "manage_users"
+  | "upload_logo"
   | "print_waybill"
   | "print_receipt"
   | "create_expense"
@@ -39,6 +41,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "delete_shipment",
     "view_shipments",
     "create_departure",
+    "delete_departure",
     "validate_departure",
     "view_finance",
     "view_distribution",
@@ -46,6 +49,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "view_reports",
     "export_data",
     "manage_users",
+    "upload_logo",
     "print_waybill",
     "print_receipt",
     "create_expense",
@@ -90,6 +94,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "edit_expense",
     "view_vehicles",
     "view_drivers",
+    "create_departure",
+    "delete_departure",
+    "validate_departure",
+    "print_waybill",
   ],
   [UserRole.SUPERVISOR]: [
     "view_dashboard",
@@ -98,6 +106,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "delete_shipment",
     "view_shipments",
     "create_departure",
+    "delete_departure",
     "validate_departure",
     "view_finance",
     "view_distribution",
@@ -105,6 +114,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "view_reports",
     "export_data",
     "manage_users",
+    "upload_logo",
     "print_waybill",
     "print_receipt",
     "create_expense",

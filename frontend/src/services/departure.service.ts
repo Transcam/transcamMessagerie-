@@ -121,6 +121,11 @@ export const departureService = {
     return response.data.data;
   },
 
+  // Delete departure
+  delete: async (id: number): Promise<void> => {
+    await httpService.delete(`/departures/${id}`);
+  },
+
   // Get departure summary with totals
   getSummary: async (id: number): Promise<DepartureSummary> => {
     const response = await httpService.get(`/departures/${id}/summary`);

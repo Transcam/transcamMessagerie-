@@ -25,6 +25,12 @@ router.patch(
   authorize("create_departure"),
   controller.update
 );
+router.delete(
+  "/:id",
+  authenticate,
+  authorize("delete_departure"),
+  controller.delete
+);
 router.post(
   "/:id/shipments",
   authenticate,
