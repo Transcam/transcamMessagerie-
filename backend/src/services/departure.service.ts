@@ -6,6 +6,7 @@ import { User } from "../entities/user.entity";
 import { AuditLog } from "../entities/audit-log.entity";
 import { GeneralWaybillService } from "./general-waybill.service";
 import { UserRole } from "../types/roles";
+import * as fs from "fs";
 
 export interface CreateDepartureDTO {
   route?: string;
@@ -265,6 +266,52 @@ export class DepartureService {
     });
 
     return updated;
+  }
+
+  /**
+   * Delete a departure (only if status is OPEN)
+   */
+  async delete(id: number, user: User): Promise<void> {
+    const departure = await this.departureRepo.findOne({
+      where: { id },
+      relations: ["shipments"],
+    });
+
+    if (!departure) {
+      throw new Error("Departure not found");
+    }
+
+    if (departure.status !== DepartureStatus.OPEN) {
+      throw new Error("Can only delete OPEN departures");
+    }
+
+    // Remove shipments from departure
+    if (departure.shipments && departure.shipments.length > 0) {
+      await this.shipmentRepo.update(
+        { id: In(departure.shipments.map((s) => s.id)) },
+        { departure_id: null, status: ShipmentStatus.CONFIRMED }
+      );
+    }
+
+    // Delete PDF file if exists
+    if (departure.pdf_path) {
+      try {
+        if (fs.existsSync(departure.pdf_path)) {
+          fs.unlinkSync(departure.pdf_path);
+        }
+      } catch (error) {
+        console.warn("Failed to delete PDF file:", error);
+      }
+    }
+
+    // Log action before deletion
+    await this.logAction("delete", id, user, departure, {
+      departure_id: id,
+      route: departure.route,
+    });
+
+    // Delete departure
+    await this.departureRepo.remove(departure);
   }
 
   /**

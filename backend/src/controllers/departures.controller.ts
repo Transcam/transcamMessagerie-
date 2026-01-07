@@ -229,5 +229,19 @@ export class DeparturesController {
       res.status(404).json({ error: error.message });
     }
   };
+
+  delete = async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const id = parseInt(req.params.id);
+      await this.service.delete(id, req.user);
+      res.json({ message: "Departure deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  };
 }
 

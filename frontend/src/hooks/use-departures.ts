@@ -219,3 +219,32 @@ export function useCloseDeparture() {
   });
 }
 
+// Delete departure mutation
+export function useDeleteDeparture() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { language } = useLanguage();
+
+  return useMutation({
+    mutationFn: (id: number) => departureService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: departureKeys.all });
+      toast({
+        title: language === "fr" ? "Départ supprimé" : "Departure deleted",
+        description: language === "fr" 
+          ? "Le départ a été supprimé avec succès" 
+          : "Departure deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === "fr" ? "Erreur" : "Error",
+        description: error.response?.data?.error || 
+          (language === "fr" 
+            ? "Impossible de supprimer le départ" 
+            : "Failed to delete departure"),
+        variant: "destructive",
+      });
+    },
+  });
+}

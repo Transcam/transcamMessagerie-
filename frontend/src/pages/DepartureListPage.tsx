@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Filter, Eye, Lock, LockOpen, Download, Printer, MoreHorizontal, Edit } from "lucide-react";
+import { Plus, Search, Filter, Eye, Lock, LockOpen, Download, Printer, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDepartures, useSealDeparture, useCloseDeparture } from "@/hooks/use-departures";
+import { useDepartures, useSealDeparture, useCloseDeparture, useDeleteDeparture } from "@/hooks/use-departures";
 import { departureService } from "@/services/departure.service";
 import { DepartureStatusBadge } from "@/components/departures/DepartureStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,12 +58,15 @@ export default function DepartureListPage() {
   });
   const [sealDialogOpen, setSealDialogOpen] = useState(false);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [departureToSeal, setDepartureToSeal] = useState<Departure | null>(null);
   const [departureToClose, setDepartureToClose] = useState<Departure | null>(null);
+  const [departureToDelete, setDepartureToDelete] = useState<Departure | null>(null);
 
   const { data, isLoading, error } = useDepartures(filters);
   const sealDeparture = useSealDeparture();
   const closeDeparture = useCloseDeparture();
+  const deleteDeparture = useDeleteDeparture();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(amount);
@@ -122,6 +125,23 @@ export default function DepartureListPage() {
     }
   };
 
+  const handleDelete = (departure: Departure) => {
+    setDepartureToDelete(departure);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!departureToDelete) return;
+    
+    try {
+      await deleteDeparture.mutateAsync(departureToDelete.id);
+      setDeleteDialogOpen(false);
+      setDepartureToDelete(null);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
   const handleDownloadPDF = async (id: number) => {
     try {
       await departureService.downloadPDF(id);
@@ -141,6 +161,7 @@ export default function DepartureListPage() {
   const canSeal = (departure: Departure) => hasPermission("validate_departure") && departure.status === "open";
   const canClose = (departure: Departure) => hasPermission("validate_departure") && departure.status === "sealed";
   const canEdit = (departure: Departure) => hasPermission("create_departure") && departure.status === "open";
+  const canDelete = (departure: Departure) => hasPermission("delete_departure") && departure.status === "open";
   const canDownloadPDF = (departure: Departure) => hasPermission("print_waybill") && (departure.status === "sealed" || departure.status === "closed");
 
   // Calculate totals for a departure
@@ -396,6 +417,19 @@ export default function DepartureListPage() {
                                   </DropdownMenuItem>
                                 )}
                                 
+                                {canDelete(departure) && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => handleDelete(departure)}
+                                      className="text-destructive focus:text-destructive"
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      {language === "fr" ? "Supprimer" : "Delete"}
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                
                                 {canDownloadPDF(departure) && (
                                   <>
                                     <DropdownMenuSeparator />
@@ -513,6 +547,36 @@ export default function DepartureListPage() {
               {closeDeparture.isPending
                 ? (language === "fr" ? "Fermeture..." : "Closing...")
                 : (language === "fr" ? "Fermer" : "Close")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === "fr" ? "Confirmer la suppression" : "Confirm Deletion"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "fr"
+                ? `Êtes-vous sûr de vouloir supprimer le départ #${departureToDelete?.id} ? Cette action est irréversible et libérera tous les colis assignés.`
+                : `Are you sure you want to delete departure #${departureToDelete?.id}? This action cannot be undone and will release all assigned shipments.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === "fr" ? "Annuler" : "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleteDeparture.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteDeparture.isPending
+                ? (language === "fr" ? "Suppression..." : "Deleting...")
+                : (language === "fr" ? "Supprimer" : "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
