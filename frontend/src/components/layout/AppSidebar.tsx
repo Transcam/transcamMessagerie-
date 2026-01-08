@@ -294,21 +294,23 @@ export function AppSidebar() {
         </Button>
 
         {/* Settings */}
-        <Link to="/settings">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "w-full justify-start gap-3 text-sidebar-foreground hover:text-sidebar-primary-foreground hover:bg-sidebar-accent",
-              isCollapsed && "justify-center"
-            )}
-          >
-            <Settings className="h-5 w-5" />
-            {!isCollapsed && (
-              <span className="text-sm">{t("nav.settings")}</span>
-            )}
-          </Button>
-        </Link>
+        {hasPermission("upload_logo") && (
+          <Link to="/settings">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "w-full justify-start gap-3 text-sidebar-foreground hover:text-sidebar-primary-foreground hover:bg-sidebar-accent",
+                isCollapsed && "justify-center"
+              )}
+            >
+              <Settings className="h-5 w-5" />
+              {!isCollapsed && (
+                <span className="text-sm">{t("nav.settings")}</span>
+              )}
+            </Button>
+          </Link>
+        )}
 
         {/* Logout */}
         <Button

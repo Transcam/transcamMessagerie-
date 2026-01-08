@@ -106,7 +106,84 @@ export default function DashboardPage() {
     const globalRevenue = distributionSummary?.total_revenue_concerned || 0;
     const totalExpenses = expenseStatistics?.totalAmount || 0;
     const canSeeAmount = user?.role !== "staff";
+    const isStaff = user?.role === "staff";
 
+    // Pour STAFF, afficher seulement 3 cartes : montant à reverser aux chauffeurs, leurs dépenses, et leur CA généré
+    if (isStaff) {
+      if (!shipmentsData?.data) {
+        return [
+          {
+            titleKey: "dashboard.driverDistribution",
+            value: "0",
+            change: 0,
+            icon: Users,
+            color: "primary" as const,
+          },
+          {
+            titleKey: "dashboard.totalExpenses",
+            value: "0",
+            change: 0,
+            icon: Receipt,
+            color: "info" as const,
+          },
+          {
+            titleKey: "dashboard.staffRevenue",
+            value: "0",
+            change: 0,
+            icon: DollarSign,
+            color: "success" as const,
+          },
+        ];
+      }
+
+      const shipments = shipmentsData.data;
+      const startDate = parseInputDate(dateRange.startDate);
+      const endDate = parseInputDate(dateRange.endDate);
+      endDate.setHours(23, 59, 59, 999);
+
+      // Filtrer les shipments du STAFF uniquement (créés par lui)
+      const staffShipments = shipments.filter((s) => {
+        const createdDate = new Date(s.created_at);
+        return (
+          createdDate >= startDate &&
+          createdDate <= endDate &&
+          s.created_by?.id === user?.id &&
+          !s.is_cancelled
+        );
+      });
+
+      // Calculer le CA généré par le STAFF
+      const staffRevenue = staffShipments.reduce(
+        (sum, s) => sum + Number(s.price),
+        0
+      );
+
+      return [
+        {
+          titleKey: "dashboard.driverDistribution",
+          value: driverDistributionTotal.toString(),
+          change: 0,
+          icon: Users,
+          color: "primary" as const,
+        },
+        {
+          titleKey: "dashboard.totalExpenses",
+          value: totalExpenses.toString(),
+          change: 0,
+          icon: Receipt,
+          color: "info" as const,
+        },
+        {
+          titleKey: "dashboard.staffRevenue",
+          value: staffRevenue.toString(),
+          change: 0,
+          icon: DollarSign,
+          color: "success" as const,
+        },
+      ];
+    }
+
+    // Pour les autres rôles, afficher toutes les cartes
     if (!shipmentsData?.data) {
       return [
         {
@@ -302,7 +379,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className={`grid gap-4 ${isStaff ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2 lg:grid-cols-4"}`}>
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
@@ -366,7 +443,7 @@ export default function DashboardPage() {
               <CardTitle>{t("dashboard.recentShipments")}</CardTitle>
               <CardDescription>
                 {language === "fr"
-                  ? "Les dernières expéditions enregistrées"
+                  ? "Les derniers envois enregistrés"
                   : "Latest registered shipments"}
               </CardDescription>
             </div>
@@ -389,7 +466,7 @@ export default function DashboardPage() {
               <div className="text-center py-12">
                 <p className="text-muted-foreground">
                   {language === "fr"
-                    ? "Aucune expédition récente"
+                    ? "Aucun envoi récent"
                     : "No recent shipments"}
                 </p>
                 {hasPermission("create_shipment") && (

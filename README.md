@@ -1,6 +1,6 @@
 # Transcam Messagerie
 
-Système de gestion de messagerie et d'expéditions pour Transcam, permettant la gestion complète du cycle de vie des expéditions, des départs de véhicules et la génération de bordereaux officiels.
+Système de gestion de messagerie et d'envois pour Transcam, permettant la gestion complète du cycle de vie des envois, des départs de véhicules et la génération de bordereaux officiels.
 
 ## 📋 Table des Matières
 
@@ -16,13 +16,13 @@ Système de gestion de messagerie et d'expéditions pour Transcam, permettant la
 
 ## 🎯 Vue d'ensemble
 
-Transcam Messagerie est une application web complète pour la gestion des expéditions de messagerie. Le système permet de :
+Transcam Messagerie est une application web complète pour la gestion des envois de messagerie. Le système permet de :
 
-- Gérer les expéditions (colis et courrier) avec suivi complet
+- Gérer les envois (colis et courrier) avec suivi complet
 - Organiser les départs de véhicules
 - Gérer la flotte de véhicules (création, modification, suivi)
 - Gérer l'équipe de chauffeurs (création, modification, suivi)
-- Assigner des expéditions aux départs
+- Assigner des envois aux départs
 - Gérer les dépenses avec suivi complet et statistiques
 - Générer des bordereaux individuels et généraux en PDF
 - Suivre les statistiques et les performances
@@ -46,18 +46,18 @@ Le projet est divisé en deux parties principales :
 
 ## ✨ Fonctionnalités Principales
 
-### 📦 Gestion des Expéditions
+### 📦 Gestion des Envois
 
 #### Création et Modification
-- **Création d'expéditions** avec formulaire complet et validation
-- **Modification d'expéditions** confirmées (selon permissions)
-- **Annulation d'expéditions** avec raison obligatoire
-- **Statut automatique** : Les expéditions sont créées avec le statut `CONFIRMED` par défaut
+- **Création d'envois** avec formulaire complet et validation
+- **Modification d'envois** confirmés (selon permissions)
+- **Annulation d'envois** avec raison obligatoire
+- **Statut automatique** : Les envois sont créés avec le statut `CONFIRMED` par défaut
 - **Génération automatique** de numéros de bordereau séquentiels (`TC-YYYY-NNNN`)
 
 #### Classification et Filtrage
-- **Nature des expéditions** : Colis ou Courrier (sélection via dropdown)
-- **Type d'expéditions** : Express ou Standard (sélection via dropdown)
+- **Nature des envois** : Colis ou Courrier (sélection via dropdown)
+- **Type d'envois** : Express ou Standard (sélection via dropdown)
 - **Statuts** : Pending, Confirmed, Assigned, Cancelled
 - **Filtrage avancé** :
   - Par statut (pending, confirmed, assigned, cancelled)
@@ -69,7 +69,7 @@ Le projet est divisé en deux parties principales :
 - **Pagination** : Navigation par pages avec limite configurable
 
 #### Documents et PDF
-- **Bordereaux individuels PDF** : Document officiel avec toutes les informations de l'expédition
+- **Bordereaux individuels PDF** : Document officiel avec toutes les informations de l'envoi
 - **Reçus clients PDF** : Format ticket (80mm) pour impression thermique
   - En-tête de l'entreprise
   - Numéro de reçu (numéro de bordereau)
@@ -81,10 +81,10 @@ Le projet est divisé en deux parties principales :
 
 #### Statistiques
 - **Statistiques globales** :
-  - Total d'expéditions
+  - Total d'envois
   - Revenu total (masqué pour STAFF)
   - Poids total
-  - Expéditions aujourd'hui
+  - Envois aujourd'hui
 - **Filtrage par date** : Toutes les statistiques sont liées au sélecteur de plage de dates
 - **Répartition** :
   - Par nature (colis, courrier) - affiché uniquement sur la page générale (pas sur les pages dédiées)
@@ -99,10 +99,10 @@ Le projet est divisé en deux parties principales :
 - **Un véhicule peut avoir plusieurs départs** (pas de restriction)
 - **Sélection de véhicule et chauffeur** : Dropdowns avec valeurs ACTIF uniquement
 
-#### Assignation d'Expéditions
-- **Assignation multiple** : Sélection et assignation de plusieurs expéditions à un départ
-- **Retrait d'expéditions** : Possibilité de retirer des expéditions d'un départ ouvert
-- **Validation** : Vérification que les expéditions ne sont pas déjà assignées à un autre départ scellé
+#### Assignation d'Envois
+- **Assignation multiple** : Sélection et assignation de plusieurs envois à un départ
+- **Retrait d'envois** : Possibilité de retirer des envois d'un départ ouvert
+- **Validation** : Vérification que les envois ne sont pas déjà assignés à un autre départ scellé
 
 #### Scellement et Fermeture
 - **Scellement de départ** :
@@ -119,7 +119,7 @@ Le projet est divisé en deux parties principales :
 - **Bordereau général PDF** :
   - En-tête officiel de l'entreprise
   - Informations du départ (bureau de départ, bureau destinataire, immatriculation du véhicule, nom du chauffeur, date, heure)
-  - Tableau détaillé des expéditions (numéro, expéditeur, destinataire, description, poids)
+  - Tableau détaillé des envois (numéro, expéditeur, destinataire, description, poids)
   - Totaux (nombre de colis, poids total, montant total)
   - Zones de signatures
   - Régénération à chaque téléchargement pour refléter les modifications
@@ -249,11 +249,11 @@ Le projet est divisé en deux parties principales :
 - **ADMIN** : Toutes les permissions, accès complet à toutes les fonctionnalités
 - **SUPERVISOR** : 
   - Gestion des utilisateurs (sauf ADMIN)
-  - Gestion des expéditions et départs
+  - Gestion des envois et départs
   - Scellement et fermeture de départs
   - Visualisation des montants
 - **STAFF** : 
-  - Création et visualisation d'expéditions
+  - Création et visualisation d'envois
   - **Masquage des montants** (prix et valeur déclarée)
   - Pas d'accès aux statistiques financières
 - **OPERATIONAL_ACCOUNTANT** : Permissions spécifiques (à définir selon les besoins)
@@ -301,7 +301,7 @@ Le projet est divisé en deux parties principales :
 
 #### Audit et Traçabilité
 - **Audit logging** : Enregistrement de toutes les actions importantes
-- **Historique complet** : Traçabilité des modifications sur les expéditions et départs
+- **Historique complet** : Traçabilité des modifications sur les envois et départs
 - **Informations d'audit** : Qui, quand, quoi, pourquoi (raison pour les annulations)
 
 ### 🌐 Internationalisation
@@ -316,11 +316,11 @@ Le projet est divisé en deux parties principales :
 
 #### Dashboard Principal
 - **Statistiques en temps réel** :
-  - Expéditions (filtrées par plage de dates)
+  - Envois (filtrés par plage de dates)
   - Revenu total (masqué pour STAFF, filtré par plage de dates)
   - Total des départs
 - **Sélecteur de plage de dates** : Permet de filtrer toutes les statistiques par période
-- **Tableau des expéditions récentes** : Expéditions filtrées par la plage de dates sélectionnée
+- **Tableau des envois récents** : Envois filtrés par la plage de dates sélectionnée
 - **Navigation rapide** : Liens vers les différentes sections
 
 #### Statistiques par Nature
@@ -332,7 +332,7 @@ Le projet est divisé en deux parties principales :
 
 #### Bordereaux Individuels
 - **Format** : PDF standard A4
-- **Contenu** : Informations complètes de l'expédition
+- **Contenu** : Informations complètes de l'envoi
 - **Génération** : À la volée (pas de stockage)
 - **Téléchargement** : Via bouton "Imprimer Bordereau" (si permission `print_waybill`)
 
@@ -342,7 +342,7 @@ Le projet est divisé en deux parties principales :
 - **Contenu** :
   - En-tête officiel de l'entreprise
   - Informations du départ (bureau, véhicule, chauffeur, date, heure)
-  - Tableau détaillé des expéditions
+  - Tableau détaillé des envois
   - Totaux et signatures
 - **Régénération** : Le PDF est régénéré à chaque téléchargement pour refléter les modifications
 - **Stockage** : Chemin sauvegardé dans la base de données
@@ -356,7 +356,7 @@ Le projet est divisé en deux parties principales :
   - Informations de l'entreprise (siège social, téléphone, N° contribuable)
   - Numéro de reçu (numéro de bordereau)
   - Informations expéditeur et destinataire
-  - Détails de l'expédition (trajet, nature, poids, valeur déclarée, montant)
+  - Détails de l'envoi (trajet, nature, poids, valeur déclarée, montant)
   - Date de départ (sans heure)
   - Conditions générales
   - Message de remerciement
@@ -372,7 +372,7 @@ Le projet est divisé en deux parties principales :
 - **Icônes** : Lucide React pour une cohérence visuelle
 
 #### Navigation
-- **Sidebar** : Navigation principale avec menu déroulant pour les expéditions
+- **Sidebar** : Navigation principale avec menu déroulant pour les envois
 - **Breadcrumbs** : Indication du chemin de navigation
 - **Actions rapides** : Boutons d'action contextuels selon les permissions
 
@@ -570,22 +570,22 @@ transcamMessagerie-/
 #### Authentification
 - `POST /api/users/login` : Connexion
 
-#### Expéditions
-- `GET /api/shipments` : Liste des expéditions
-- `GET /api/shipments/:id` : Détails d'une expédition
-- `POST /api/shipments` : Créer une expédition
-- `PATCH /api/shipments/:id` : Modifier une expédition
-- `DELETE /api/shipments/:id` : Annuler une expédition
+#### Envois
+- `GET /api/shipments` : Liste des envois
+- `GET /api/shipments/:id` : Détails d'un envoi
+- `POST /api/shipments` : Créer un envoi
+- `PATCH /api/shipments/:id` : Modifier un envoi
+- `DELETE /api/shipments/:id` : Annuler un envoi
 - `GET /api/shipments/:id/waybill` : Télécharger le bordereau PDF
 - `GET /api/shipments/:id/receipt` : Télécharger le reçu PDF (format ticket)
-- `GET /api/shipments/statistics` : Statistiques des expéditions
+- `GET /api/shipments/statistics` : Statistiques des envois
 
 #### Départs
 - `GET /api/departures` : Liste des départs
 - `GET /api/departures/:id` : Détails d'un départ
 - `POST /api/departures` : Créer un départ
 - `PATCH /api/departures/:id` : Modifier un départ
-- `POST /api/departures/:id/assign` : Assigner des expéditions
+- `POST /api/departures/:id/assign` : Assigner des envois
 - `POST /api/departures/:id/seal` : Sceller un départ
 - `POST /api/departures/:id/close` : Fermer un départ
 - `GET /api/departures/:id/general-waybill` : Télécharger le bordereau général
@@ -634,16 +634,16 @@ transcamMessagerie-/
 Le système utilise un contrôle d'accès basé sur les rôles (RBAC) :
 
 - **ADMIN** : Accès complet à toutes les fonctionnalités
-- **SUPERVISOR** : Gestion des utilisateurs (sauf ADMIN), gestion des expéditions, départs et dépenses
+- **SUPERVISOR** : Gestion des utilisateurs (sauf ADMIN), gestion des envois, départs et dépenses
 - **STAFF** : 
-  - Création et visualisation d'expéditions (les montants sont masqués)
+  - Création et visualisation d'envois (les montants sont masqués)
   - Création de dépenses et visualisation de **ses propres dépenses uniquement** (montants masqués)
-- **OPERATIONAL_ACCOUNTANT** : Visualisation et gestion des dépenses, visualisation des expéditions
+- **OPERATIONAL_ACCOUNTANT** : Visualisation et gestion des dépenses, visualisation des envois
 
 ### Restrictions Spécifiques
 
 - Les utilisateurs **STAFF** :
-  - Ne peuvent pas voir les montants (prix) des expéditions
+  - Ne peuvent pas voir les montants (prix) des envois
   - Ne voient que **leurs propres dépenses** (filtrage automatique)
   - Ne peuvent pas voir les montants des dépenses (masqués)
   - Ne peuvent pas modifier ou supprimer les dépenses
@@ -656,9 +656,9 @@ Le système utilise un contrôle d'accès basé sur les rôles (RBAC) :
 
 ### Génération de PDF
 
-- **Bordereaux individuels** : Un PDF par expédition avec toutes les informations
-- **Bordereaux généraux** : Un PDF par départ avec toutes les expéditions assignées
-- **Reçus clients** : Format ticket (80mm) pour les clients avec toutes les informations de l'expédition
+- **Bordereaux individuels** : Un PDF par envoi avec toutes les informations
+- **Bordereaux généraux** : Un PDF par départ avec tous les envois assignés
+- **Reçus clients** : Format ticket (80mm) pour les clients avec toutes les informations de l'envoi
 - **Format officiel** : Conforme aux standards de transport au Cameroun
 - **Régénération** : Les PDF sont régénérés à chaque téléchargement pour refléter les modifications
 
@@ -666,7 +666,7 @@ Le système utilise un contrôle d'accès basé sur les rôles (RBAC) :
 
 - Statistiques globales et filtrées par nature (colis/courrier)
 - Répartition par nature (sur page générale uniquement)
-- Filtrage par plage de dates sur toutes les pages (Dashboard, Expéditions, Dépenses, Répartitions)
+- Filtrage par plage de dates sur toutes les pages (Dashboard, Envois, Dépenses, Répartitions)
 - Revenus et poids totaux (masqués pour STAFF)
 - Statistiques liées dynamiquement au sélecteur de dates
 
@@ -717,7 +717,7 @@ npm run preview
 
 ## 📝 Notes Importantes
 
-- Les expéditions sont créées avec le statut **CONFIRMED** par défaut
+- Les envois sont créés avec le statut **CONFIRMED** par défaut
 - Les numéros de bordereau sont générés automatiquement et de manière séquentielle
 - Les bordereaux généraux ne peuvent être générés qu'après le scellement d'un départ
 - Les PDF sont stockés localement dans `/storage/waybills/`
@@ -757,7 +757,7 @@ Pour toute question ou problème, veuillez contacter l'équipe de développement
 - **Composant réutilisable** : DateRangePicker disponible sur toutes les pages nécessaires
 - **Presets** : Aujourd'hui, Hier, Cette semaine, Semaine dernière, Ce mois, Mois dernier, Cette année, Année dernière, Personnalisé
 - **Intégration** : Lié aux statistiques et tableaux de données
-- **Pages concernées** : Dashboard, Expéditions, Dépenses, Répartitions
+- **Pages concernées** : Dashboard, Envois, Dépenses, Répartitions
 
 ### Gestion des Répartitions
 - **Nouvelle fonctionnalité** : Calcul automatique des répartitions (Chauffeurs, Ministère, Agence)
@@ -765,7 +765,7 @@ Pour toute question ou problème, veuillez contacter l'équipe de développement
 - **Filtrage par date** : Toutes les répartitions sont filtrables par plage de dates
 - **Masquage STAFF** : Les montants sont masqués pour les utilisateurs STAFF
 
-### Type d'Expédition
-- **Nouveau champ** : Type d'expédition (Express ou Standard)
+### Type d'Envoi
+- **Nouveau champ** : Type d'envoi (Express ou Standard)
 - **Intégration** : Utilisé dans les critères de répartition ministère
-- **Formulaire** : Ajouté aux formulaires de création et modification d'expéditions
+- **Formulaire** : Ajouté aux formulaires de création et modification d'envois

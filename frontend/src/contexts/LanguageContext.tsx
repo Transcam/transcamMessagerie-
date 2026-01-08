@@ -13,10 +13,10 @@ const translations: Translations = {
   // Navigation
   "nav.dashboard": { fr: "Tableau de bord", en: "Dashboard" },
   "nav.users": { fr: "Utilisateurs", en: "Users" },
-  "nav.shipments": { fr: "Expéditions", en: "Shipments" },
+  "nav.shipments": { fr: "Envois", en: "Shipments" },
   "nav.shipments.courrier": { fr: "Courrier", en: "Mail" },
   "nav.shipments.colis": { fr: "Colis", en: "Parcel" },
-  "nav.newShipment": { fr: "Nouvelle expédition", en: "New Shipment" },
+  "nav.newShipment": { fr: "Nouvel envoi", en: "New Shipment" },
   "nav.departures": { fr: "Départs", en: "Departures" },
   "nav.vehicles": { fr: "Véhicules", en: "Vehicles" },
   "nav.drivers": { fr: "Chauffeurs", en: "Drivers" },
@@ -46,11 +46,11 @@ const translations: Translations = {
   "dashboard.title": { fr: "Tableau de bord", en: "Dashboard" },
   "dashboard.welcome": { fr: "Bienvenue", en: "Welcome" },
   "dashboard.todayShipments": {
-    fr: "Expéditions du jour",
+    fr: "Envois du jour",
     en: "Today's Shipments",
   },
   "dashboard.monthShipments": {
-    fr: "Expéditions du mois",
+    fr: "Envois du mois",
     en: "Month's Shipments",
   },
   "dashboard.totalRevenue": { fr: "Recettes totales", en: "Total Revenue" },
@@ -59,14 +59,15 @@ const translations: Translations = {
   "dashboard.ministryDistribution": { fr: "À verser au ministère", en: "Ministry Distribution" },
   "dashboard.globalRevenue": { fr: "Chiffre d'affaire global", en: "Global Revenue" },
   "dashboard.totalExpenses": { fr: "Total des dépenses", en: "Total Expenses" },
+  "dashboard.staffRevenue": { fr: "Chiffre d'affaire généré", en: "Revenue Generated" },
   "dashboard.recentShipments": {
-    fr: "Expéditions récentes",
+    fr: "Envois récents",
     en: "Recent Shipments",
   },
 
   // Shipments
-  "shipment.new": { fr: "Nouvelle expédition", en: "New Shipment" },
-  "shipment.list": { fr: "Liste des expéditions", en: "Shipments List" },
+  "shipment.new": { fr: "Nouvel envoi", en: "New Shipment" },
+  "shipment.list": { fr: "Liste des envois", en: "Shipments List" },
   "shipment.sender": { fr: "Expéditeur", en: "Sender" },
   "shipment.senderName": { fr: "Nom de l'expéditeur", en: "Sender Name" },
   "shipment.senderPhone": {
@@ -104,7 +105,7 @@ const translations: Translations = {
   "departure.vehicle": { fr: "Véhicule", en: "Vehicle" },
   "departure.driver": { fr: "Chauffeur", en: "Driver" },
   "departure.selectShipments": {
-    fr: "Sélectionner les expéditions",
+    fr: "Sélectionner les envois",
     en: "Select Shipments",
   },
   "departure.validate": { fr: "Valider le départ", en: "Validate Departure" },

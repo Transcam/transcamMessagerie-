@@ -1,6 +1,6 @@
 # Backend - Transcam Messagerie
 
-API REST backend pour la gestion de messagerie et d'expéditions Transcam, construite avec Node.js, Express, TypeScript et PostgreSQL.
+API REST backend pour la gestion de messagerie et d'envois Transcam, construite avec Node.js, Express, TypeScript et PostgreSQL.
 
 ## 🚀 Technologies
 
@@ -41,15 +41,15 @@ backend/
 - **Hachage de mots de passe** avec bcrypt
 - **Système de rôles** :
   - `ADMIN` : Toutes les permissions
-  - `SUPERVISOR` : Gestion des utilisateurs (sauf ADMIN), gestion des expéditions et départs
-  - `STAFF` : Création et visualisation d'expéditions (sans voir les montants)
+  - `SUPERVISOR` : Gestion des utilisateurs (sauf ADMIN), gestion des envois et départs
+  - `STAFF` : Création et visualisation d'envois (sans voir les montants)
   - `OPERATIONAL_ACCOUNTANT` : Permissions spécifiques (à définir)
 - **Contrôle d'accès basé sur les permissions** :
   - Middleware `authenticate` : Vérifie le token JWT
   - Middleware `authorize` : Vérifie les permissions spécifiques
   - Masquage des données sensibles selon les rôles (ex: prix pour STAFF)
 
-### 📦 Gestion des Expéditions
+### 📦 Gestion des Envois
 
 #### Entité `Shipment`
 
@@ -67,20 +67,20 @@ backend/
 
 #### Endpoints API
 
-- `GET /api/shipments` : Liste des expéditions (avec filtres)
+- `GET /api/shipments` : Liste des envois (avec filtres)
   - Filtres : status, route, nature, dateFrom, dateTo, waybillNumber
   - Pagination
   - **Masque le prix pour les utilisateurs STAFF**
-- `GET /api/shipments/:id` : Détails d'une expédition
+- `GET /api/shipments/:id` : Détails d'un envoi
   - **Masque le prix pour les utilisateurs STAFF**
-- `POST /api/shipments` : Création d'expédition
+- `POST /api/shipments` : Création d'envoi
   - Génération automatique du numéro de bordereau
   - Statut automatiquement défini à `CONFIRMED`
-- `PATCH /api/shipments/:id` : Mise à jour d'expédition
-- `DELETE /api/shipments/:id` : Annulation d'expédition (avec raison)
+- `PATCH /api/shipments/:id` : Mise à jour d'envoi
+- `DELETE /api/shipments/:id` : Annulation d'envoi (avec raison)
 - `GET /api/shipments/:id/waybill` : Téléchargement du bordereau PDF individuel
 - `GET /api/shipments/:id/receipt` : Téléchargement du reçu PDF (format ticket 80mm)
-- `GET /api/shipments/statistics` : Statistiques des expéditions
+- `GET /api/shipments/statistics` : Statistiques des envois
   - Total, revenu total, poids total
   - Répartition par statut et par nature
   - Statistiques du jour et du mois
@@ -101,7 +101,7 @@ backend/
 - **`ReceiptService`** :
   - Génération de PDF pour reçus clients
   - Format ticket (80mm) pour impression thermique
-  - Contenu : Informations complètes de l'expédition, conditions générales
+  - Contenu : Informations complètes de l'envoi, conditions générales
 
 ### 🚌 Gestion des Départs
 
@@ -114,7 +114,7 @@ backend/
   - Date de scellement
   - Chemin du PDF du bordereau général
 - **Relations** :
-  - Expéditions assignées (Shipment[])
+  - Envois assignés (Shipment[])
 
 #### Endpoints API
 
@@ -122,8 +122,8 @@ backend/
 - `GET /api/departures/:id` : Détails d'un départ
 - `POST /api/departures` : Création de départ
 - `PATCH /api/departures/:id` : Mise à jour de départ
-- `POST /api/departures/:id/assign` : Assignation d'expéditions
-- `DELETE /api/departures/:id/shipments/:shipmentId` : Retrait d'expédition
+- `POST /api/departures/:id/assign` : Assignation d'envois
+- `DELETE /api/departures/:id/shipments/:shipmentId` : Retrait d'envoi
 - `POST /api/departures/:id/seal` : Scellement du départ
   - Génère le numéro de bordereau général
   - Génère le PDF du bordereau général
@@ -136,7 +136,7 @@ backend/
 
 - **`DepartureService`** :
   - CRUD complet
-  - Assignation/retrait d'expéditions
+  - Assignation/retrait d'envois
   - Scellement et fermeture
   - Calcul de résumés (nombre de colis, poids total, montant total)
   - Audit logging
@@ -146,7 +146,7 @@ backend/
   - Génération de PDF du bordereau général avec :
     - En-tête officiel de l'entreprise
     - Informations du départ (bureau, immatriculation du véhicule, nom du chauffeur, date, heure)
-    - Tableau détaillé des expéditions (numéro, expéditeur, destinataire, description, poids)
+    - Tableau détaillé des envois (numéro, expéditeur, destinataire, description, poids)
     - Totaux (nombre de colis, poids total, montant total)
     - Zones de signatures
     - **Affichage** : Immatriculation du véhicule et nom complet du chauffeur depuis la base de données
@@ -338,32 +338,32 @@ backend/
 ### 💰 Gestion des Répartitions
 
 #### Vue d'ensemble
-- **Calcul automatique** : Les répartitions sont calculées en temps réel à partir des expéditions liées aux départs fermés
+- **Calcul automatique** : Les répartitions sont calculées en temps réel à partir des envois liés aux départs fermés
 - **Date de référence** : Utilise la date de scellement (`sealed_at`) des départs fermés
 - **Filtrage par date** : Tous les endpoints supportent les filtres `dateFrom` et `dateTo`
 - **Pas de stockage** : Les répartitions sont calculées à la volée (pas de table dédiée)
 
 #### Répartition Chauffeurs
 - **Règle** : 60% du montant des colis ≤ 40kg transportés
-- **Calcul** : Pour chaque expédition de type colis avec poids ≤ 40kg dans un départ fermé
-- **Retour** : Liste des chauffeurs avec montant total, nombre d'expéditions, et détails par expédition
+- **Calcul** : Pour chaque envoi de type colis avec poids ≤ 40kg dans un départ fermé
+- **Retour** : Liste des chauffeurs avec montant total, nombre d'envois, et détails par envoi
 
 #### Répartition Ministère
-- **Règle** : 5% du chiffre d'affaires des expéditions éligibles
-- **Expéditions éligibles** :
+- **Règle** : 5% du chiffre d'affaires des envois éligibles
+- **Envois éligibles** :
   - Colis ≤ 50kg, OU
   - Courrier Standard ≤ 100g, OU
   - Courrier Express entre 100g et 2kg (exclus de 100g, inclus de 2kg)
-- **Retour** : Montant total, chiffre d'affaires éligible, nombre d'expéditions, et liste des expéditions éligibles
+- **Retour** : Montant total, chiffre d'affaires éligible, nombre d'envois, et liste des envois éligibles
 
 #### Répartition Agence
 - **Règle** : Montant restant après déduction des répartitions chauffeurs et ministère
-- **Calcul** : Prix de l'expédition - Montant chauffeur - Montant ministère
-- **Retour** : Montant total agence, chiffre d'affaires concerné, nombre d'expéditions, et liste avec détail des montants
+- **Calcul** : Prix de l'envoi - Montant chauffeur - Montant ministère
+- **Retour** : Montant total agence, chiffre d'affaires concerné, nombre d'envois, et liste avec détail des montants
 
 #### Résumé Général
 - **Endpoint** : `/api/distributions/summary`
-- **Retour** : Totaux consolidés (chauffeurs, ministère, agence, CA total, nombre d'expéditions)
+- **Retour** : Totaux consolidés (chauffeurs, ministère, agence, CA total, nombre d'envois)
 
 #### Contrôle d'Accès
 - **Permission requise** : `view_distribution`
@@ -416,14 +416,14 @@ backend/
 
 - Enregistrement de toutes les actions importantes
 - Champs : entity_type, entity_id, action, old_values, new_values, user, reason
-- Utilisé pour tracer les modifications sur les expéditions et départs
+- Utilisé pour tracer les modifications sur les envois et départs
 
 ### 📄 Génération de PDF
 
 #### Bordereaux Individuels
 
 - Format : `TC-YYYY-NNNN`
-- Contenu : Informations complètes de l'expédition
+- Contenu : Informations complètes de l'envoi
 - Stockage : Générés à la volée (pas de stockage)
 
 #### Reçus Clients
@@ -433,7 +433,7 @@ backend/
   - En-tête de l'entreprise
   - Numéro de reçu (numéro de bordereau)
   - Informations expéditeur et destinataire
-  - Détails de l'expédition (trajet, nature, poids, valeur déclarée, montant)
+  - Détails de l'envoi (trajet, nature, poids, valeur déclarée, montant)
   - Date de départ
   - Conditions générales
 - Stockage : Générés à la volée (pas de stockage)
@@ -445,7 +445,7 @@ backend/
 - Contenu :
   - En-tête officiel de l'entreprise
   - Informations du départ
-  - Tableau des expéditions assignées
+  - Tableau des envois assignés
   - Totaux et signatures
 - Stockage : `/storage/waybills/general/`
 - **Régénération** : Le PDF est régénéré à chaque téléchargement pour refléter les modifications
@@ -453,14 +453,14 @@ backend/
 ## 🔧 Services Principaux
 
 ### `ShipmentService`
-- Gestion complète du cycle de vie des expéditions
+- Gestion complète du cycle de vie des envois
 - Génération de numéros de bordereau
 - Calcul de statistiques
 - Audit logging
 
 ### `DepartureService`
 - Gestion des départs
-- Assignation d'expéditions
+- Assignation d'envois
 - Scellement et fermeture
 - Calcul de résumés
 
@@ -498,7 +498,7 @@ backend/
 - Filtrage par plage de dates (utilise `sealed_at` des départs fermés)
 - Règles de calcul :
   - **Chauffeurs** : 60% du montant des colis ≤ 40kg
-  - **Ministère** : 5% du CA des expéditions éligibles
+  - **Ministère** : 5% du CA des envois éligibles
   - **Agence** : Montant restant après déductions
 - Masquage des montants pour les utilisateurs STAFF
 - Calcul en temps réel (pas de stockage)
@@ -508,7 +508,7 @@ backend/
 ### Tables Principales
 
 - **`users`** : Utilisateurs du système
-- **`shipments`** : Expéditions
+- **`shipments`** : Envois
 - **`departures`** : Départs
 - **`vehicles`** : Véhicules de la flotte
 - **`drivers`** : Chauffeurs
@@ -545,10 +545,10 @@ Le système de permissions est défini dans `src/types/permissions.ts` et `src/h
 ### Permissions Disponibles
 
 - `view_dashboard` : Voir le tableau de bord
-- `view_shipments` : Voir les expéditions
-- `create_shipment` : Créer des expéditions
-- `edit_shipment` : Modifier des expéditions
-- `delete_shipment` : Annuler des expéditions
+- `view_shipments` : Voir les envois
+- `create_shipment` : Créer des envois
+- `edit_shipment` : Modifier des envois
+- `delete_shipment` : Annuler des envois
 - `view_departures` : Voir les départs
 - `create_departure` : Créer des départs
 - `validate_departure` : Sceller/fermer des départs
@@ -639,7 +639,7 @@ npm start
 - `npm run migration:generate` : Génère une nouvelle migration
 - `npm run migration:run` : Exécute les migrations
 - `npm run migration:revert` : Annule la dernière migration
-- `npm run seed:shipments` : Insère des expéditions de test
+- `npm run seed:shipments` : Insère des envois de test
 - `npm run seed:expenses` : Insère des dépenses de test
 - `npm run seed:vehicles` : Insère des véhicules de test
 - `npm run seed:drivers` : Insère des chauffeurs de test
@@ -665,7 +665,7 @@ http://localhost:3000/api
 POST /users/login
 ```
 
-### Expéditions
+### Envois
 ```
 GET    /shipments
 GET    /shipments/:id

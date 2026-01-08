@@ -31,12 +31,12 @@ export class AuditLog {
   @Column({ type: "jsonb", nullable: true })
   new_values!: Record<string, any>;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: "user_id" })
-  user!: User;
+  user!: User | null;
 
-  @Column()
-  user_id!: number;
+  @Column({ nullable: true })
+  user_id!: number | null;
 
   @Column({ type: "text", nullable: true })
   reason!: string;

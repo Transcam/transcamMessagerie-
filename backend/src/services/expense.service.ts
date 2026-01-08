@@ -105,12 +105,8 @@ export class ExpenseService {
 
     const [expenses, total] = await query.getManyAndCount();
 
-    // Mask amount for STAFF role
-    if (user.role === UserRole.STAFF) {
-      expenses.forEach((expense) => {
-        (expense as any).amount = null;
-      });
-    }
+    // STAFF can see amounts of their own expenses only (already filtered above)
+    // No need to mask since they only see their own expenses
 
     return [expenses, total];
   }
@@ -130,10 +126,8 @@ export class ExpenseService {
       throw new Error("Expense not found");
     }
 
-    // Mask amount for STAFF role
-    if (user.role === UserRole.STAFF) {
-      (expense as any).amount = null;
-    }
+    // STAFF can see amount of their own expense (already verified above)
+    // No need to mask since they only see their own expenses
 
     return expense;
   }
@@ -264,20 +258,8 @@ export class ExpenseService {
     // Calculate average
     const averageAmount = total > 0 ? totalAmount / total : 0;
 
-    // Mask amounts for STAFF role
-    if (user.role === UserRole.STAFF) {
-      return {
-        total,
-        totalAmount: null,
-        byCategory: {}, // Empty for staff
-        todayCount,
-        todayAmount: null,
-        monthCount,
-        monthAmount: null,
-        averageAmount: null,
-      };
-    }
-
+    // STAFF can see statistics of their own expenses only (already filtered above)
+    // Return all statistics including amounts since they only see their own expenses
     return {
       total,
       totalAmount,

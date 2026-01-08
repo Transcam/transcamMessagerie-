@@ -110,7 +110,7 @@ export default function ShipmentDetailPage() {
           <CardContent className="p-6">
             <p className="text-destructive">
               {language === "fr"
-                ? "Expédition introuvable"
+                ? "Envoi introuvable"
                 : "Shipment not found"}
             </p>
             <Button
@@ -213,12 +213,12 @@ export default function ShipmentDetailPage() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>
                     {language === "fr"
-                      ? "Annuler l'expédition"
+                      ? "Annuler l'envoi"
                       : "Cancel Shipment"}
                   </AlertDialogTitle>
                   <AlertDialogDescription>
                     {language === "fr"
-                      ? "Veuillez fournir une raison pour l'annulation de cette expédition."
+                      ? "Veuillez fournir une raison pour l'annulation de cet envoi."
                       : "Please provide a reason for cancelling this shipment."}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -341,7 +341,11 @@ export default function ShipmentDetailPage() {
                   <p className="text-sm text-muted-foreground">
                     {t("shipment.weight")}
                   </p>
-                  <p className="font-medium">{shipment.weight} kg</p>
+                  <p className="font-medium">
+                    {shipment.weight !== null && shipment.weight !== undefined 
+                      ? `${shipment.weight} kg` 
+                      : "N/A"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">

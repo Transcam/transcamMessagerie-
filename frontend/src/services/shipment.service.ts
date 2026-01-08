@@ -16,9 +16,10 @@ export interface Shipment {
   receiver_name: string;
   receiver_phone: string;
   description?: string;
-  weight: number;
+  weight: number | null;
   declared_value: number;
   price: number;
+  is_free?: boolean;
   route: string;
   nature: ShipmentNature;
   type: ShipmentType;
@@ -41,9 +42,10 @@ export interface CreateShipmentDTO {
   receiver_name: string;
   receiver_phone: string;
   description?: string;
-  weight: number;
+  weight?: number;
   declared_value?: number;
   price: number;
+  is_free?: boolean;
   route: string;
   nature?: ShipmentNature;
   type?: ShipmentType;
@@ -58,6 +60,7 @@ export interface UpdateShipmentDTO {
   weight?: number;
   declared_value?: number;
   price?: number;
+  is_free?: boolean;
   route?: string;
   nature?: ShipmentNature;
   type?: ShipmentType;
@@ -126,6 +129,15 @@ export const shipmentService = {
     return response.data.data;
   },
 
+  // Delete existing shipment and create new one
+  deleteAndCreate: async (existingId: number, data: CreateShipmentDTO): Promise<Shipment> => {
+    const response = await httpService.post("/shipments/delete-and-create", {
+      existingId,
+      ...data,
+    });
+    return response.data.data;
+  },
+
   // Confirm shipment
   confirm: async (id: number): Promise<Shipment> => {
     const response = await httpService.patch(`/shipments/${id}/confirm`);
@@ -142,6 +154,14 @@ export const shipmentService = {
   cancel: async (id: number, reason: string): Promise<Shipment> => {
     const response = await httpService.delete(`/shipments/${id}`, {
       data: { reason },
+    });
+    return response.data.data;
+  },
+
+  // Search contacts (senders/receivers)
+  searchContacts: async (query: string, type: 'sender' | 'receiver'): Promise<Array<{ name: string; phone: string; count: number }>> => {
+    const response = await httpService.get("/shipments/contacts/search", {
+      params: { q: query, type },
     });
     return response.data.data;
   },

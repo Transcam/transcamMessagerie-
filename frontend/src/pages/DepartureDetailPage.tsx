@@ -535,7 +535,9 @@ export default function DepartureDetailPage() {
                         <TableCell>{shipment.receiver_name}</TableCell>
                         <TableCell>{shipment.description || "-"}</TableCell>
                         <TableCell className="text-right">
-                          {parseFloat(shipment.weight.toString()).toFixed(2)} kg
+                          {shipment.weight !== null && shipment.weight !== undefined
+                            ? `${parseFloat(shipment.weight.toString()).toFixed(2)} kg`
+                            : "N/A"}
                         </TableCell>
                         <TableCell className="text-right font-medium">
                           {shipment.price !== null && shipment.price !== undefined
@@ -753,7 +755,9 @@ export default function DepartureDetailPage() {
                           <TableCell>{shipment.receiver_name}</TableCell>
                           <TableCell>{shipment.route}</TableCell>
                           <TableCell className="text-right">
-                            {parseFloat(shipment.weight.toString()).toFixed(2)} kg
+                            {shipment.weight !== null && shipment.weight !== undefined
+                              ? `${parseFloat(shipment.weight.toString()).toFixed(2)} kg`
+                              : "N/A"}
                           </TableCell>
                           <TableCell className="text-right font-medium">
                             {shipment.price !== null && shipment.price !== undefined

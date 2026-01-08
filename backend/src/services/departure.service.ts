@@ -269,7 +269,7 @@ export class DepartureService {
   }
 
   /**
-   * Delete a departure (only if status is OPEN)
+   * Delete a departure (only if status is OPEN, or if user is ADMIN/SUPERVISOR)
    */
   async delete(id: number, user: User): Promise<void> {
     const departure = await this.departureRepo.findOne({
@@ -281,8 +281,11 @@ export class DepartureService {
       throw new Error("Departure not found");
     }
 
-    if (departure.status !== DepartureStatus.OPEN) {
-      throw new Error("Can only delete OPEN departures");
+    // Allow deletion if user is ADMIN or SUPERVISOR, or if departure is OPEN
+    if (departure.status !== DepartureStatus.OPEN && 
+        user.role !== UserRole.ADMIN && 
+        user.role !== UserRole.SUPERVISOR) {
+      throw new Error("Can only delete OPEN departures. ADMIN and SUPERVISOR can delete closed departures.");
     }
 
     // Remove shipments from departure
@@ -440,7 +443,9 @@ export class DepartureService {
         if (user?.role !== UserRole.STAFF && shipment.declared_value !== null && shipment.declared_value !== undefined) {
           acc.total_declared_value += parseFloat(shipment.declared_value.toString());
         }
-        acc.total_weight += parseFloat(shipment.weight.toString());
+        if (shipment.weight !== null && shipment.weight !== undefined) {
+          acc.total_weight += parseFloat(shipment.weight.toString());
+        }
         return acc;
       },
       { total_price: 0, total_weight: 0, total_declared_value: 0 }

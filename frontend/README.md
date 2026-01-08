@@ -1,6 +1,6 @@
 # Frontend - Transcam Messagerie
 
-Application frontend de gestion de messagerie et d'expéditions pour Transcam, construite avec React, TypeScript et Vite.
+Application frontend de gestion de messagerie et d'envois pour Transcam, construite avec React, TypeScript et Vite.
 
 ## 🚀 Technologies
 
@@ -25,7 +25,7 @@ frontend/
 │   │   ├── departures/     # Composants spécifiques aux départs
 │   │   ├── expenses/       # Composants spécifiques aux dépenses
 │   │   ├── layout/          # Composants de mise en page
-│   │   ├── shipments/       # Composants spécifiques aux expéditions
+│   │   ├── shipments/       # Composants spécifiques aux envois
 │   │   └── ui/             # Composants UI de base (shadcn/ui)
 │   ├── contexts/           # Contextes React (Auth, Language)
 │   ├── hooks/              # Hooks personnalisés
@@ -43,7 +43,7 @@ frontend/
 - **Système de connexion** avec JWT
 - **Gestion des rôles** : ADMIN, STAFF, SUPERVISOR, OPERATIONAL_ACCOUNTANT
 - **Contrôle d'accès basé sur les permissions** :
-  - Les utilisateurs STAFF ne peuvent pas voir les montants (prix) des expéditions
+  - Les utilisateurs STAFF ne peuvent pas voir les montants (prix) des envois
   - Les utilisateurs STAFF ne voient que leurs propres dépenses (montants masqués)
   - Les utilisateurs STAFF ne peuvent pas modifier ou supprimer les dépenses
   - Les SUPERVISOR ne peuvent pas créer/modifier/supprimer les comptes ADMIN
@@ -55,43 +55,43 @@ frontend/
 - **Basculement de langue** en temps réel
 - **Traductions complètes** de l'interface utilisateur
 
-### 📦 Gestion des Expéditions
+### 📦 Gestion des Envois
 
 #### Pages Disponibles
 
-1. **Liste des Expéditions** (`/shipments`)
-   - Affichage de toutes les expéditions
+1. **Liste des Envois** (`/shipments`)
+   - Affichage de tous les envois
    - Filtrage par statut, route, nature (colis/courrier), numéro de bordereau
    - Pagination
    - Actions : Voir, Modifier, Imprimer reçu, Annuler
    - **Filtrage par nature** : `/shipments/colis` et `/shipments/courrier`
 
-2. **Détails d'Expédition** (`/shipments/:id`)
-   - Informations complètes de l'expédition
+2. **Détails d'Envoi** (`/shipments/:id`)
+   - Informations complètes de l'envoi
    - Historique et audit trail
    - Actions : Modifier, Imprimer reçu, Annuler
 
-3. **Création d'Expédition** (`/shipments/new`)
+3. **Création d'Envoi** (`/shipments/new`)
    - Formulaire complet avec validation
    - Sélection de la nature (colis/courrier)
    - Génération automatique du numéro de bordereau
 
-4. **Modification d'Expédition** (`/shipments/:id/edit`)
-   - Édition des informations d'expédition
+4. **Modification d'Envoi** (`/shipments/:id/edit`)
+   - Édition des informations d'envoi
    - Validation en temps réel
 
 #### Fonctionnalités
 
-- **Nature des expéditions** : Colis ou Courrier
-- **Type d'expéditions** : Express ou Standard (sélection via dropdown)
+- **Nature des envois** : Colis ou Courrier
+- **Type d'envois** : Express ou Standard (sélection via dropdown)
 - **Statuts** : Pending, Confirmed, Assigned, Cancelled
 - **Génération de bordereaux PDF** individuels
 - **Génération de reçus PDF** en format ticket (80mm) pour les clients
 - **Statistiques** :
-  - Total d'expéditions
+  - Total d'envois
   - Revenu total (masqué pour STAFF)
   - Poids total
-  - Expéditions aujourd'hui
+  - Envois aujourd'hui
   - **Filtrage par date** : Toutes les statistiques sont liées au sélecteur de plage de dates
   - Répartition par nature (affichée uniquement sur la page générale, pas sur les pages dédiées)
 
@@ -106,10 +106,10 @@ frontend/
 
 2. **Détails de Départ** (`/departures/:id`)
    - Informations complètes du départ
-   - Liste des expéditions assignées
+   - Liste des envois assignés
    - Résumé (nombre de colis, poids total, montant total)
    - Actions selon le statut :
-     - **Open** : Assigner des expéditions, Sceller le départ
+     - **Open** : Assigner des envois, Sceller le départ
      - **Sealed** : Télécharger bordereau général, Fermer le départ
      - **Closed** : Télécharger bordereau général
    - **Contrôle d'accès** :
@@ -123,9 +123,9 @@ frontend/
 #### Fonctionnalités
 
 - **Statuts** : Open, Sealed, Closed
-- **Assignation d'expéditions** à un départ (les expéditions déjà assignées sont pré-cochées dans le dialog)
+- **Assignation d'envois** à un départ (les envois déjà assignés sont pré-cochés dans le dialog)
 - **Scellement** : Génération du numéro de bordereau général (BG-YYYY-NNNN)
-- **Génération de bordereau général PDF** avec toutes les expéditions
+- **Génération de bordereau général PDF** avec tous les envois
   - Affichage de l'immatriculation du véhicule et du nom complet du chauffeur depuis la base de données
 - **Masquage des montants** pour les utilisateurs STAFF dans les listes et détails
 
@@ -230,11 +230,11 @@ frontend/
 ### 📊 Dashboard
 
 - **Statistiques globales** :
-  - Expéditions (filtrées par plage de dates)
+  - Envois (filtrés par plage de dates)
   - Revenu total (masqué pour STAFF, filtré par plage de dates)
   - Total des départs
 - **Sélecteur de plage de dates** : Permet de filtrer toutes les statistiques par période
-- **Tableau des expéditions récentes** : Expéditions filtrées par la plage de dates sélectionnée
+- **Tableau des envois récents** : Envois filtrés par la plage de dates sélectionnée
 - **Navigation rapide** vers les différentes sections
 
 ### 💰 Gestion des Répartitions
@@ -242,7 +242,7 @@ frontend/
 #### Page Disponible
 
 1. **Page Répartitions** (`/distribution`)
-   - Vue d'ensemble avec cartes statistiques (Total Chauffeurs, Total Ministère, Total Agence, Expéditions concernées)
+   - Vue d'ensemble avec cartes statistiques (Total Chauffeurs, Total Ministère, Total Agence, Envois concernés)
    - Sélecteur de vue : Chauffeur ou Ministère
    - **Sélecteur de plage de dates** avec presets (Aujourd'hui, Hier, Cette semaine, etc.)
    - Filtrage automatique de toutes les données selon la plage de dates sélectionnée
@@ -253,8 +253,8 @@ frontend/
 - Pour chaque chauffeur :
   - Nom complet
   - Montant total (masqué pour STAFF)
-  - Nombre d'expéditions
-  - Détails par expédition (bordereau, poids, prix, montant chauffeur, date scellement)
+  - Nombre d'envois
+  - Détails par envoi (bordereau, poids, prix, montant chauffeur, date scellement)
 - **Règle** : 60% du montant des colis ≤ 40kg
 
 #### Vue Ministère
@@ -262,10 +262,10 @@ frontend/
 - **Statistiques** :
   - CA Éligible (masqué pour STAFF)
   - Montant Ministère (masqué pour STAFF)
-  - Nombre d'expéditions éligibles
-- **Liste des expéditions éligibles** avec détails :
+  - Nombre d'envois éligibles
+- **Liste des envois éligibles** avec détails :
   - Bordereau, nature, type, poids, prix (masqué pour STAFF), date scellement
-- **Règle** : 5% du CA des expéditions éligibles (colis ≤ 50kg, courrier standard ≤ 100g, courrier express entre 100g et 2kg)
+- **Règle** : 5% du CA des envois éligibles (colis ≤ 50kg, courrier standard ≤ 100g, courrier express entre 100g et 2kg)
 
 #### Contrôle d'Accès
 
@@ -285,13 +285,13 @@ frontend/
 
 - **`DashboardLayout`** : Layout principal avec sidebar et header
 - **`AppSidebar`** : Barre latérale de navigation avec :
-  - Menu déroulant pour les expéditions (Courrier, Colis)
+  - Menu déroulant pour les envois (Courrier, Colis)
   - Lien vers la gestion des véhicules
   - Affichage conditionnel basé sur les permissions
   - Basculement de langue
   - Informations utilisateur
 
-### Composants d'Expéditions
+### Composants d'Envois
 
 - **`ShipmentStatusBadge`** : Badge coloré pour les statuts
 - **`ShipmentStats`** : Composant de statistiques avec cartes
@@ -318,27 +318,27 @@ frontend/
   - **Mode personnalisé** : Sélection via calendrier avec plage de dates
   - **Auto-détection** : Détecte automatiquement le preset correspondant à la plage sélectionnée
   - **Internationalisé** : Support FR/EN avec formatage de dates adapté
-  - **Utilisé sur** : Dashboard, Expéditions, Dépenses, Répartitions
+  - **Utilisé sur** : Dashboard, Envois, Dépenses, Répartitions
 
 ## 🔧 Services API
 
 ### `shipment.service.ts`
-- `list()` : Liste des expéditions avec filtres
-- `getOne()` : Détails d'une expédition
-- `create()` : Création d'expédition
-- `update()` : Mise à jour d'expédition
-- `cancel()` : Annulation d'expédition
+- `list()` : Liste des envois avec filtres
+- `getOne()` : Détails d'un envoi
+- `create()` : Création d'envoi
+- `update()` : Mise à jour d'envoi
+- `cancel()` : Annulation d'envoi
 - `downloadWaybill()` : Téléchargement du bordereau PDF
 - `downloadReceipt()` : Téléchargement du reçu PDF (format ticket)
-- `getStatistics()` : Statistiques des expéditions
+- `getStatistics()` : Statistiques des envois
 
 ### `departure.service.ts`
 - `list()` : Liste des départs
 - `getOne()` : Détails d'un départ
 - `create()` : Création de départ
 - `update()` : Mise à jour de départ
-- `assignShipments()` : Assignation d'expéditions
-- `removeShipment()` : Retrait d'expédition
+- `assignShipments()` : Assignation d'envois
+- `removeShipment()` : Retrait d'envoi
 - `seal()` : Scellement du départ
 - `close()` : Fermeture du départ
 - `downloadGeneralWaybill()` : Téléchargement du bordereau général
@@ -388,20 +388,20 @@ frontend/
 ## 🪝 Hooks Personnalisés
 
 ### `use-shipments.ts`
-- `useShipments()` : Liste des expéditions
-- `useShipment()` : Détails d'une expédition
-- `useCreateShipment()` : Création d'expédition
-- `useUpdateShipment()` : Mise à jour d'expédition
-- `useCancelShipment()` : Annulation d'expédition
+- `useShipments()` : Liste des envois
+- `useShipment()` : Détails d'un envoi
+- `useCreateShipment()` : Création d'envoi
+- `useUpdateShipment()` : Mise à jour d'envoi
+- `useCancelShipment()` : Annulation d'envoi
 - `useGenerateReceipt()` : Génération et téléchargement de reçu PDF
-- `useShipmentStatistics()` : Statistiques des expéditions (filtres: nature, dateFrom, dateTo)
+- `useShipmentStatistics()` : Statistiques des envois (filtres: nature, dateFrom, dateTo)
 
 ### `use-departures.ts`
 - `useDepartures()` : Liste des départs
 - `useDeparture()` : Détails d'un départ
 - `useCreateDeparture()` : Création de départ
 - `useUpdateDeparture()` : Mise à jour de départ
-- `useAssignShipments()` : Assignation d'expéditions
+- `useAssignShipments()` : Assignation d'envois
 - `useSealDeparture()` : Scellement de départ
 - `useCloseDeparture()` : Fermeture de départ
 
@@ -511,16 +511,16 @@ L'URL de l'API est configurée dans `src/services/http-service.ts` et utilise la
 ## 📝 Notes Importantes
 
 - Les utilisateurs **STAFF** :
-  - Ne peuvent pas voir les montants (prix) des expéditions
+  - Ne peuvent pas voir les montants (prix) des envois
   - Ne voient que **leurs propres dépenses** (filtrage automatique côté backend)
   - Ne peuvent pas voir les montants des dépenses (affichés comme "-")
   - Ne peuvent pas modifier ou supprimer les dépenses
   - Peuvent créer et modifier des véhicules et des chauffeurs, mais ne peuvent pas les supprimer
 - Les **SUPERVISOR** ne peuvent pas créer, modifier ou supprimer les comptes **ADMIN**
-- Les expéditions sont créées avec le statut **CONFIRMED** par défaut
-- Les expéditions ont maintenant un **type** (Express ou Standard) en plus de la nature (Colis/Courrier)
+- Les envois sont créés avec le statut **CONFIRMED** par défaut
+- Les envois ont maintenant un **type** (Express ou Standard) en plus de la nature (Colis/Courrier)
 - Les statistiques sont filtrées selon la nature si on est sur `/shipments/colis` ou `/shipments/courrier`
-- Toutes les statistiques (Dashboard, Expéditions, Dépenses, Répartitions) sont liées au sélecteur de plage de dates
+- Toutes les statistiques (Dashboard, Envois, Dépenses, Répartitions) sont liées au sélecteur de plage de dates
 - Le composant **DateRangePicker** est disponible sur toutes les pages nécessaires avec des presets et une sélection personnalisée
 - Les bordereaux et reçus PDF sont générés côté backend et téléchargés via le frontend
 - Les reçus sont au format ticket (80mm) pour impression sur imprimantes thermiques
