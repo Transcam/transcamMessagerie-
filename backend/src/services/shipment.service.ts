@@ -1,4 +1,4 @@
-import { Repository } from "typeorm";
+import { Repository, MoreThanOrEqual } from "typeorm";
 import { AppDataSource } from "../../db";
 import {
   Shipment,
@@ -18,9 +18,10 @@ export interface CreateShipmentDTO {
   receiver_name: string;
   receiver_phone: string;
   description?: string;
-  weight: number;
+  weight?: number;
   declared_value?: number;
   price: number;
+  is_free?: boolean;
   route: string;
   nature?: ShipmentNature;
 }
@@ -34,6 +35,7 @@ export interface UpdateShipmentDTO {
   weight?: number;
   declared_value?: number;
   price?: number;
+  is_free?: boolean;
   route?: string;
   nature?: ShipmentNature;
 }
@@ -64,7 +66,114 @@ export class ShipmentService {
     this.receiptService = new ReceiptService();
   }
 
+  /**
+   * Check if a similar shipment already exists
+   * Option 4 (Hybrid): 
+   * - Vérifie les critères de base (sender, receiver, route) dans les 3 dernières heures
+   * - Si description fournie, l'ajoute comme critère
+   * - Si poids fourni, l'ajoute comme critère
+   * - Exclut les colis annulés
+   */
+  async checkSimilarShipment(data: CreateShipmentDTO): Promise<Shipment | null> {
+    // Vérifier les 3 dernières heures
+    const threeHoursAgo = new Date();
+    threeHoursAgo.setHours(threeHoursAgo.getHours() - 3);
+
+    // Critères de base (toujours vérifiés)
+    const baseCriteria: any = {
+      sender_name: data.sender_name,
+      sender_phone: data.sender_phone,
+      receiver_name: data.receiver_name,
+      receiver_phone: data.receiver_phone,
+      route: data.route,
+      is_cancelled: false,
+      created_at: MoreThanOrEqual(threeHoursAgo),
+    };
+
+    // Ajouter description comme critère si fournie
+    if (data.description) {
+      baseCriteria.description = data.description;
+    }
+
+    // Ajouter poids comme critère si fourni
+    if (data.weight !== null && data.weight !== undefined) {
+      baseCriteria.weight = data.weight;
+    }
+
+    const similarShipment = await this.shipmentRepo.findOne({
+      where: baseCriteria,
+      order: {
+        created_at: "DESC",
+      },
+    });
+
+    return similarShipment;
+  }
+
   async create(data: CreateShipmentDTO, user: User): Promise<Shipment> {
+    // Vérifier si un colis similaire existe
+    const similarShipment = await this.checkSimilarShipment(data);
+    
+    if (similarShipment) {
+      // Lancer une erreur spéciale avec les infos du colis existant
+      const error: any = new Error("DUPLICATE_SHIPMENT");
+      error.code = "DUPLICATE_SHIPMENT";
+      error.existingShipment = {
+        id: similarShipment.id,
+        waybill_number: similarShipment.waybill_number,
+        created_at: similarShipment.created_at,
+        sender_name: similarShipment.sender_name,
+        receiver_name: similarShipment.receiver_name,
+      };
+      throw error;
+    }
+
+    const waybillNumber = await this.waybillService.generateNext();
+    const isFree = data.is_free || false;
+
+    const shipment = this.shipmentRepo.create({
+      ...data,
+      waybill_number: waybillNumber,
+      nature: data.nature || ShipmentNature.COLS,
+      status: ShipmentStatus.CONFIRMED,
+      is_confirmed: true,
+      confirmed_at: new Date(),
+      confirmed_by: user,
+      confirmed_by_id: user.id,
+      created_by: user,
+      created_by_id: user.id,
+      is_free: isFree,
+      price: isFree ? 0 : data.price,
+    });
+
+    const saved = await this.shipmentRepo.save(shipment);
+    await this.logAction("create", saved.id, user, null, saved);
+
+    return saved;
+  }
+
+  /**
+   * Delete an existing shipment and create a new one with the provided data
+   * Used when a duplicate shipment is detected and user chooses to replace it
+   */
+  async deleteAndCreate(existingId: number, data: CreateShipmentDTO, user: User): Promise<Shipment> {
+    // Récupérer l'ancien colis
+    const existingShipment = await this.shipmentRepo.findOne({
+      where: { id: existingId },
+    });
+
+    if (!existingShipment) {
+      throw new Error("Shipment not found");
+    }
+
+    // Sauvegarder les anciennes valeurs pour l'audit
+    const oldValues = { ...existingShipment };
+
+    // Supprimer l'ancien colis
+    await this.shipmentRepo.remove(existingShipment);
+    await this.logAction("delete", existingId, user, oldValues, null);
+
+    // Créer le nouveau colis (sans vérification de doublon car on vient de supprimer l'ancien)
     const waybillNumber = await this.waybillService.generateNext();
 
     const shipment = this.shipmentRepo.create({
@@ -308,6 +417,9 @@ export class ShipmentService {
 
     // Exclude cancelled shipments by default
     query.andWhere("shipment.is_cancelled = false");
+    
+    // Exclude free shipments from revenue calculations
+    query.andWhere("(shipment.is_free = false OR shipment.is_free IS NULL)");
 
     // Apply filters
     if (filters.nature) {
@@ -335,7 +447,7 @@ export class ShipmentService {
       0
     );
     const totalWeight = shipments.reduce(
-      (sum, s) => sum + parseFloat(s.weight.toString()),
+      (sum, s) => sum + (s.weight !== null && s.weight !== undefined ? parseFloat(s.weight.toString()) : 0),
       0
     );
 
@@ -391,5 +503,49 @@ export class ShipmentService {
       monthCount,
       monthRevenue,
     };
+  }
+
+  /**
+   * Recherche les contacts (expéditeurs/destinataires) par nom
+   * Retourne les contacts correspondants avec leur téléphone et nombre d'utilisations
+   */
+  async searchContacts(
+    query: string,
+    type: 'sender' | 'receiver',
+    limit: number = 10
+  ): Promise<Array<{ name: string; phone: string; count: number }>> {
+    const searchTerm = `%${query.toLowerCase()}%`;
+    
+    let fieldName: string;
+    let phoneField: string;
+    
+    if (type === 'sender') {
+      fieldName = 'sender_name';
+      phoneField = 'sender_phone';
+    } else {
+      fieldName = 'receiver_name';
+      phoneField = 'receiver_phone';
+    }
+    
+    // Rechercher les contacts correspondants, groupés par nom et téléphone
+    const results = await this.shipmentRepo
+      .createQueryBuilder('shipment')
+      .select(`shipment.${fieldName}`, 'name')
+      .addSelect(`shipment.${phoneField}`, 'phone')
+      .addSelect('COUNT(*)', 'count')
+      .where(`LOWER(shipment.${fieldName}) LIKE :searchTerm`, { searchTerm })
+      .andWhere('shipment.is_cancelled = false')
+      .groupBy(`shipment.${fieldName}`)
+      .addGroupBy(`shipment.${phoneField}`)
+      .orderBy('count', 'DESC')
+      .addOrderBy(`shipment.${fieldName}`, 'ASC')
+      .limit(limit)
+      .getRawMany();
+    
+    return results.map(r => ({
+      name: r.name,
+      phone: r.phone,
+      count: parseInt(r.count),
+    }));
   }
 }

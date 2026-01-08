@@ -633,9 +633,11 @@ export class GeneralWaybillService {
       }
 
       const amount = parseFloat(shipment.price.toString());
-      const weight = parseFloat(shipment.weight.toString());
+      const weight = shipment.weight !== null && shipment.weight !== undefined ? parseFloat(shipment.weight.toString()) : null;
       totalAmount += amount;
-      totalWeight += weight;
+      if (weight !== null) {
+        totalWeight += weight;
+      }
       parcelCount++;
 
       const rowY = yPos;
@@ -730,7 +732,8 @@ export class GeneralWaybillService {
 
       // Last column (Poids): centered like all other columns
       dataColStartX += colWidths.description;
-      doc.text(weight.toFixed(2) + " kg", dataColStartX + padding, rowY, {
+      const weightText = weight !== null ? weight.toFixed(2) + " kg" : "N/A";
+      doc.text(weightText, dataColStartX + padding, rowY, {
         width: colWidths.weight - padding * 2,
         align: "center",
       });

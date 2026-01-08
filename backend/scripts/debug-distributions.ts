@@ -91,10 +91,10 @@ async function debugDistributions() {
     console.log("\n");
 
     const shipments = await query.getMany();
-    console.log(`✅ Expéditions trouvées: ${shipments.length}\n`);
+    console.log(`✅ Envois trouvés: ${shipments.length}\n`);
 
     if (shipments.length === 0) {
-      console.log("❌ Aucune expédition trouvée avec cette requête !\n");
+      console.log("❌ Aucun envoi trouvé avec cette requête !\n");
       
       // Vérifier sans les filtres de date
       console.log("🔍 Test sans les filtres de date:\n");
@@ -109,17 +109,17 @@ async function debugDistributions() {
         .andWhere("shipment.weight <= :maxWeight", { maxWeight: 40 });
 
       const shipmentsNoDate = await queryNoDate.getMany();
-      console.log(`Expéditions trouvées SANS filtre de date: ${shipmentsNoDate.length}\n`);
+      console.log(`Envois trouvés SANS filtre de date: ${shipmentsNoDate.length}\n`);
       
       if (shipmentsNoDate.length > 0) {
         console.log("⚠️  Le problème est dans le filtre de date !");
-        console.log("\nDétails des expéditions trouvées (sans filtre de date):");
+        console.log("\nDétails des envois trouvés (sans filtre de date):");
         for (const ship of shipmentsNoDate.slice(0, 5)) {
           console.log(`  - Shipment ${ship.id}: sealed_at = ${ship.departure?.sealed_at?.toISOString() || "NULL"}`);
         }
       }
     } else {
-      console.log("✅ Expéditions trouvées avec les filtres de date !\n");
+      console.log("✅ Envois trouvés avec les filtres de date !\n");
       for (const ship of shipments.slice(0, 5)) {
         console.log(`  - Shipment ${ship.id}: weight=${ship.weight}, price=${ship.price}, sealed_at=${ship.departure?.sealed_at?.toISOString() || "NULL"}`);
       }

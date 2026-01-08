@@ -44,6 +44,9 @@ import { departureService } from "@/services/departure.service";
 import { DepartureStatusBadge } from "@/components/departures/DepartureStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Departure } from "@/services/departure.service";
+import { UserRole } from "@/types/role";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DateRange, getDateRangeForPreset } from "@/lib/date-utils";
 
 export default function DepartureListPage() {
   const navigate = useNavigate();
@@ -53,6 +56,7 @@ export default function DepartureListPage() {
     status: "",
     route: "",
     generalWaybillNumber: "",
+    dateRange: getDateRangeForPreset("thisMonth"),
     page: 1,
     limit: 20,
   });
@@ -63,7 +67,11 @@ export default function DepartureListPage() {
   const [departureToClose, setDepartureToClose] = useState<Departure | null>(null);
   const [departureToDelete, setDepartureToDelete] = useState<Departure | null>(null);
 
-  const { data, isLoading, error } = useDepartures(filters);
+  const { data, isLoading, error } = useDepartures({
+    ...filters,
+    dateFrom: filters.dateRange.startDate,
+    dateTo: filters.dateRange.endDate,
+  });
   const sealDeparture = useSealDeparture();
   const closeDeparture = useCloseDeparture();
   const deleteDeparture = useDeleteDeparture();
@@ -77,7 +85,7 @@ export default function DepartureListPage() {
     return date.toLocaleDateString(language === "fr" ? "fr-FR" : "en-US");
   };
 
-  const handleFilterChange = (key: string, value: string) => {
+  const handleFilterChange = (key: string, value: any) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   };
 
@@ -86,6 +94,7 @@ export default function DepartureListPage() {
       status: "",
       route: "",
       generalWaybillNumber: "",
+      dateRange: getDateRangeForPreset("thisMonth"),
       page: 1,
       limit: 20,
     });
@@ -161,7 +170,15 @@ export default function DepartureListPage() {
   const canSeal = (departure: Departure) => hasPermission("validate_departure") && departure.status === "open";
   const canClose = (departure: Departure) => hasPermission("validate_departure") && departure.status === "sealed";
   const canEdit = (departure: Departure) => hasPermission("create_departure") && departure.status === "open";
-  const canDelete = (departure: Departure) => hasPermission("delete_departure") && departure.status === "open";
+  const canDelete = (departure: Departure) => {
+    if (!hasPermission("delete_departure")) return false;
+    // ADMIN and SUPERVISOR can delete even closed departures
+    if (user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERVISOR) {
+      return true;
+    }
+    // Others can only delete OPEN departures
+    return departure.status === "open";
+  };
   const canDownloadPDF = (departure: Departure) => hasPermission("print_waybill") && (departure.status === "sealed" || departure.status === "closed");
 
   // Calculate totals for a departure
@@ -227,7 +244,7 @@ export default function DepartureListPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-5">
               <div className="space-y-2">
                 <label className="text-sm font-medium">
                   {language === "fr" ? "Statut" : "Status"}
@@ -272,6 +289,15 @@ export default function DepartureListPage() {
                     className="pl-8"
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  {language === "fr" ? "Période" : "Period"}
+                </label>
+                <DateRangePicker
+                  value={filters.dateRange}
+                  onChange={(range) => handleFilterChange("dateRange", range)}
+                />
               </div>
               <div className="flex items-end">
                 <Button

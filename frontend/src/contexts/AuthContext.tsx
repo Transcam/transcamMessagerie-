@@ -68,12 +68,6 @@ const rolePermissions: Record<UserRole, string[]> = {
     "view_expenses",
     "create_departure",
     "validate_departure",
-    "view_vehicles",
-    "create_vehicle",
-    "edit_vehicle",
-    "view_drivers",
-    "create_driver",
-    "edit_driver",
   ],
   [UserRole.OPERATIONAL_ACCOUNTANT]: [
     "view_dashboard",

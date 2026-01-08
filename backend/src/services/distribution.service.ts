@@ -1,6 +1,10 @@
 import { Repository } from "typeorm";
 import { AppDataSource } from "../../db";
-import { Shipment, ShipmentNature, ShipmentType } from "../entities/shipment.entity";
+import {
+  Shipment,
+  ShipmentNature,
+  ShipmentType,
+} from "../entities/shipment.entity";
 import { Departure, DepartureStatus } from "../entities/departure.entity";
 import { Driver } from "../entities/driver.entity";
 
@@ -13,7 +17,7 @@ export interface DistributionFiltersDTO {
 export interface DriverDistributionShipment {
   shipment_id: number;
   waybill_number: string;
-  weight: number;
+  weight: number | null;
   price: number;
   driver_amount: number; // 60% of price
   departure_id: number;
@@ -36,7 +40,7 @@ export interface MinistryDistributionShipment {
   waybill_number: string;
   nature: ShipmentNature;
   type: ShipmentType;
-  weight: number;
+  weight: number | null;
   price: number;
   departure_id: number;
   sealed_at: Date;
@@ -91,7 +95,9 @@ export class DistributionService {
       .where("departure.status = :status", { status: DepartureStatus.CLOSED })
       .andWhere("shipment.departure_id IS NOT NULL")
       .andWhere("shipment.is_cancelled = false")
+      .andWhere("(shipment.is_free = false OR shipment.is_free IS NULL)")
       .andWhere("shipment.nature = :nature", { nature: ShipmentNature.COLS })
+      .andWhere("shipment.weight IS NOT NULL")
       .andWhere("shipment.weight <= :maxWeight", { maxWeight: 40 });
 
     // Apply date filters
@@ -145,7 +151,10 @@ export class DistributionService {
       distribution.shipments.push({
         shipment_id: shipment.id,
         waybill_number: shipment.waybill_number,
-        weight: parseFloat(shipment.weight.toString()),
+        weight:
+          shipment.weight !== null && shipment.weight !== undefined
+            ? parseFloat(shipment.weight.toString())
+            : null,
         price: price,
         driver_amount: driverAmount,
         departure_id: shipment.departure.id,
@@ -172,6 +181,8 @@ export class DistributionService {
       .where("departure.status = :status", { status: DepartureStatus.CLOSED })
       .andWhere("shipment.departure_id IS NOT NULL")
       .andWhere("shipment.is_cancelled = false")
+      .andWhere("(shipment.is_free = false OR shipment.is_free IS NULL)")
+      .andWhere("shipment.weight IS NOT NULL")
       .andWhere(
         // Critère 1: Colis <= 50kg
         "(shipment.nature = :natureColis AND shipment.weight <= :weight50) OR " +
@@ -221,7 +232,10 @@ export class DistributionService {
         waybill_number: shipment.waybill_number,
         nature: shipment.nature,
         type: shipment.type,
-        weight: parseFloat(shipment.weight.toString()),
+        weight:
+          shipment.weight !== null && shipment.weight !== undefined
+            ? parseFloat(shipment.weight.toString())
+            : null,
         price: price,
         departure_id: shipment.departure.id,
         sealed_at: shipment.departure.sealed_at!,
@@ -250,7 +264,8 @@ export class DistributionService {
       .innerJoinAndSelect("shipment.departure", "departure")
       .where("departure.status = :status", { status: DepartureStatus.CLOSED })
       .andWhere("shipment.departure_id IS NOT NULL")
-      .andWhere("shipment.is_cancelled = false");
+      .andWhere("shipment.is_cancelled = false")
+      .andWhere("(shipment.is_free = false OR shipment.is_free IS NULL)");
 
     // Apply date filters
     if (filters.dateFrom) {
@@ -274,34 +289,44 @@ export class DistributionService {
       if (!shipment.departure) continue;
 
       const price = parseFloat(shipment.price.toString());
-      const weight = parseFloat(shipment.weight.toString());
+      const weight =
+        shipment.weight !== null && shipment.weight !== undefined
+          ? parseFloat(shipment.weight.toString())
+          : null;
       const nature = shipment.nature;
       const type = shipment.type;
 
       totalRevenue += price;
 
-      // Calculate driver distribution (60% for colis <= 40kg)
-      if (nature === ShipmentNature.COLS && weight <= 40 && shipment.departure.driver_id) {
+      // Calculate driver distribution (60% for colis <= 40kg) - only if weight is not null
+      if (
+        weight !== null &&
+        nature === ShipmentNature.COLS &&
+        weight <= 40 &&
+        shipment.departure.driver_id
+      ) {
         totalDriverDistributions += price * 0.6;
       }
 
-      // Calculate ministry distribution (5% for eligible shipments)
+      // Calculate ministry distribution (5% for eligible shipments) - only if weight is not null
       const isMinistryEligible =
-        (nature === ShipmentNature.COLS && weight <= 50) ||
-        (nature === ShipmentNature.COURRIER &&
-          type === ShipmentType.STANDARD &&
-          weight <= 0.1) ||
-        (nature === ShipmentNature.COURRIER &&
-          type === ShipmentType.EXPRESS &&
-          weight > 0.1 &&
-          weight <= 2);
+        weight !== null &&
+        ((nature === ShipmentNature.COLS && weight <= 50) ||
+          (nature === ShipmentNature.COURRIER &&
+            type === ShipmentType.STANDARD &&
+            weight <= 0.1) ||
+          (nature === ShipmentNature.COURRIER &&
+            type === ShipmentType.EXPRESS &&
+            weight > 0.1 &&
+            weight <= 2));
 
       if (isMinistryEligible) {
         totalMinistryDistribution += price * 0.05;
       }
     }
 
-    const agencyAmount = totalRevenue - totalDriverDistributions - totalMinistryDistribution;
+    const agencyAmount =
+      totalRevenue - totalDriverDistributions - totalMinistryDistribution;
 
     return {
       total_revenue: totalRevenue,
@@ -326,7 +351,8 @@ export class DistributionService {
     );
 
     // Get ministry distribution
-    const ministryDistribution = await this.calculateMinistryDistribution(filters);
+    const ministryDistribution =
+      await this.calculateMinistryDistribution(filters);
 
     // Get agency distribution
     const agencyDistribution = await this.calculateAgencyDistribution(filters);
@@ -334,7 +360,8 @@ export class DistributionService {
     // Calculate total revenue based on created_at (for accounting purposes)
     const revenueQuery = this.shipmentRepo
       .createQueryBuilder("shipment")
-      .where("shipment.is_cancelled = false");
+      .where("shipment.is_cancelled = false")
+      .andWhere("(shipment.is_free = false OR shipment.is_free IS NULL)");
 
     if (filters.dateFrom) {
       revenueQuery.andWhere("shipment.created_at >= :dateFrom", {
@@ -362,4 +389,3 @@ export class DistributionService {
     };
   }
 }
-

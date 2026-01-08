@@ -61,14 +61,17 @@ export class Shipment {
   @Column({ type: "text", nullable: true })
   description!: string;
 
-  @Column({ type: "decimal", precision: 10, scale: 2 })
-  weight!: number;
+  @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
+  weight!: number | null;
 
   @Column({ type: "decimal", precision: 10, scale: 2, default: 0 })
   declared_value!: number;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
   price!: number;
+
+  @Column({ type: "boolean", default: false })
+  is_free!: boolean;
 
   @Column({ type: "varchar", length: 255 })
   route!: string;
@@ -101,7 +104,7 @@ export class Shipment {
   @Column({ type: "timestamp", nullable: true })
   confirmed_at!: Date;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: "confirmed_by_id" })
   confirmed_by!: User | null;
 
@@ -114,7 +117,7 @@ export class Shipment {
   @Column({ type: "timestamp", nullable: true })
   cancelled_at!: Date;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: "cancelled_by_id" })
   cancelled_by!: User | null;
 
@@ -132,13 +135,13 @@ export class Shipment {
   @Column({ nullable: true })
   departure_id!: number | null;
 
-  // Audit Trail
-  @ManyToOne(() => User)
+  // Audit Trail - now nullable to allow user deletion
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: "created_by_id" })
-  created_by!: User;
+  created_by!: User | null;
 
-  @Column()
-  created_by_id!: number;
+  @Column({ nullable: true })
+  created_by_id!: number | null;
 
   @CreateDateColumn()
   created_at!: Date;

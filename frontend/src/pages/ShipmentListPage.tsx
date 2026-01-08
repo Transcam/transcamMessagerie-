@@ -42,6 +42,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useShipments, useCancelShipment, useGenerateReceipt, useDownloadReceipt } from "@/hooks/use-shipments";
 import { shipmentService } from "@/services/shipment.service";
 import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Shipment } from "@/services/shipment.service";
 import { ShipmentStats } from "@/components/shipments/ShipmentStats";
@@ -189,7 +190,7 @@ export default function ShipmentListPage() {
           <CardContent className="p-6">
             <p className="text-destructive">
               {language === "fr"
-                ? "Erreur lors du chargement des expéditions"
+                ? "Erreur lors du chargement des envois"
                 : "Error loading shipments"}
             </p>
           </CardContent>
@@ -207,19 +208,19 @@ export default function ShipmentListPage() {
             <h1 className="text-3xl font-bold tracking-tight">
               {filters.nature === "courrier"
                 ? language === "fr"
-                  ? "Expéditions - Courrier"
+                  ? "Envois - Courrier"
                   : "Shipments - Mail"
                 : filters.nature === "colis"
                 ? language === "fr"
-                  ? "Expéditions - Colis"
+                  ? "Envois - Colis"
                   : "Shipments - Parcel"
                 : t("shipment.list")}
             </h1>
             <p className="text-muted-foreground mt-1">
               {language === "fr"
                 ? filters.nature
-                  ? `Gérez toutes les expéditions de type ${filters.nature === "courrier" ? "courrier" : "colis"}`
-                  : "Gérez toutes vos expéditions"
+                  ? `Gérez tous les envois de type ${filters.nature === "courrier" ? "courrier" : "colis"}`
+                  : "Gérez tous vos envois"
                 : filters.nature
                 ? `Manage all ${filters.nature === "courrier" ? "mail" : "parcel"} shipments`
                 : "Manage all your shipments"}
@@ -344,7 +345,7 @@ export default function ShipmentListPage() {
             <CardTitle>{t("dashboard.recentShipments")}</CardTitle>
             <CardDescription>
               {data?.pagination.total || 0}{" "}
-              {language === "fr" ? "expéditions trouvées" : "shipments found"}
+              {language === "fr" ? "envois trouvés" : "shipments found"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -358,7 +359,7 @@ export default function ShipmentListPage() {
               <div className="text-center py-12">
                 <p className="text-muted-foreground">
                   {language === "fr"
-                    ? "Aucune expédition trouvée"
+                    ? "Aucun envoi trouvé"
                     : "No shipments found"}
                 </p>
                 {hasPermission("create_shipment") && (
@@ -418,7 +419,15 @@ export default function ShipmentListPage() {
                         </TableCell>
                         {user?.role !== "staff" && (
                           <TableCell className="text-right font-medium">
-                            {shipment.price ? `${formatCurrency(shipment.price)} FCFA` : "-"}
+                            {shipment.is_free ? (
+                              <Badge variant="secondary">
+                                {language === "fr" ? "Gratuit" : "Free"}
+                              </Badge>
+                            ) : shipment.price ? (
+                              `${formatCurrency(shipment.price)} FCFA`
+                            ) : (
+                              "-"
+                            )}
                           </TableCell>
                         )}
                         <TableCell>
@@ -539,7 +548,7 @@ export default function ShipmentListPage() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {language === "fr" 
-                ? `Êtes-vous sûr de vouloir supprimer l'expédition ${shipmentToDelete?.waybill_number} ? Cette action est irréversible.`
+                ? `Êtes-vous sûr de vouloir supprimer l'envoi ${shipmentToDelete?.waybill_number} ? Cette action est irréversible.`
                 : `Are you sure you want to delete shipment ${shipmentToDelete?.waybill_number}? This action cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -29,7 +29,7 @@ export class IndividualWaybillService {
     }
 
     // Header section
-    height += 18 + 12 + 12 + 15 + 12; // Company name, address, phone, tax, line
+    height += 18 + 12 + 12 + 12; // Company name, address, phone, line
 
     // Receipt number
     height += 15 + 15 + 12; // Title, number, line
@@ -77,7 +77,9 @@ export class IndividualWaybillService {
           settings?.company_logo_url || "/assets/images/LogoTranscam.jpg";
 
         // Retirer le "/" initial du logoUrl pour éviter les problèmes avec path.join
-        const logoUrlClean = logoUrl.startsWith("/") ? logoUrl.substring(1) : logoUrl;
+        const logoUrlClean = logoUrl.startsWith("/")
+          ? logoUrl.substring(1)
+          : logoUrl;
 
         // Chemin physique du logo
         const logoPath = path.join(
@@ -164,13 +166,6 @@ export class IndividualWaybillService {
         });
         yPos += 12;
 
-        doc.fontSize(7).font("Helvetica").fillColor("#000000");
-        doc.text("N° contribuable: M0818164445-46P", margin, yPos, {
-          align: "center",
-          width: pageWidth,
-        });
-        yPos += 15;
-
         // Horizontal line
         doc
           .moveTo(margin, yPos)
@@ -254,7 +249,7 @@ export class IndividualWaybillService {
         // ============================================
 
         doc.fontSize(7).font("Helvetica").fillColor("#000000");
-        doc.text(`TRAJET: ${shipment.route}`, margin, yPos);
+        doc.text(`DESTINATION: Kribi`, margin, yPos);
         yPos += 11;
 
         const natureLabel = shipment.nature === "colis" ? "Colis" : "Courrier";
@@ -263,11 +258,11 @@ export class IndividualWaybillService {
         yPos += 11;
 
         doc.fontSize(7).font("Helvetica").fillColor("#000000");
-        doc.text(
-          `POIDS: ${parseFloat(shipment.weight.toString()).toFixed(2)} kg`,
-          margin,
-          yPos
-        );
+        const weightText =
+          shipment.weight !== null && shipment.weight !== undefined
+            ? `${parseFloat(shipment.weight.toString()).toFixed(2)} kg`
+            : "N/A";
+        doc.text(`POIDS: ${weightText}`, margin, yPos);
         yPos += 11;
 
         doc.fontSize(7).font("Helvetica").fillColor("#000000");

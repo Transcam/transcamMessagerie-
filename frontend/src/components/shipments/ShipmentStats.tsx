@@ -81,7 +81,7 @@ export function ShipmentStats({ nature, dateFrom, dateTo }: ShipmentStatsProps) 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {language === "fr" ? "Total Expéditions" : "Total Shipments"}
+              {language === "fr" ? "Total Envois" : "Total Shipments"}
             </CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -89,7 +89,7 @@ export function ShipmentStats({ nature, dateFrom, dateTo }: ShipmentStatsProps) 
             <div className="text-2xl font-bold">{formatNumber(stats.total)}</div>
             <p className="text-xs text-muted-foreground">
               {language === "fr"
-                ? "Toutes les expéditions"
+                ? "Tous les envois"
                 : "All shipments"}
             </p>
           </CardContent>
@@ -148,7 +148,7 @@ export function ShipmentStats({ nature, dateFrom, dateTo }: ShipmentStatsProps) 
             </div>
             <p className="text-xs text-muted-foreground">
               {language === "fr"
-                ? "Expéditions créées"
+                ? "Envois créés"
                 : "Shipments created"}
             </p>
           </CardContent>
@@ -174,7 +174,7 @@ export function ShipmentStats({ nature, dateFrom, dateTo }: ShipmentStatsProps) 
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {language === "fr"
-                      ? "Expéditions de colis"
+                      ? "Envois de colis"
                       : "Parcel shipments"}
                   </p>
                 </div>
@@ -189,7 +189,7 @@ export function ShipmentStats({ nature, dateFrom, dateTo }: ShipmentStatsProps) 
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {language === "fr"
-                      ? "Expéditions de courrier"
+                      ? "Envois de courrier"
                       : "Mail shipments"}
                   </p>
                 </div>

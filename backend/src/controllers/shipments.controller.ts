@@ -40,10 +40,21 @@ export class ShipmentsController {
 
       const [shipments, total] = await this.service.list(filters);
 
-      // Remove price field for STAFF role
+      // Remove price field for STAFF role, except for their own shipments
       const userRole = req.user?.role;
+      const userId = req.user?.id;
       const sanitizedShipments = shipments.map((shipment: any) => {
         if (userRole === "staff") {
+          // STAFF can see price of their own shipments only
+          const isOwnShipment = 
+            shipment.created_by?.id === userId || 
+            shipment.created_by_id === userId;
+          
+          if (isOwnShipment) {
+            return shipment; // Keep price for own shipments
+          }
+          
+          // Remove price for shipments created by others
           const { price, ...shipmentWithoutPrice } = shipment;
           return shipmentWithoutPrice;
         }
@@ -69,12 +80,21 @@ export class ShipmentsController {
       const id = parseInt(req.params.id);
       const shipment = await this.service.getOne(id);
 
-      // Remove price field for STAFF role
+      // Remove price field for STAFF role, except for their own shipments
       const userRole = req.user?.role;
+      const userId = req.user?.id;
       let sanitizedShipment = shipment;
       if (userRole === "staff") {
-        const { price, ...shipmentWithoutPrice } = shipment as any;
-        sanitizedShipment = shipmentWithoutPrice;
+        // STAFF can see price of their own shipments only
+        const isOwnShipment = 
+          shipment.created_by?.id === userId || 
+          (shipment as any).created_by_id === userId;
+        
+        if (!isOwnShipment) {
+          // Remove price for shipments created by others
+          const { price, ...shipmentWithoutPrice } = shipment as any;
+          sanitizedShipment = shipmentWithoutPrice;
+        }
       }
 
       res.json({ data: sanitizedShipment });
@@ -96,6 +116,7 @@ export class ShipmentsController {
         receiver_phone,
         weight,
         price,
+        is_free,
         route,
         nature,
       } = req.body;
@@ -106,23 +127,65 @@ export class ShipmentsController {
           .json({ error: "Sender and receiver information are required" });
       }
 
-      if (!weight || weight <= 0) {
-        return res
-          .status(400)
-          .json({ error: "Weight is required and must be greater than 0" });
-      }
-
-      if (!price || price <= 0) {
-        return res
-          .status(400)
-          .json({ error: "Price is required and must be greater than 0" });
+      // Weight is now optional - no validation needed
+      
+      // Validation du prix : si is_free est true, price peut être 0, sinon price doit être > 0
+      const isFree = is_free === true || is_free === "true";
+      
+      if (isFree) {
+        // Envoi gratuit : price doit être 0 ou null/undefined
+        if (price !== undefined && price !== null && price !== 0) {
+          return res.status(400).json({ 
+            error: "Price must be 0 for free shipments" 
+          });
+        }
+      } else {
+        // Envoi payant : price doit être > 0
+        if (!price || price <= 0) {
+          return res
+            .status(400)
+            .json({ error: "Price is required and must be greater than 0" });
+        }
       }
 
       if (!route) {
         return res.status(400).json({ error: "Route is required" });
       }
 
-      const shipment = await this.service.create(req.body, req.user);
+      // S'assurer que price est défini (0 si gratuit)
+      const finalPrice = isFree ? 0 : price;
+
+      const shipment = await this.service.create({
+        ...req.body,
+        price: finalPrice,
+        is_free: isFree,
+      }, req.user);
+      res.status(201).json({ data: shipment });
+    } catch (error: any) {
+      // Gérer l'erreur de colis similaire
+      if (error.code === "DUPLICATE_SHIPMENT") {
+        return res.status(409).json({
+          error: "DUPLICATE_SHIPMENT",
+          message: "Un colis similaire a déjà été enregistré",
+          existingShipment: error.existingShipment,
+        });
+      }
+      res.status(400).json({ error: error.message });
+    }
+  };
+
+  deleteAndCreate = async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const existingId = parseInt(req.body.existingId);
+      if (!existingId || isNaN(existingId)) {
+        return res.status(400).json({ error: "existingId is required and must be a valid number" });
+      }
+
+      const shipment = await this.service.deleteAndCreate(existingId, req.body, req.user);
       res.status(201).json({ data: shipment });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -150,7 +213,34 @@ export class ShipmentsController {
       }
 
       const id = parseInt(req.params.id);
-      const shipment = await this.service.update(id, req.body, req.user);
+      const { price, is_free, ...otherData } = req.body;
+
+      // Validation du prix si fourni
+      if (price !== undefined || is_free !== undefined) {
+        const isFree = is_free === true || is_free === "true" || (is_free === undefined && req.body.is_free === true);
+        
+        if (isFree) {
+          // Envoi gratuit : price doit être 0 ou null/undefined
+          if (price !== undefined && price !== null && price !== 0) {
+            return res.status(400).json({ 
+              error: "Price must be 0 for free shipments" 
+            });
+          }
+          otherData.price = 0;
+          otherData.is_free = true;
+        } else {
+          // Envoi payant : price doit être > 0
+          if (price !== undefined && (!price || price <= 0)) {
+            return res.status(400).json({ 
+              error: "Price must be greater than 0 for paid shipments" 
+            });
+          }
+          otherData.price = price;
+          otherData.is_free = false;
+        }
+      }
+
+      const shipment = await this.service.update(id, otherData, req.user);
       res.json({ data: shipment });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -249,6 +339,25 @@ export class ShipmentsController {
       }
 
       res.json({ data: sanitizedStatistics });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  };
+
+  searchContacts = async (req: Request, res: Response) => {
+    try {
+      const { q, type } = req.query;
+      
+      if (!q || typeof q !== 'string') {
+        return res.status(400).json({ error: "Query parameter 'q' is required" });
+      }
+      
+      if (type !== 'sender' && type !== 'receiver') {
+        return res.status(400).json({ error: "Type must be 'sender' or 'receiver'" });
+      }
+      
+      const contacts = await this.service.searchContacts(q, type as 'sender' | 'receiver');
+      res.json({ data: contacts });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

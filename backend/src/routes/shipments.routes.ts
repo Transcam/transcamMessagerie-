@@ -7,9 +7,11 @@ const router = Router();
 const controller = new ShipmentsController();
 
 router.get("/statistics", authenticate, authorize("view_shipments"), controller.getStatistics);
+router.get("/contacts/search", authenticate, authorize("view_shipments"), controller.searchContacts);
 router.get("/", authenticate, authorize("view_shipments"), controller.list);
 router.get("/:id", authenticate, authorize("view_shipments"), controller.getOne);
 router.post("/", authenticate, authorize("create_shipment"), controller.create);
+router.post("/delete-and-create", authenticate, authorize("create_shipment"), controller.deleteAndCreate);
 router.patch("/:id/confirm", authenticate, authorize("edit_shipment"), controller.confirm);
 router.patch("/:id", authenticate, authorize("edit_shipment"), controller.update);
 router.delete("/:id", authenticate, authorize("delete_shipment"), controller.cancel);

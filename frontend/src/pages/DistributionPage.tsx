@@ -151,7 +151,7 @@ export default function DistributionPage() {
                 <div className="text-2xl font-bold">{formatCurrency(summary.total_revenue_concerned)}</div>
                 <p className="text-xs text-muted-foreground">
                   {summary.total_shipments_concerned}{" "}
-                  {language === "fr" ? "expéditions" : "shipments"}
+                  {language === "fr" ? "envois" : "shipments"}
                 </p>
               </CardContent>
             </Card>
@@ -230,7 +230,7 @@ export default function DistributionPage() {
                           </h3>
                           <p className="text-sm text-muted-foreground">
                             {distribution.shipment_count}{" "}
-                            {language === "fr" ? "expéditions" : "shipments"} •{" "}
+                            {language === "fr" ? "envois" : "shipments"} •{" "}
                             {formatCurrency(distribution.total_amount)}
                           </p>
                         </div>
@@ -261,7 +261,11 @@ export default function DistributionPage() {
                               <TableCell className="font-medium">
                                 {shipment.waybill_number}
                               </TableCell>
-                              <TableCell>{shipment.weight}</TableCell>
+                              <TableCell>
+                                {shipment.weight !== null && shipment.weight !== undefined
+                                  ? `${shipment.weight} kg`
+                                  : "N/A"}
+                              </TableCell>
                               <TableCell>{formatCurrency(shipment.price)}</TableCell>
                               <TableCell className="font-semibold">
                                 {formatCurrency(shipment.driver_amount)}
@@ -294,7 +298,7 @@ export default function DistributionPage() {
               </CardTitle>
               <CardDescription>
                 {language === "fr"
-                  ? "5% du chiffre d'affaires des expéditions éligibles"
+                  ? "5% du chiffre d'affaires des envois éligibles"
                   : "5% of revenue from eligible shipments"}
               </CardDescription>
             </CardHeader>
@@ -322,7 +326,7 @@ export default function DistributionPage() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">
-                        {language === "fr" ? "Nombre d'expéditions" : "Number of shipments"}
+                        {language === "fr" ? "Nombre d'envois" : "Number of shipments"}
                       </p>
                       <p className="text-2xl font-bold">
                         {ministryDistribution.shipment_count}
@@ -371,7 +375,11 @@ export default function DistributionPage() {
                           <TableCell>
                             {SHIPMENT_TYPE_LABELS[shipment.type][language]}
                           </TableCell>
-                          <TableCell>{shipment.weight}</TableCell>
+                          <TableCell>
+                            {shipment.weight !== null && shipment.weight !== undefined
+                              ? `${shipment.weight} kg`
+                              : "N/A"}
+                          </TableCell>
                           <TableCell>{formatCurrency(shipment.price)}</TableCell>
                           <TableCell>{formatDateDisplay(shipment.sealed_at, language)}</TableCell>
                         </TableRow>

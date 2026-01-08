@@ -40,16 +40,11 @@ export class ExpensesController {
 
       const [expenses, total] = await this.service.list(filters, req.user);
 
-      // Sanitize amounts for STAFF role (already done in service, but double-check)
-      const sanitizedExpenses = expenses.map((expense: any) => {
-        if (req.user?.role === UserRole.STAFF) {
-          return { ...expense, amount: null };
-        }
-        return expense;
-      });
+      // STAFF can see amounts of their own expenses only (already filtered in service)
+      // No need to sanitize since they only see their own expenses
 
       res.json({
-        data: sanitizedExpenses,
+        data: expenses,
         pagination: {
           total,
           page: filters.page,
@@ -71,13 +66,10 @@ export class ExpensesController {
       const id = parseInt(req.params.id);
       const expense = await this.service.getOne(id, req.user);
 
-      // Sanitize amount for STAFF role (already done in service, but double-check)
-      let sanitizedExpense = expense;
-      if (req.user.role === UserRole.STAFF) {
-        sanitizedExpense = { ...expense, amount: null } as any;
-      }
+      // STAFF can see amount of their own expense only (already verified in service)
+      // No need to sanitize since they only see their own expenses
 
-      res.json({ data: sanitizedExpense });
+      res.json({ data: expense });
     } catch (error: any) {
       res.status(404).json({ error: error.message });
     }

@@ -50,11 +50,49 @@ export function useCreateShipment() {
       // Invalider aussi les statistiques
       queryClient.invalidateQueries({ queryKey: ["shipment-statistics"] });
       toast({
-        title: language === "fr" ? "Expédition créée" : "Shipment created",
+        title: language === "fr" ? "Envoi créé" : "Shipment created",
         description:
           language === "fr"
             ? `Bordereau N° ${data.waybill_number} créé`
             : `Waybill No. ${data.waybill_number} created`,
+      });
+    },
+    onError: (error: any) => {
+      // Ne pas afficher de toast pour DUPLICATE_SHIPMENT (409), on gère ça dans le composant
+      if (error.response?.status === 409) {
+        throw error; // Re-lancer l'erreur pour que le composant puisse la gérer
+      }
+      toast({
+        title: language === "fr" ? "Erreur" : "Error",
+        description:
+          error.response?.data?.error ||
+          (language === "fr"
+            ? "Impossible de créer l'envoi"
+            : "Failed to create shipment"),
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+// Delete existing shipment and create new one mutation
+export function useDeleteAndCreateShipment() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { language } = useLanguage();
+
+  return useMutation({
+    mutationFn: ({ existingId, data }: { existingId: number; data: CreateShipmentDTO }) =>
+      shipmentService.deleteAndCreate(existingId, data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["shipment-statistics"] });
+      toast({
+        title: language === "fr" ? "Envoi créé" : "Shipment created",
+        description:
+          language === "fr"
+            ? `L'ancien colis a été supprimé et le nouveau bordereau N° ${data.waybill_number} a été créé`
+            : `Old shipment deleted and new waybill No. ${data.waybill_number} created`,
       });
     },
     onError: (error: any) => {
@@ -63,8 +101,8 @@ export function useCreateShipment() {
         description:
           error.response?.data?.error ||
           (language === "fr"
-            ? "Impossible de créer l'expédition"
-            : "Failed to create shipment"),
+            ? "Impossible de supprimer l'ancien et créer le nouveau colis"
+            : "Failed to delete old and create new shipment"),
         variant: "destructive",
       });
     },
@@ -82,7 +120,7 @@ export function useConfirmShipment() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: shipmentKeys.all });
       toast({
-        title: language === "fr" ? "Expédition confirmée" : "Shipment confirmed",
+        title: language === "fr" ? "Envoi confirmé" : "Shipment confirmed",
         description:
           language === "fr"
             ? `Bordereau N° ${data.waybill_number} confirmé`
@@ -95,7 +133,7 @@ export function useConfirmShipment() {
         description:
           error.response?.data?.error ||
           (language === "fr"
-            ? "Impossible de confirmer l'expédition"
+            ? "Impossible de confirmer l'envoi"
             : "Failed to confirm shipment"),
         variant: "destructive",
       });
@@ -115,7 +153,7 @@ export function useUpdateShipment() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: shipmentKeys.all });
       toast({
-        title: language === "fr" ? "Expédition mise à jour" : "Shipment updated",
+        title: language === "fr" ? "Envoi mis à jour" : "Shipment updated",
       });
     },
     onError: (error: any) => {
@@ -124,7 +162,7 @@ export function useUpdateShipment() {
         description:
           error.response?.data?.error ||
           (language === "fr"
-            ? "Impossible de mettre à jour l'expédition"
+            ? "Impossible de mettre à jour l'envoi"
             : "Failed to update shipment"),
         variant: "destructive",
       });
@@ -144,7 +182,7 @@ export function useCancelShipment() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: shipmentKeys.all });
       toast({
-        title: language === "fr" ? "Expédition annulée" : "Shipment cancelled",
+        title: language === "fr" ? "Envoi annulé" : "Shipment cancelled",
       });
     },
     onError: (error: any) => {
@@ -153,7 +191,7 @@ export function useCancelShipment() {
         description:
           error.response?.data?.error ||
           (language === "fr"
-            ? "Impossible d'annuler l'expédition"
+            ? "Impossible d'annuler l'envoi"
             : "Failed to cancel shipment"),
         variant: "destructive",
       });
@@ -234,6 +272,16 @@ export function useShipmentStatistics(
   return useQuery<ShipmentStatistics>({
     queryKey: ["shipment-statistics", nature, filters],
     queryFn: () => shipmentService.getStatistics(nature, filters),
+  });
+}
+
+// Search contacts hook
+export function useSearchContacts(query: string, type: 'sender' | 'receiver', enabled: boolean = true) {
+  return useQuery({
+    queryKey: ['contacts', query, type],
+    queryFn: () => shipmentService.searchContacts(query, type),
+    enabled: enabled && query.length >= 2, // Rechercher seulement si au moins 2 caractères
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 

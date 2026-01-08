@@ -9,7 +9,7 @@ export interface DistributionFilters {
 export interface DriverDistributionShipment {
   shipment_id: number;
   waybill_number: string;
-  weight: number;
+  weight: number | null;
   price: number;
   driver_amount: number;
   departure_id: number;
@@ -32,7 +32,7 @@ export interface MinistryDistributionShipment {
   waybill_number: string;
   nature: "colis" | "courrier";
   type: "express" | "standard";
-  weight: number;
+  weight: number | null;
   price: number;
   departure_id: number;
   sealed_at: string;

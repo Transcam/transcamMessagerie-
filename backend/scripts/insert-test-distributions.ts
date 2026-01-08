@@ -49,8 +49,8 @@ interface ShipmentConfig {
   price: number; // en FCFA
 }
 
-// Configuration des expéditions pour tester les répartitions
-// Pour chaque départ, on crée 10 expéditions avec des poids variés
+// Configuration des envois pour tester les répartitions
+// Pour chaque départ, on crée 10 envois avec des poids variés
 const shipmentConfigs: ShipmentConfig[] = [
   // Colis ≤ 40kg (éligible chauffeur + ministère)
   { nature: ShipmentNature.COLS, weight: 15, price: 15000 },
