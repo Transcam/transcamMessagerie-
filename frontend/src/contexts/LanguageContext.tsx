@@ -55,9 +55,18 @@ const translations: Translations = {
   },
   "dashboard.totalRevenue": { fr: "Recettes totales", en: "Total Revenue" },
   "dashboard.totalDepartures": { fr: "Total départs", en: "Total Departures" },
-  "dashboard.driverDistribution": { fr: "À verser aux chauffeurs", en: "Driver Distribution" },
-  "dashboard.ministryDistribution": { fr: "À verser au ministère", en: "Ministry Distribution" },
-  "dashboard.globalRevenue": { fr: "Chiffre d'affaire global", en: "Global Revenue" },
+  "dashboard.driverDistribution": {
+    fr: "À verser aux chauffeurs",
+    en: "Driver Distribution",
+  },
+  "dashboard.ministryDistribution": {
+    fr: "À verser au ministère",
+    en: "Ministry Distribution",
+  },
+  "dashboard.globalRevenue": {
+    fr: "Chiffre d'affaire global",
+    en: "Global Revenue",
+  },
   "dashboard.totalExpenses": { fr: "Total des dépenses", en: "Total Expenses" },
   "dashboard.recentShipments": {
     fr: "Expéditions récentes",
@@ -88,11 +97,17 @@ const translations: Translations = {
   "shipment.status": { fr: "Statut", en: "Status" },
   "shipment.date": { fr: "Date", en: "Date" },
   "shipment.confirm": { fr: "Confirmer", en: "Confirm" },
-      "shipment.print": { fr: "Imprimer", en: "Print" },
-      "shipment.printReceipt": { fr: "Imprimer Reçu", en: "Print Receipt" },
-      "receipt.downloading": { fr: "Téléchargement du reçu...", en: "Downloading receipt..." },
-      "receipt.error": { fr: "Erreur lors de la génération du reçu", en: "Error generating receipt" },
-      "shipment.confirmed": { fr: "Confirmé", en: "Confirmed" },
+  "shipment.print": { fr: "Imprimer", en: "Print" },
+  "shipment.printReceipt": { fr: "Imprimer Reçu", en: "Print Receipt" },
+  "receipt.downloading": {
+    fr: "Téléchargement du reçu...",
+    en: "Downloading receipt...",
+  },
+  "receipt.error": {
+    fr: "Erreur lors de la génération du reçu",
+    en: "Error generating receipt",
+  },
+  "shipment.confirmed": { fr: "Confirmé", en: "Confirmed" },
   "shipment.pending": { fr: "En attente", en: "Pending" },
   "shipment.assigned": { fr: "Assigné", en: "Assigned" },
   "shipment.cancelled": { fr: "Annulé", en: "Cancelled" },
@@ -159,6 +174,26 @@ const translations: Translations = {
   "common.date": { fr: "Date", en: "Date" },
   "common.amount": { fr: "Montant", en: "Amount" },
   "common.fcfa": { fr: "FCFA", en: "FCFA" },
+
+  // Offline Indicator
+  "offline.title": { fr: "Vous êtes hors ligne", en: "You are offline" },
+  "offline.syncing": { fr: "Synchronisation...", en: "Syncing..." },
+  "offline.queued": { fr: "requête en attente", en: "request queued" },
+  "offline.queuedPlural": { fr: "requêtes en attente", en: "requests queued" },
+  "offline.willBeSent": {
+    fr: "Vos requêtes seront envoyées lorsque vous serez de nouveau en ligne.",
+    en: "Your requests will be sent when you are back online.",
+  },
+  "offline.processing": {
+    fr: "Traitement des requêtes en attente...",
+    en: "Processing queued requests...",
+  },
+  "offline.waiting": {
+    fr: "En attente de synchronisation.",
+    en: "Waiting to sync when ready.",
+  },
+  "offline.syncNow": { fr: "Synchroniser maintenant", en: "Sync Now" },
+  "offline.clearQueue": { fr: "Vider la file", en: "Clear Queue" },
 };
 
 interface LanguageContextType {
