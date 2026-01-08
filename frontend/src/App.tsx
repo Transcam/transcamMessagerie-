@@ -6,8 +6,10 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { OfflineProvider } from "./contexts/OfflineContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ClientErrorHandler } from "./components/ClientErrorHandler";
+import { OfflineIndicator } from "./components/OfflineIndicator";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import NewShipmentPage from "./pages/NewShipmentPage";
@@ -321,6 +323,7 @@ const AppContent = () => {
           <AppRoutes />
         </ErrorBoundary>
       </BrowserRouter>
+      <OfflineIndicator />
       <Analytics />
     </TooltipProvider>
   );
@@ -330,9 +333,11 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
-        <ClientErrorHandler>
-          <AppContent />
-        </ClientErrorHandler>
+        <OfflineProvider>
+          <ClientErrorHandler>
+            <AppContent />
+          </ClientErrorHandler>
+        </OfflineProvider>
       </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>

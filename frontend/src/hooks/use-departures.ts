@@ -1,5 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  isQueuedRequestError,
+  getQueuedRequestMessage,
+} from "@/utils/offline-utils";
+import {
   departureService,
   Departure,
   CreateDepartureDTO,
@@ -13,7 +17,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 export const departureKeys = {
   all: ["departures"] as const,
   lists: () => [...departureKeys.all, "list"] as const,
-  list: (filters?: DepartureFilters) => [...departureKeys.lists(), filters] as const,
+  list: (filters?: DepartureFilters) =>
+    [...departureKeys.lists(), filters] as const,
   details: () => [...departureKeys.all, "detail"] as const,
   detail: (id: number) => [...departureKeys.details(), id] as const,
   summary: (id: number) => [...departureKeys.detail(id), "summary"] as const,
@@ -57,17 +62,31 @@ export function useCreateDeparture() {
       queryClient.invalidateQueries({ queryKey: departureKeys.lists() });
       toast({
         title: language === "fr" ? "Départ créé" : "Departure created",
-        description: language === "fr" 
-          ? "Le départ a été créé avec succès" 
-          : "Departure created successfully",
+        description:
+          language === "fr"
+            ? "Le départ a été créé avec succès"
+            : "Departure created successfully",
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      // Check if request was queued for offline retry
+      if (isQueuedRequestError(error)) {
+        toast({
+          title: language === "fr" ? "Requête en attente" : "Request queued",
+          description: getQueuedRequestMessage(language),
+        });
+        // Mutation will complete normally even with this error
+        return;
+      }
+
+      // Handle regular errors
+      const axiosError = error as { response?: { data?: { error?: string } } };
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: error.response?.data?.error || 
-          (language === "fr" 
-            ? "Impossible de créer le départ" 
+        description:
+          axiosError.response?.data?.error ||
+          (language === "fr"
+            ? "Impossible de créer le départ"
             : "Failed to create departure"),
         variant: "destructive",
       });
@@ -93,9 +112,10 @@ export function useUpdateDeparture() {
     onError: (error: any) => {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: error.response?.data?.error || 
-          (language === "fr" 
-            ? "Impossible de mettre à jour le départ" 
+        description:
+          error.response?.data?.error ||
+          (language === "fr"
+            ? "Impossible de mettre à jour le départ"
             : "Failed to update departure"),
         variant: "destructive",
       });
@@ -116,17 +136,19 @@ export function useAssignShipments() {
       queryClient.invalidateQueries({ queryKey: departureKeys.all });
       toast({
         title: language === "fr" ? "Colis assignés" : "Shipments assigned",
-        description: language === "fr" 
-          ? `${data.assigned_count} colis assigné(s)` 
-          : `${data.assigned_count} shipment(s) assigned`,
+        description:
+          language === "fr"
+            ? `${data.assigned_count} colis assigné(s)`
+            : `${data.assigned_count} shipment(s) assigned`,
       });
     },
     onError: (error: any) => {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: error.response?.data?.error || 
-          (language === "fr" 
-            ? "Impossible d'assigner les colis" 
+        description:
+          error.response?.data?.error ||
+          (language === "fr"
+            ? "Impossible d'assigner les colis"
             : "Failed to assign shipments"),
         variant: "destructive",
       });
@@ -152,9 +174,10 @@ export function useRemoveShipment() {
     onError: (error: any) => {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: error.response?.data?.error || 
-          (language === "fr" 
-            ? "Impossible de retirer le colis" 
+        description:
+          error.response?.data?.error ||
+          (language === "fr"
+            ? "Impossible de retirer le colis"
             : "Failed to remove shipment"),
         variant: "destructive",
       });
@@ -174,17 +197,19 @@ export function useSealDeparture() {
       queryClient.invalidateQueries({ queryKey: departureKeys.all });
       toast({
         title: language === "fr" ? "Départ scellé" : "Departure sealed",
-        description: language === "fr"
-          ? `Bordereau Général ${data.general_waybill_number} généré`
-          : `General Waybill ${data.general_waybill_number} generated`,
+        description:
+          language === "fr"
+            ? `Bordereau Général ${data.general_waybill_number} généré`
+            : `General Waybill ${data.general_waybill_number} generated`,
       });
     },
     onError: (error: any) => {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: error.response?.data?.error || 
-          (language === "fr" 
-            ? "Impossible de sceller le départ" 
+        description:
+          error.response?.data?.error ||
+          (language === "fr"
+            ? "Impossible de sceller le départ"
             : "Failed to seal departure"),
         variant: "destructive",
       });
@@ -209,9 +234,10 @@ export function useCloseDeparture() {
     onError: (error: any) => {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: error.response?.data?.error || 
-          (language === "fr" 
-            ? "Impossible de fermer le départ" 
+        description:
+          error.response?.data?.error ||
+          (language === "fr"
+            ? "Impossible de fermer le départ"
             : "Failed to close departure"),
         variant: "destructive",
       });
@@ -231,17 +257,19 @@ export function useDeleteDeparture() {
       queryClient.invalidateQueries({ queryKey: departureKeys.all });
       toast({
         title: language === "fr" ? "Départ supprimé" : "Departure deleted",
-        description: language === "fr" 
-          ? "Le départ a été supprimé avec succès" 
-          : "Departure deleted successfully",
+        description:
+          language === "fr"
+            ? "Le départ a été supprimé avec succès"
+            : "Departure deleted successfully",
       });
     },
     onError: (error: any) => {
       toast({
         title: language === "fr" ? "Erreur" : "Error",
-        description: error.response?.data?.error || 
-          (language === "fr" 
-            ? "Impossible de supprimer le départ" 
+        description:
+          error.response?.data?.error ||
+          (language === "fr"
+            ? "Impossible de supprimer le départ"
             : "Failed to delete departure"),
         variant: "destructive",
       });
