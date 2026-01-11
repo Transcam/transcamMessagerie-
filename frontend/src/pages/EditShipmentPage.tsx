@@ -31,39 +31,49 @@ import { useShipment, useUpdateShipment } from "@/hooks/use-shipments";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SHIPMENT_TYPE_LABELS } from "@/services/shipment.service";
 import { ContactAutocomplete } from "@/components/ui/contact-autocomplete";
+import { PHONE_REGEX, PHONE_VALIDATION_MESSAGE } from "@/lib/phone-regex";
 
-const routes = [
-  "Yaoundé → Kribi",
-];
+const routes = ["Yaoundé → Kribi"];
 
 // Form validation schema
-const shipmentSchema = z.object({
-  sender_name: z.string().min(1, "Sender name is required"),
-  sender_phone: z.string().min(1, "Sender phone is required"),
-  receiver_name: z.string().min(1, "Receiver name is required"),
-  receiver_phone: z.string().min(1, "Receiver phone is required"),
-  description: z.string().optional(),
-  weight: z.number().min(0.1, "Weight must be greater than 0").optional(),
-  declared_value: z.number().min(0).optional(),
-  price: z.number().min(0, "Price must be >= 0"),
-  is_free: z.boolean().default(false),
-  route: z.string().min(1, "Route is required"),
-  nature: z.enum(["colis", "courrier"]).default("colis"),
-  type: z.enum(["express", "standard"]).default("standard"),
-}).refine((data) => {
-  // Si gratuit, price doit être 0
-  if (data.is_free && data.price !== 0) {
-    return false;
-  }
-  // Si payant, price doit être > 0
-  if (!data.is_free && data.price <= 0) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Price must be 0 for free shipments and > 0 for paid shipments",
-  path: ["price"],
-});
+const shipmentSchema = z
+  .object({
+    sender_name: z.string().min(1, "Sender name is required"),
+    sender_phone: z
+      .string()
+      .min(1, "Sender phone is required")
+      .regex(PHONE_REGEX, PHONE_VALIDATION_MESSAGE),
+    receiver_name: z.string().min(1, "Receiver name is required"),
+    receiver_phone: z
+      .string()
+      .min(1, "Receiver phone is required")
+      .regex(PHONE_REGEX, PHONE_VALIDATION_MESSAGE),
+    description: z.string().optional(),
+    weight: z.number().min(0.1, "Weight must be greater than 0").optional(),
+    declared_value: z.number().min(0).optional(),
+    price: z.number().min(0, "Price must be >= 0"),
+    is_free: z.boolean().default(false),
+    route: z.string().min(1, "Route is required"),
+    nature: z.enum(["colis", "courrier"]).default("colis"),
+    type: z.enum(["express", "standard"]).default("standard"),
+  })
+  .refine(
+    (data) => {
+      // Si gratuit, price doit être 0
+      if (data.is_free && data.price !== 0) {
+        return false;
+      }
+      // Si payant, price doit être > 0
+      if (!data.is_free && data.price <= 0) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Price must be 0 for free shipments and > 0 for paid shipments",
+      path: ["price"],
+    }
+  );
 
 type ShipmentFormValues = z.infer<typeof shipmentSchema>;
 
@@ -72,7 +82,8 @@ export default function EditShipmentPage() {
   const { id } = useParams<{ id: string }>();
   const { t, language } = useLanguage();
   const shipmentId = id ? parseInt(id, 10) : 0;
-  const { data: shipment, isLoading: isLoadingShipment } = useShipment(shipmentId);
+  const { data: shipment, isLoading: isLoadingShipment } =
+    useShipment(shipmentId);
   const updateShipment = useUpdateShipment();
 
   const form = useForm<ShipmentFormValues>({
@@ -115,7 +126,7 @@ export default function EditShipmentPage() {
 
   const onSubmit = async (data: ShipmentFormValues) => {
     if (!shipmentId) return;
-    
+
     try {
       await updateShipment.mutateAsync({
         id: shipmentId,
@@ -149,9 +160,7 @@ export default function EditShipmentPage() {
           <Card>
             <CardContent className="p-6">
               <p className="text-destructive">
-                {language === "fr"
-                  ? "Envoi non trouvé"
-                  : "Shipment not found"}
+                {language === "fr" ? "Envoi non trouvé" : "Shipment not found"}
               </p>
             </CardContent>
           </Card>
@@ -199,7 +208,11 @@ export default function EditShipmentPage() {
                             form.setValue("sender_phone", phone);
                           }}
                           type="sender"
-                          placeholder={language === "fr" ? "Nom de l'expéditeur" : "Sender name"}
+                          placeholder={
+                            language === "fr"
+                              ? "Nom de l'expéditeur"
+                              : "Sender name"
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -213,7 +226,7 @@ export default function EditShipmentPage() {
                     <FormItem>
                       <FormLabel>{t("shipment.senderPhone")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="+237 6XX XXX XXX" {...field} />
+                        <Input placeholder="678901234" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -244,7 +257,11 @@ export default function EditShipmentPage() {
                             form.setValue("receiver_phone", phone);
                           }}
                           type="receiver"
-                          placeholder={language === "fr" ? "Nom du destinataire" : "Receiver name"}
+                          placeholder={
+                            language === "fr"
+                              ? "Nom du destinataire"
+                              : "Receiver name"
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -258,7 +275,7 @@ export default function EditShipmentPage() {
                     <FormItem>
                       <FormLabel>{t("shipment.receiverPhone")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="+237 6XX XXX XXX" {...field} />
+                        <Input placeholder="678901234" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -280,9 +297,9 @@ export default function EditShipmentPage() {
                     <FormItem>
                       <FormLabel>{t("shipment.route")}</FormLabel>
                       <FormControl>
-                        <Input 
-                          value={field.value || "Yaoundé → Kribi"} 
-                          disabled 
+                        <Input
+                          value={field.value || "Yaoundé → Kribi"}
+                          disabled
                           readOnly
                           className="bg-muted cursor-not-allowed"
                         />
@@ -402,7 +419,11 @@ export default function EditShipmentPage() {
                             onChange={(e) => {
                               const value = e.target.value;
                               if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                                field.onChange(value === "" ? undefined : (parseFloat(value) || undefined));
+                                field.onChange(
+                                  value === ""
+                                    ? undefined
+                                    : parseFloat(value) || undefined
+                                );
                               }
                             }}
                             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -430,7 +451,9 @@ export default function EditShipmentPage() {
                             onChange={(e) => {
                               const value = e.target.value;
                               if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                                field.onChange(value === "" ? 0 : parseFloat(value) || 0);
+                                field.onChange(
+                                  value === "" ? 0 : parseFloat(value) || 0
+                                );
                               }
                             }}
                             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -445,9 +468,7 @@ export default function EditShipmentPage() {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>
-                          {t("shipment.price")} (FCFA) *
-                        </FormLabel>
+                        <FormLabel>{t("shipment.price")} (FCFA) *</FormLabel>
                         <FormControl>
                           <Input
                             type="text"
@@ -459,7 +480,9 @@ export default function EditShipmentPage() {
                             onChange={(e) => {
                               const value = e.target.value;
                               if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                                field.onChange(value === "" ? 0 : parseFloat(value) || 0);
+                                field.onChange(
+                                  value === "" ? 0 : parseFloat(value) || 0
+                                );
                               }
                             }}
                             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -488,11 +511,13 @@ export default function EditShipmentPage() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>
-                            {language === "fr" ? "Envoi gratuit" : "Free shipment"}
+                            {language === "fr"
+                              ? "Envoi gratuit"
+                              : "Free shipment"}
                           </FormLabel>
                           <FormDescription>
-                            {language === "fr" 
-                              ? "Cocher si l'envoi est gratuit (prix = 0)" 
+                            {language === "fr"
+                              ? "Cocher si l'envoi est gratuit (prix = 0)"
                               : "Check if the shipment is free (price = 0)"}
                           </FormDescription>
                         </div>
@@ -537,4 +562,3 @@ export default function EditShipmentPage() {
     </DashboardLayout>
   );
 }
-
