@@ -15,7 +15,12 @@ router.get(
 router.get("/", authenticate, authorize("view_expenses"), controller.list);
 router.get("/:id", authenticate, authorize("view_expenses"), controller.getOne);
 router.post("/", authenticate, authorize("create_expense"), controller.create);
-router.patch("/:id", authenticate, authorize("edit_expense"), controller.update);
+router.patch(
+  "/:id",
+  authenticate,
+  authorize("edit_expense"),
+  controller.update
+);
 router.delete(
   "/:id",
   authenticate,
@@ -24,5 +29,3 @@ router.delete(
 );
 
 export default router;
-
-
