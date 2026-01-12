@@ -238,21 +238,34 @@ export const shipmentService = {
     };
 
     try {
-      // IMPORTANT: Utiliser arraybuffer au lieu de blob pour éviter la conversion en string
-      // Axios avec responseType: "blob" peut convertir en string, corrompant les données binaires
-      const response = await httpService.get(`/shipments/${id}/receipt`, {
-        responseType: "arraybuffer", // Changé de "blob" à "arraybuffer" pour éviter la corruption
-      } as any);
+      // IMPORTANT: Utiliser fetch au lieu d'Axios pour les PDFs
+      // fetch gère mieux les données binaires cross-origin et ne convertit pas en string
+      const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+      const token = localStorage.getItem("auth_token");
+      
+      const response = await fetch(`${baseURL}/shipments/${id}/receipt`, {
+        method: "GET",
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // Récupérer l'ArrayBuffer directement depuis fetch
+      const arrayBuffer = await response.arrayBuffer();
       
       // Vérification du blob reçu côté frontend
-      console.log("📄 [Frontend] Response data type:", typeof response.data);
-      console.log("📄 [Frontend] Response data is ArrayBuffer:", response.data instanceof ArrayBuffer);
-      console.log("📄 [Frontend] ArrayBuffer byteLength:", response.data?.byteLength || "unknown");
-      console.log("📄 [Frontend] Content-Type:", response.headers["content-type"]);
-      console.log("📄 [Frontend] Content-Length:", response.headers["content-length"]);
+      console.log("📄 [Frontend] Response data type:", typeof arrayBuffer);
+      console.log("📄 [Frontend] Response data is ArrayBuffer:", arrayBuffer instanceof ArrayBuffer);
+      console.log("📄 [Frontend] ArrayBuffer byteLength:", arrayBuffer.byteLength);
+      console.log("📄 [Frontend] Content-Type:", response.headers.get("content-type"));
+      console.log("📄 [Frontend] Content-Length:", response.headers.get("content-length"));
       
       // Créer le blob depuis l'ArrayBuffer directement
-      const blob = new Blob([response.data], { type: "application/pdf" });
+      const blob = new Blob([arrayBuffer], { type: "application/pdf" });
       
       // Vérification que le blob n'est pas vide
       if (blob.size === 0) {
@@ -261,7 +274,7 @@ export const shipmentService = {
       }
       
       // Vérifier que la taille correspond au Content-Length
-      const expectedSize = parseInt(response.headers["content-length"] || "0", 10);
+      const expectedSize = parseInt(response.headers.get("content-length") || "0", 10);
       if (expectedSize > 0 && blob.size !== expectedSize) {
         console.warn(`⚠️ [Frontend] Taille blob (${blob.size}) != Content-Length (${expectedSize})`);
       }
