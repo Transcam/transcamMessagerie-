@@ -49,6 +49,8 @@ export interface CreateShipmentDTO {
   route: string;
   nature?: ShipmentNature;
   type?: ShipmentType;
+  created_at?: string; // ISO date string for historical dates
+  is_manual?: boolean; // Flag for manual registration
 }
 
 export interface UpdateShipmentDTO {
@@ -310,82 +312,120 @@ export const shipmentService = {
       
       const url = window.URL.createObjectURL(blob);
       
-      // Fonction pour créer un wrapper HTML avec CSS @page pour forcer le format 80mm (ticket)
-      const createPrintWindow = (pdfUrl: string): Window | null => {
-        const printWindow = window.open('', '_blank', 'noopener,noreferrer');
-        if (!printWindow) return null;
-        
-        // Créer le HTML avec CSS @page pour forcer le format ticket 80mm
-        printWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="UTF-8">
-              <title>Reçu - Impression</title>
-              <style>
-                @page {
-                  size: 80mm auto;
-                  margin: 0;
-                }
-                * {
-                  margin: 0;
-                  padding: 0;
-                  box-sizing: border-box;
-                }
-                html, body {
-                  width: 100%;
-                  height: 100%;
-                  overflow: hidden;
-                }
-                iframe {
-                  width: 100%;
-                  height: 100%;
-                  border: none;
-                  display: block;
-                }
-              </style>
-            </head>
-            <body>
-              <iframe src="${pdfUrl}" type="application/pdf"></iframe>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        
-        return printWindow;
-      };
+      // Créer un iframe avec wrapper HTML contenant CSS @page (pas de nouvel onglet)
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "none";
+      iframe.style.opacity = "0";
+      iframe.style.pointerEvents = "none";
+      
+      // Utiliser srcdoc pour injecter le wrapper HTML avec CSS @page pour forcer le format 80mm (ticket)
+      iframe.srcdoc = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Reçu - Impression</title>
+            <style>
+              @page {
+                size: 80mm auto;
+                margin: 0;
+              }
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              html, body {
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+              }
+              iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+                display: block;
+              }
+            </style>
+          </head>
+          <body>
+            <iframe src="${url}" type="application/pdf"></iframe>
+          </body>
+        </html>
+      `;
+      
+      document.body.appendChild(iframe);
       
       // Fonction de nettoyage
       const cleanup = () => {
-        window.URL.revokeObjectURL(url);
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+          window.URL.revokeObjectURL(url);
+        }, 3000);
       };
       
-      // Essayer d'ouvrir dans une nouvelle fenêtre avec wrapper HTML
-      const printWindow = createPrintWindow(url);
+      // Fonction pour tenter l'impression
+      const attemptPrint = () => {
+        try {
+          if (iframe.contentWindow) {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            cleanup();
+          } else {
+            throw new Error("iframe contentWindow is null");
+          }
+        } catch (error) {
+          console.error("Error printing via iframe:", error);
+          // Fallback: utiliser la méthode fallback existante
+          cleanup();
+          fallbackPrintMethod(url, id, waybillNumber);
+        }
+      };
       
-      if (printWindow) {
-        // Attendre que le PDF soit chargé
+      // Attendre que le wrapper HTML soit chargé dans l'iframe
+      iframe.onload = () => {
+        // Attendre aussi que le PDF dans le sous-iframe soit chargé
         setTimeout(() => {
           try {
-            printWindow.focus();
-            printWindow.print();
-            
-            // Nettoyer après l'impression
-            setTimeout(() => {
-              printWindow.close();
-              cleanup();
-            }, 1000);
+            const innerIframe = iframe.contentDocument?.querySelector('iframe');
+            if (innerIframe) {
+              innerIframe.onload = () => {
+                setTimeout(attemptPrint, 500);
+              };
+              // Timeout de secours si onload ne se déclenche pas
+              setTimeout(attemptPrint, 2000);
+            } else {
+              // Si le sous-iframe n'est pas trouvé, essayer quand même
+              attemptPrint();
+            }
           } catch (error) {
-            console.error("Error printing:", error);
-            printWindow.close();
-            // Fallback: utiliser la méthode fallback existante
-            fallbackPrintMethod(url, id, waybillNumber);
+            console.error("Error accessing inner iframe:", error);
+            // Essayer quand même l'impression
+            attemptPrint();
           }
-        }, 2000);
-      } else {
-        // Popup bloquée: utiliser la méthode fallback existante
-        fallbackPrintMethod(url, id, waybillNumber);
-      }
+        }, 500);
+      };
+      
+      // Timeout de secours
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          attemptPrint();
+        }
+      }, 3000);
+      
+      // Timeout final pour nettoyer
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          cleanup();
+        }
+      }, 10000);
     } catch (error) {
       console.error("Error downloading receipt:", error);
       throw error;

@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
@@ -37,6 +36,7 @@ export function ContactAutocomplete({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { language } = useLanguage();
+  const inputRef = useRef<HTMLInputElement>(null);
   
   const { data: contacts, isLoading } = useSearchContacts(
     searchQuery || value,
@@ -45,10 +45,25 @@ export function ContactAutocomplete({
   );
 
   const handleSelect = (contact: { name: string; phone: string }) => {
+    // Remplir les champs
     onValueChange(contact.name);
     onPhoneChange(contact.phone);
+    
+    // Fermer immédiatement le popover et réinitialiser
     setOpen(false);
     setSearchQuery("");
+    
+    // Remettre le focus sur le champ input après sélection
+    setTimeout(() => {
+      inputRef.current?.focus();
+      // Optionnel: mettre le curseur à la fin du texte
+      if (inputRef.current) {
+        inputRef.current.setSelectionRange(
+          contact.name.length,
+          contact.name.length
+        );
+      }
+    }, 0);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,11 +84,20 @@ export function ContactAutocomplete({
     }
   };
 
+  // Fermer le popover si l'utilisateur clique en dehors
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setSearchQuery("");
+    }
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <div className="relative">
           <Input
+            ref={inputRef}
             value={value}
             onChange={handleInputChange}
             onFocus={handleInputFocus}
@@ -86,17 +110,15 @@ export function ContactAutocomplete({
           )}
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command>
-          <CommandInput
-            placeholder={
-              language === "fr"
-                ? "Rechercher un contact..."
-                : "Search contact..."
-            }
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-          />
+      <PopoverContent 
+        className="w-[var(--radix-popover-trigger-width)] p-0" 
+        align="start"
+        onOpenAutoFocus={(e) => {
+          // Empêcher le focus automatique sur le contenu du popover
+          e.preventDefault();
+        }}
+      >
+        <Command shouldFilter={false}>
           <CommandList>
             <CommandEmpty>
               {language === "fr"
@@ -109,7 +131,17 @@ export function ContactAutocomplete({
                   <CommandItem
                     key={`${contact.name}-${contact.phone}-${index}`}
                     value={contact.name}
-                    onSelect={() => handleSelect(contact)}
+                    onSelect={(currentValue) => {
+                      // Vérifier que la valeur correspond bien au contact sélectionné
+                      if (currentValue === contact.name) {
+                        handleSelect(contact);
+                      }
+                    }}
+                    onMouseDown={(e) => {
+                      // Empêcher la perte de focus sur l'input et garantir la sélection
+                      e.preventDefault();
+                      handleSelect(contact);
+                    }}
                     className="cursor-pointer"
                   >
                     <div className="flex flex-col w-full">

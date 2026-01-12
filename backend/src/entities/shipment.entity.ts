@@ -143,7 +143,8 @@ export class Shipment {
   @Column({ nullable: true })
   created_by_id!: number | null;
 
-  @CreateDateColumn()
+  // Changed from @CreateDateColumn() to @Column() to allow manual dates for historical registrations
+  @Column({ type: "timestamp", nullable: false, default: () => "CURRENT_TIMESTAMP" })
   created_at!: Date;
 
   @UpdateDateColumn()

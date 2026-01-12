@@ -24,6 +24,8 @@ export interface CreateShipmentDTO {
   is_free?: boolean;
   route: string;
   nature?: ShipmentNature;
+  created_at?: Date; // Optional: for manual/historical registration
+  is_manual?: boolean; // Flag to indicate manual registration
 }
 
 export interface UpdateShipmentDTO {
@@ -111,25 +113,53 @@ export class ShipmentService {
   }
 
   async create(data: CreateShipmentDTO, user: User): Promise<Shipment> {
-    // Vérifier si un colis similaire existe
-    const similarShipment = await this.checkSimilarShipment(data);
+    // Skip duplicate check for historical dates (older than 3 hours) or manual registrations
+    const shouldCheckDuplicate = !data.is_manual && 
+      (!data.created_at || (data.created_at && 
+        (new Date().getTime() - new Date(data.created_at).getTime()) < 3 * 60 * 60 * 1000));
     
-    if (similarShipment) {
-      // Lancer une erreur spéciale avec les infos du colis existant
-      const error: any = new Error("DUPLICATE_SHIPMENT");
-      error.code = "DUPLICATE_SHIPMENT";
-      error.existingShipment = {
-        id: similarShipment.id,
-        waybill_number: similarShipment.waybill_number,
-        created_at: similarShipment.created_at,
-        sender_name: similarShipment.sender_name,
-        receiver_name: similarShipment.receiver_name,
-      };
-      throw error;
+    if (shouldCheckDuplicate) {
+      // Vérifier si un colis similaire existe
+      const similarShipment = await this.checkSimilarShipment(data);
+      
+      if (similarShipment) {
+        // Lancer une erreur spéciale avec les infos du colis existant
+        const error: any = new Error("DUPLICATE_SHIPMENT");
+        error.code = "DUPLICATE_SHIPMENT";
+        error.existingShipment = {
+          id: similarShipment.id,
+          waybill_number: similarShipment.waybill_number,
+          created_at: similarShipment.created_at,
+          sender_name: similarShipment.sender_name,
+          receiver_name: similarShipment.receiver_name,
+        };
+        throw error;
+      }
     }
 
     const waybillNumber = await this.waybillService.generateNext();
     const isFree = data.is_free || false;
+
+    // Handle manual/historical date registration
+    let createdAt = new Date();
+    let confirmedAt = new Date();
+    
+    if (data.created_at) {
+      createdAt = new Date(data.created_at);
+      confirmedAt = new Date(data.created_at);
+      
+      // Validation: date cannot be in the future
+      if (createdAt > new Date()) {
+        throw new Error("Cannot create shipment with future date");
+      }
+      
+      // Allow dates from reasonable past (max 1 year to prevent errors)
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      if (createdAt < oneYearAgo) {
+        throw new Error("Cannot create shipment with date more than 1 year in the past");
+      }
+    }
 
     const shipment = this.shipmentRepo.create({
       ...data,
@@ -137,13 +167,14 @@ export class ShipmentService {
       nature: data.nature || ShipmentNature.COLS,
       status: ShipmentStatus.CONFIRMED,
       is_confirmed: true,
-      confirmed_at: new Date(),
+      confirmed_at: confirmedAt,
       confirmed_by: user,
       confirmed_by_id: user.id,
       created_by: user,
       created_by_id: user.id,
       is_free: isFree,
       price: isFree ? 0 : data.price,
+      created_at: createdAt, // Set manual date
     });
 
     const saved = await this.shipmentRepo.save(shipment);
@@ -173,8 +204,30 @@ export class ShipmentService {
     await this.shipmentRepo.remove(existingShipment);
     await this.logAction("delete", existingId, user, oldValues, null);
 
+    // Handle manual/historical date registration
+    let createdAt = new Date();
+    let confirmedAt = new Date();
+    
+    if (data.created_at) {
+      createdAt = new Date(data.created_at);
+      confirmedAt = new Date(data.created_at);
+      
+      // Validation: date cannot be in the future
+      if (createdAt > new Date()) {
+        throw new Error("Cannot create shipment with future date");
+      }
+      
+      // Allow dates from reasonable past (max 1 year to prevent errors)
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      if (createdAt < oneYearAgo) {
+        throw new Error("Cannot create shipment with date more than 1 year in the past");
+      }
+    }
+
     // Créer le nouveau colis (sans vérification de doublon car on vient de supprimer l'ancien)
     const waybillNumber = await this.waybillService.generateNext();
+    const isFree = data.is_free || false;
 
     const shipment = this.shipmentRepo.create({
       ...data,
@@ -182,11 +235,14 @@ export class ShipmentService {
       nature: data.nature || ShipmentNature.COLS,
       status: ShipmentStatus.CONFIRMED,
       is_confirmed: true,
-      confirmed_at: new Date(),
+      confirmed_at: confirmedAt,
       confirmed_by: user,
       confirmed_by_id: user.id,
       created_by: user,
       created_by_id: user.id,
+      is_free: isFree,
+      price: isFree ? 0 : data.price,
+      created_at: createdAt, // Set manual date
     });
 
     const saved = await this.shipmentRepo.save(shipment);

@@ -58,6 +58,8 @@ const shipmentSchema = z.object({
   route: z.string().min(1, "Route is required"),
   nature: z.enum(["colis", "courrier"]).default("colis"),
   type: z.enum(["express", "standard"]).default("standard"),
+  created_at: z.string().optional(),
+  is_manual: z.boolean().optional(),
 }).refine((data) => {
   // Si gratuit, price doit être 0
   if (data.is_free && data.price !== 0) {
@@ -71,6 +73,21 @@ const shipmentSchema = z.object({
 }, {
   message: "Price must be 0 for free shipments and > 0 for paid shipments",
   path: ["price"],
+}).refine((data) => {
+  // Validate created_at if provided
+  if (data.created_at) {
+    const date = new Date(data.created_at);
+    if (isNaN(date.getTime())) {
+      return false;
+    }
+    if (date > new Date()) {
+      return false;
+    }
+  }
+  return true;
+}, {
+  message: "Date must be valid and not in the future",
+  path: ["created_at"],
 });
 
 type ShipmentFormValues = z.infer<typeof shipmentSchema>;
@@ -86,6 +103,9 @@ export default function NewShipmentPage() {
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [existingShipment, setExistingShipment] = useState<any>(null);
   const [pendingFormData, setPendingFormData] = useState<ShipmentFormValues | null>(null);
+  
+  // State for manual registration toggle
+  const [isManualRegistration, setIsManualRegistration] = useState(false);
 
   // Récupérer la nature depuis le state de navigation si disponible
   const defaultNature = (location.state as { nature?: "colis" | "courrier" })?.nature || "colis";
@@ -105,6 +125,8 @@ export default function NewShipmentPage() {
       route: "Yaoundé → Kribi",
       nature: defaultNature,
       type: "standard",
+      created_at: undefined,
+      is_manual: false,
     },
   });
 
@@ -123,6 +145,8 @@ export default function NewShipmentPage() {
       const shipment = await createShipment.mutateAsync({
         ...data,
         declared_value: data.declared_value || 0,
+        created_at: data.created_at || undefined,
+        is_manual: data.is_manual || false,
       });
       navigateToSuccess(shipment);
     } catch (error: any) {
@@ -143,6 +167,8 @@ export default function NewShipmentPage() {
         data: {
           ...pendingFormData,
           declared_value: pendingFormData.declared_value || 0,
+          created_at: pendingFormData.created_at || undefined,
+          is_manual: pendingFormData.is_manual || false,
         },
       });
       setDuplicateDialogOpen(false);
@@ -497,6 +523,87 @@ export default function NewShipmentPage() {
                     )}
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Manual Registration Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {language === "fr" 
+                    ? "Enregistrement manuel/historique" 
+                    : "Manual/Historical Registration"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="is_manual"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value || false}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            setIsManualRegistration(!!checked);
+                            // Reset created_at when disabling manual mode
+                            if (!checked) {
+                              form.setValue("created_at", undefined);
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          {language === "fr" 
+                            ? "Enregistrement manuel/historique" 
+                            : "Manual/Historical Registration"}
+                        </FormLabel>
+                        <FormDescription>
+                          {language === "fr"
+                            ? "Activez pour enregistrer des envois datés d'une période où le système était hors service"
+                            : "Enable to register shipments from when the system was down"}
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {isManualRegistration && (
+                  <FormField
+                    control={form.control}
+                    name="created_at"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {language === "fr" ? "Date de l'envoi" : "Shipment Date"}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="datetime-local"
+                            max={new Date().toISOString().slice(0, 16)}
+                            value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                const date = new Date(e.target.value);
+                                field.onChange(date.toISOString());
+                              } else {
+                                field.onChange(undefined);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {language === "fr"
+                            ? "Sélectionnez la date et l'heure de l'envoi (du 1er janvier jusqu'à aujourd'hui)"
+                            : "Select the date and time of the shipment (from January 1st until today)"}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </CardContent>
             </Card>
 

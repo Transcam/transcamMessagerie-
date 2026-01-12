@@ -119,6 +119,8 @@ export class ShipmentsController {
         is_free,
         route,
         nature,
+        created_at, // New field for historical dates
+        is_manual,
       } = req.body;
 
       if (!sender_name || !sender_phone || !receiver_name || !receiver_phone) {
@@ -152,6 +154,20 @@ export class ShipmentsController {
         return res.status(400).json({ error: "Route is required" });
       }
 
+      // Handle optional manual/historical date
+      let parsedCreatedAt: Date | undefined;
+      if (created_at) {
+        parsedCreatedAt = new Date(created_at);
+        // Validate date format
+        if (isNaN(parsedCreatedAt.getTime())) {
+          return res.status(400).json({ error: "Invalid date format for created_at" });
+        }
+        // Validate date is not in future
+        if (parsedCreatedAt > new Date()) {
+          return res.status(400).json({ error: "Cannot create shipment with future date" });
+        }
+      }
+
       // S'assurer que price est défini (0 si gratuit)
       const finalPrice = isFree ? 0 : price;
 
@@ -159,6 +175,8 @@ export class ShipmentsController {
         ...req.body,
         price: finalPrice,
         is_free: isFree,
+        created_at: parsedCreatedAt,
+        is_manual: is_manual || !!parsedCreatedAt, // Mark as manual if date provided
       }, req.user);
       res.status(201).json({ data: shipment });
     } catch (error: any) {
