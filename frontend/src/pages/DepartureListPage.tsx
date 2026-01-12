@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Filter, Eye, Lock, LockOpen, Download, Printer, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, Eye, Lock, LockOpen, Download, Printer, MoreHorizontal, Edit, Trash2, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +43,7 @@ import { useDepartures, useSealDeparture, useCloseDeparture, useDeleteDeparture 
 import { departureService } from "@/services/departure.service";
 import { DepartureStatusBadge } from "@/components/departures/DepartureStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Departure } from "@/services/departure.service";
 import { UserRole } from "@/types/role";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
@@ -66,6 +67,8 @@ export default function DepartureListPage() {
   const [departureToSeal, setDepartureToSeal] = useState<Departure | null>(null);
   const [departureToClose, setDepartureToClose] = useState<Departure | null>(null);
   const [departureToDelete, setDepartureToDelete] = useState<Departure | null>(null);
+  const [selectedDepartures, setSelectedDepartures] = useState<number[]>([]);
+  const [isDeletingMultiple, setIsDeletingMultiple] = useState(false);
 
   const { data, isLoading, error } = useDepartures({
     ...filters,
@@ -166,6 +169,41 @@ export default function DepartureListPage() {
       console.error("Failed to print PDF:", error);
     }
   };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedDepartures(data?.data.map(d => d.id) || []);
+    } else {
+      setSelectedDepartures([]);
+    }
+  };
+
+  const handleSelectDeparture = (departureId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedDepartures(prev => [...prev, departureId]);
+    } else {
+      setSelectedDepartures(prev => prev.filter(id => id !== departureId));
+    }
+  };
+
+  const handleDeleteMultiple = async () => {
+    if (selectedDepartures.length === 0) return;
+    
+    setIsDeletingMultiple(true);
+    try {
+      await Promise.all(
+        selectedDepartures.map(id => deleteDeparture.mutateAsync(id))
+      );
+      setSelectedDepartures([]);
+    } catch (error) {
+      // Error handled by hook
+    } finally {
+      setIsDeletingMultiple(false);
+    }
+  };
+
+  const isAllSelected = data?.data.length > 0 && selectedDepartures.length === data.data.length;
+  const isIndeterminate = selectedDepartures.length > 0 && selectedDepartures.length < (data?.data.length || 0);
 
   const canSeal = (departure: Departure) => hasPermission("validate_departure") && departure.status === "open";
   const canClose = (departure: Departure) => hasPermission("validate_departure") && departure.status === "sealed";
@@ -349,6 +387,17 @@ export default function DepartureListPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={isAllSelected}
+                          onCheckedChange={handleSelectAll}
+                          ref={(el) => {
+                            if (el) {
+                              el.indeterminate = isIndeterminate;
+                            }
+                          }}
+                        />
+                      </TableHead>
                       <TableHead>ID</TableHead>
                       <TableHead>{language === "fr" ? "N° Bordereau" : "Waybill #"}</TableHead>
                       <TableHead>{language === "fr" ? "Route" : "Route"}</TableHead>
@@ -369,9 +418,15 @@ export default function DepartureListPage() {
                       return (
                         <TableRow
                           key={departure.id}
-                          className="cursor-pointer hover:bg-muted/50"
+                          className={`cursor-pointer hover:bg-muted/50 ${selectedDepartures.includes(departure.id) ? 'bg-muted' : ''}`}
                           onClick={() => navigate(`/departures/${departure.id}`)}
                         >
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedDepartures.includes(departure.id)}
+                              onCheckedChange={(checked) => handleSelectDeparture(departure.id, !!checked)}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">
                             #{departure.id}
                           </TableCell>
@@ -607,6 +662,46 @@ export default function DepartureListPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Floating action bar for multiple selection */}
+      {selectedDepartures.length > 0 && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
+          <Card className="shadow-lg border-2">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4">
+                <div className="text-sm font-medium">
+                  {language === "fr" 
+                    ? `${selectedDepartures.length} départ(s) sélectionné(s)`
+                    : `${selectedDepartures.length} departure(s) selected`}
+                </div>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteMultiple}
+                  disabled={isDeletingMultiple}
+                >
+                  {isDeletingMultiple ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {language === "fr" ? "Suppression..." : "Deleting..."}
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {language === "fr" ? "Supprimer" : "Delete"}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedDepartures([])}
+                >
+                  {language === "fr" ? "Annuler" : "Cancel"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

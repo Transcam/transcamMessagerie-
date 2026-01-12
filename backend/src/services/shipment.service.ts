@@ -1,4 +1,4 @@
-import { Repository, MoreThanOrEqual } from "typeorm";
+import { Repository, MoreThanOrEqual, In, Not, IsNull } from "typeorm";
 import { AppDataSource } from "../../db";
 import {
   Shipment,
@@ -7,6 +7,7 @@ import {
 } from "../entities/shipment.entity";
 import { User } from "../entities/user.entity";
 import { AuditLog } from "../entities/audit-log.entity";
+import { Departure } from "../entities/departure.entity";
 import { WaybillService } from "./waybill.service";
 import { IndividualWaybillService } from "./individual-waybill.service";
 import { ReceiptService } from "./receipt.service";
@@ -56,6 +57,7 @@ export interface ShipmentFiltersDTO {
 export class ShipmentService {
   private shipmentRepo: Repository<Shipment>;
   private auditRepo: Repository<AuditLog>;
+  private departureRepo: Repository<Departure>;
   private waybillService: WaybillService;
   private individualWaybillService: IndividualWaybillService;
   private receiptService: ReceiptService;
@@ -63,6 +65,7 @@ export class ShipmentService {
   constructor() {
     this.shipmentRepo = AppDataSource.getRepository(Shipment);
     this.auditRepo = AppDataSource.getRepository(AuditLog);
+    this.departureRepo = AppDataSource.getRepository(Departure);
     this.waybillService = new WaybillService();
     this.individualWaybillService = new IndividualWaybillService();
     this.receiptService = new ReceiptService();
@@ -305,14 +308,14 @@ export class ShipmentService {
   }
 
   /**
-   * Cancel shipment
+   * Delete shipment (hard delete)
    * Authorization is handled at route level with authorize("delete_shipment")
    */
   async cancel(
     shipmentId: number,
     reason: string,
     user: User
-  ): Promise<Shipment> {
+  ): Promise<void> {
     const shipment = await this.shipmentRepo.findOne({
       where: { id: shipmentId },
     });
@@ -321,23 +324,125 @@ export class ShipmentService {
       throw new Error("Shipment not found");
     }
 
-    if (shipment.is_cancelled) {
-      throw new Error("Shipment already cancelled");
+    // Unassign from departure before deletion (if assigned)
+    if (shipment.departure_id !== null && shipment.departure_id !== undefined) {
+      await this.shipmentRepo.update(
+        { id: shipmentId },
+        { departure_id: null }
+      );
+      // Reload shipment to get updated values
+      const updatedShipment = await this.shipmentRepo.findOne({ where: { id: shipmentId } });
+      if (updatedShipment) {
+        shipment.departure_id = null;
+      }
     }
 
-    const oldValues = { ...shipment };
+    // Create a clean object with only primitive values for logging
+    const oldValues = {
+      id: shipment.id,
+      waybill_number: shipment.waybill_number,
+      sender_name: shipment.sender_name,
+      sender_phone: shipment.sender_phone,
+      receiver_name: shipment.receiver_name,
+      receiver_phone: shipment.receiver_phone,
+      description: shipment.description,
+      weight: shipment.weight,
+      declared_value: shipment.declared_value,
+      price: shipment.price,
+      is_free: shipment.is_free,
+      route: shipment.route,
+      nature: shipment.nature,
+      type: shipment.type,
+      status: shipment.status,
+      is_confirmed: shipment.is_confirmed,
+      confirmed_at: shipment.confirmed_at,
+      is_cancelled: shipment.is_cancelled,
+      cancelled_at: shipment.cancelled_at,
+      cancellation_reason: shipment.cancellation_reason,
+      departure_id: shipment.departure_id,
+      created_by_id: shipment.created_by_id,
+      confirmed_by_id: shipment.confirmed_by_id,
+      cancelled_by_id: shipment.cancelled_by_id,
+      created_at: shipment.created_at,
+      updated_at: shipment.updated_at,
+    };
 
-    shipment.is_cancelled = true;
-    shipment.status = ShipmentStatus.CANCELLED;
-    shipment.cancelled_at = new Date();
-    shipment.cancelled_by = user;
-    shipment.cancelled_by_id = user.id;
-    shipment.cancellation_reason = reason;
+    // Log action before deletion
+    await this.logAction("delete", shipmentId, user, oldValues, null, reason);
 
-    const saved = await this.shipmentRepo.save(shipment);
-    await this.logAction("cancel", saved.id, user, oldValues, saved, reason);
+    // Hard delete - remove from database
+    await this.shipmentRepo.remove(shipment);
+  }
 
-    return saved;
+  /**
+   * Delete multiple shipments (bulk delete)
+   * Authorization is handled at route level with authorize("delete_shipment")
+   */
+  async deleteMultiple(
+    shipmentIds: number[],
+    user: User
+  ): Promise<{ deleted: number; skipped: number; errors: Array<{ id: number; error: string }> }> {
+    const errors: Array<{ id: number; error: string }> = [];
+    let deleted = 0;
+    let skipped = 0;
+
+    // First, unassign all shipments from departures in bulk
+    await this.shipmentRepo.update(
+      { id: In(shipmentIds), departure_id: Not(IsNull()) },
+      { departure_id: null }
+    );
+
+    for (const id of shipmentIds) {
+      try {
+        const shipment = await this.shipmentRepo.findOne({ where: { id } });
+        
+        if (!shipment) {
+          errors.push({ id, error: "Shipment not found" });
+          continue;
+        }
+
+        // Create a clean object with only primitive values for logging
+        const oldValues = {
+          id: shipment.id,
+          waybill_number: shipment.waybill_number,
+          sender_name: shipment.sender_name,
+          sender_phone: shipment.sender_phone,
+          receiver_name: shipment.receiver_name,
+          receiver_phone: shipment.receiver_phone,
+          description: shipment.description,
+          weight: shipment.weight,
+          declared_value: shipment.declared_value,
+          price: shipment.price,
+          is_free: shipment.is_free,
+          route: shipment.route,
+          nature: shipment.nature,
+          type: shipment.type,
+          status: shipment.status,
+          is_confirmed: shipment.is_confirmed,
+          confirmed_at: shipment.confirmed_at,
+          is_cancelled: shipment.is_cancelled,
+          cancelled_at: shipment.cancelled_at,
+          cancellation_reason: shipment.cancellation_reason,
+          departure_id: shipment.departure_id,
+          created_by_id: shipment.created_by_id,
+          confirmed_by_id: shipment.confirmed_by_id,
+          cancelled_by_id: shipment.cancelled_by_id,
+          created_at: shipment.created_at,
+          updated_at: shipment.updated_at,
+        };
+        
+        // Log action before deletion
+        await this.logAction("delete", id, user, oldValues, null, "Bulk delete");
+        
+        // Hard delete
+        await this.shipmentRepo.remove(shipment);
+        deleted++;
+      } catch (error: any) {
+        errors.push({ id, error: error.message });
+      }
+    }
+
+    return { deleted, skipped, errors };
   }
 
   async list(filters: ShipmentFiltersDTO): Promise<[Shipment[], number]> {

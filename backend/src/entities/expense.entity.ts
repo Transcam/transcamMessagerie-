@@ -47,12 +47,12 @@ export class Expense {
   category!: ExpenseCategory;
 
   // Audit Trail
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: "created_by_id" })
-  created_by!: User;
+  created_by!: User | null;
 
-  @Column()
-  created_by_id!: number;
+  @Column({ nullable: true })
+  created_by_id!: number | null;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: "updated_by_id" })

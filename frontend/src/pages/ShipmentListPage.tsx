@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Plus, Search, Filter, Eye, Printer, Download, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, Eye, Printer, Download, MoreHorizontal, Edit, Trash2, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,11 +39,13 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useShipments, useCancelShipment, useGenerateReceipt, useDownloadReceipt } from "@/hooks/use-shipments";
+import { useShipments, useCancelShipment, useGenerateReceipt, useDownloadReceipt, useDeleteMultipleShipments } from "@/hooks/use-shipments";
+import { useToast } from "@/hooks/use-toast";
 import { shipmentService } from "@/services/shipment.service";
 import { ShipmentStatusBadge } from "@/components/shipments/ShipmentStatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Shipment } from "@/services/shipment.service";
 import { ShipmentStats } from "@/components/shipments/ShipmentStats";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
@@ -62,6 +64,7 @@ export default function ShipmentListPage() {
   const location = useLocation();
   const { t, language } = useLanguage();
   const { hasPermission, user } = useAuth();
+  const canDeleteShipments = hasPermission("delete_shipment");
   
   // Détecter la nature depuis l'URL
   const getNatureFromPath = () => {
@@ -102,11 +105,15 @@ export default function ShipmentListPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [shipmentToDelete, setShipmentToDelete] = useState<Shipment | null>(null);
   const [deleteReason, setDeleteReason] = useState("");
+  const [selectedShipments, setSelectedShipments] = useState<number[]>([]);
+  const [isDeletingMultiple, setIsDeletingMultiple] = useState(false);
 
   const { data, isLoading, error } = useShipments(filters);
   const cancelShipment = useCancelShipment();
   const generateReceipt = useGenerateReceipt();
   const downloadReceipt = useDownloadReceipt();
+  const deleteMultipleShipments = useDeleteMultipleShipments();
+  const { toast } = useToast();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(amount);
@@ -145,9 +152,8 @@ export default function ShipmentListPage() {
   const confirmDelete = async () => {
     if (!shipmentToDelete) return;
     
-    const reason = deleteReason || (language === "fr" 
-      ? "Annulation par l'utilisateur" 
-      : "Cancelled by user");
+    // Reason is optional for hard delete
+    const reason = deleteReason || undefined;
     
     try {
       await cancelShipment.mutateAsync({
@@ -182,6 +188,50 @@ export default function ShipmentListPage() {
     // Navigate to edit page (we'll create this or use detail page with edit mode)
     navigate(`/shipments/${shipment.id}/edit`);
   };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedShipments(data?.data.map(s => s.id) || []);
+    } else {
+      setSelectedShipments([]);
+    }
+  };
+
+  const handleSelectShipment = (shipmentId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedShipments(prev => [...prev, shipmentId]);
+    } else {
+      setSelectedShipments(prev => prev.filter(id => id !== shipmentId));
+    }
+  };
+
+  const handleDeleteMultiple = async () => {
+    if (selectedShipments.length === 0) return;
+    
+    setIsDeletingMultiple(true);
+    try {
+      // Utiliser l'endpoint batch pour supprimer tous les envois en une seule requête
+      const result = await deleteMultipleShipments.mutateAsync(selectedShipments);
+      
+      // Retirer les envois supprimés de la sélection
+      // Garder seulement ceux qui ont eu une erreur ou qui ont été ignorés (mais on les retire quand même)
+      setSelectedShipments(prev => prev.filter(id => 
+        result.errors.some(e => e.id === id)
+      ));
+      
+      // Si tous les envois ont été supprimés ou ignorés, vider la sélection
+      if (result.deleted + result.skipped === selectedShipments.length) {
+        setSelectedShipments([]);
+      }
+    } catch (error) {
+      // Error handled by hook
+    } finally {
+      setIsDeletingMultiple(false);
+    }
+  };
+
+  const isAllSelected = data?.data.length > 0 && selectedShipments.length === data.data.length;
+  const isIndeterminate = selectedShipments.length > 0 && selectedShipments.length < (data?.data.length || 0);
 
   if (error) {
     return (
@@ -378,6 +428,19 @@ export default function ShipmentListPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      {canDeleteShipments && (
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={handleSelectAll}
+                            ref={(el) => {
+                              if (el) {
+                                el.indeterminate = isIndeterminate;
+                              }
+                            }}
+                          />
+                        </TableHead>
+                      )}
                       <TableHead>{t("waybill.number")}</TableHead>
                       <TableHead>{t("shipment.sender")}</TableHead>
                       <TableHead>{t("shipment.receiver")}</TableHead>
@@ -397,9 +460,17 @@ export default function ShipmentListPage() {
                     {data.data.map((shipment) => (
                       <TableRow
                         key={shipment.id}
-                        className="cursor-pointer hover:bg-muted/50"
+                        className={`cursor-pointer hover:bg-muted/50 ${selectedShipments.includes(shipment.id) ? 'bg-muted' : ''}`}
                         onClick={() => navigate(`/shipments/${shipment.id}`)}
                       >
+                        {canDeleteShipments && (
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedShipments.includes(shipment.id)}
+                              onCheckedChange={(checked) => handleSelectShipment(shipment.id, !!checked)}
+                            />
+                          </TableCell>
+                        )}
                         <TableCell className="font-mono text-sm font-medium">
                           {shipment.waybill_number}
                         </TableCell>
@@ -484,15 +555,19 @@ export default function ShipmentListPage() {
                                 </DropdownMenuItem>
                               )}
                               
-                              {/* Delete - Always visible for now */}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleDelete(shipment)}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                {language === "fr" ? "Supprimer" : "Delete"}
-                              </DropdownMenuItem>
+                              {/* Delete - Only for admin and supervisor */}
+                              {canDeleteShipments && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleDelete(shipment)}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    {language === "fr" ? "Supprimer" : "Delete"}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -579,6 +654,46 @@ export default function ShipmentListPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Floating action bar for multiple selection - Only for admin and supervisor */}
+      {canDeleteShipments && selectedShipments.length > 0 && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
+          <Card className="shadow-lg border-2">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4">
+                <div className="text-sm font-medium">
+                  {language === "fr" 
+                    ? `${selectedShipments.length} envoi(s) sélectionné(s)`
+                    : `${selectedShipments.length} shipment(s) selected`}
+                </div>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteMultiple}
+                  disabled={isDeletingMultiple}
+                >
+                  {isDeletingMultiple ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {language === "fr" ? "Suppression..." : "Deleting..."}
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {language === "fr" ? "Supprimer" : "Delete"}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedShipments([])}
+                >
+                  {language === "fr" ? "Annuler" : "Cancel"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

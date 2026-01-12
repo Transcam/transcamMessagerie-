@@ -20,7 +20,8 @@
     "seed:vehicles": "ts-node scripts/insert-test-vehicles.ts",
     "seed:drivers": "ts-node scripts/insert-test-drivers.ts",
     "seed:distributions": "ts-node scripts/insert-test-distributions.ts",
-    "debug:distributions": "ts-node scripts/debug-distributions.ts"
+    "debug:distributions": "ts-node scripts/debug-distributions.ts",
+    "reset:db": "ts-node scripts/reset-database.ts"
   },
   "keywords": [],
   "author": "",

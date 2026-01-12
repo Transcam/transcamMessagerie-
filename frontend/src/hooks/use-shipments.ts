@@ -177,12 +177,17 @@ export function useCancelShipment() {
   const { language } = useLanguage();
 
   return useMutation({
-    mutationFn: ({ id, reason }: { id: number; reason: string }) =>
+    mutationFn: ({ id, reason }: { id: number; reason?: string }) =>
       shipmentService.cancel(id, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: shipmentKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["shipment-statistics"] });
       toast({
-        title: language === "fr" ? "Envoi annulé" : "Shipment cancelled",
+        title: language === "fr" ? "Envoi supprimé" : "Shipment deleted",
+        description:
+          language === "fr"
+            ? "L'envoi a été supprimé définitivement"
+            : "The shipment has been permanently deleted",
       });
     },
     onError: (error: any) => {
@@ -191,8 +196,55 @@ export function useCancelShipment() {
         description:
           error.response?.data?.error ||
           (language === "fr"
-            ? "Impossible d'annuler l'envoi"
-            : "Failed to cancel shipment"),
+            ? "Impossible de supprimer l'envoi"
+            : "Failed to delete shipment"),
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+// Delete multiple shipments mutation
+export function useDeleteMultipleShipments() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { language } = useLanguage();
+
+  return useMutation({
+    mutationFn: (ids: number[]) => shipmentService.deleteMultiple(ids),
+    onSuccess: (result) => {
+      // Invalider les queries une seule fois après toutes les suppressions
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["shipment-statistics"] });
+      
+      // Afficher un message de résultat
+      if (result.deleted > 0) {
+        toast({
+          title: language === "fr" ? "Suppression réussie" : "Deletion successful",
+          description: language === "fr"
+            ? `${result.deleted} envoi(s) supprimé(s)${result.skipped > 0 ? `. ${result.skipped} ignoré(s) (assignés à un départ).` : '.'}${result.errors.length > 0 ? ` ${result.errors.length} erreur(s).` : ''}`
+            : `${result.deleted} shipment(s) deleted${result.skipped > 0 ? `. ${result.skipped} skipped (assigned to departure).` : '.'}${result.errors.length > 0 ? ` ${result.errors.length} error(s).` : ''}`,
+        });
+      }
+      
+      if (result.skipped > 0 && result.deleted === 0) {
+        toast({
+          title: language === "fr" ? "Aucune suppression" : "No deletions",
+          description: language === "fr"
+            ? `Tous les envois sélectionnés sont assignés à un départ. Retirez-les d'abord du départ.`
+            : `All selected shipments are assigned to a departure. Remove them from the departure first.`,
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === "fr" ? "Erreur" : "Error",
+        description:
+          error.response?.data?.error ||
+          (language === "fr"
+            ? "Impossible de supprimer les envois"
+            : "Failed to delete shipments"),
         variant: "destructive",
       });
     },
