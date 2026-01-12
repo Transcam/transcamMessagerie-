@@ -152,10 +152,17 @@ export const shipmentService = {
     return response.data.data;
   },
 
-  // Cancel shipment
-  cancel: async (id: number, reason: string): Promise<Shipment> => {
-    const response = await httpService.delete(`/shipments/${id}`, {
+  // Delete shipment (hard delete)
+  cancel: async (id: number, reason?: string): Promise<void> => {
+    await httpService.delete(`/shipments/${id}`, {
       data: { reason },
+    });
+  },
+
+  // Delete multiple shipments (bulk delete)
+  deleteMultiple: async (ids: number[]): Promise<{ deleted: number; skipped: number; errors: Array<{ id: number; error: string }> }> => {
+    const response = await httpService.delete("/shipments/bulk", {
+      data: { shipment_ids: ids },
     });
     return response.data.data;
   },

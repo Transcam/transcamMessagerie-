@@ -51,12 +51,12 @@ export class Driver {
   status!: DriverStatus;
 
   // User tracking
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: "created_by_id" })
-  created_by!: User;
+  created_by!: User | null;
 
-  @Column()
-  created_by_id!: number;
+  @Column({ nullable: true })
+  created_by_id!: number | null;
 
   // Relations
   @OneToMany(() => Departure, (departure) => departure.driver)

@@ -75,21 +75,21 @@ export class Departure {
   closed_at!: Date | null;
 
   // User tracking
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: "created_by_id" })
-  created_by!: User;
+  created_by!: User | null;
 
-  @Column()
-  created_by_id!: number;
+  @Column({ nullable: true })
+  created_by_id!: number | null;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: "sealed_by_id" })
   sealed_by!: User | null;
 
   @Column({ nullable: true })
   sealed_by_id!: number | null;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: "closed_by_id" })
   closed_by!: User | null;
 

@@ -69,24 +69,19 @@ export default function ShipmentDetailPage() {
 
 
   const handleCancel = async () => {
-    if (!shipment || !cancelReason.trim()) {
-      toast({
-        title: language === "fr" ? "Erreur" : "Error",
-        description:
-          language === "fr"
-            ? "La raison d'annulation est requise"
-            : "Cancellation reason is required",
-        variant: "destructive",
-      });
+    if (!shipment) {
       return;
     }
+    // Reason is optional for hard delete
     try {
       await cancelShipment.mutateAsync({
         id: shipment.id,
-        reason: cancelReason,
+        reason: cancelReason.trim() || undefined,
       });
       setShowCancelDialog(false);
       setCancelReason("");
+      // Navigate back to list after deletion
+      navigate("/shipments");
     } catch (error) {
       // Error handled in hook
     }

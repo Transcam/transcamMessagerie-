@@ -274,14 +274,37 @@ export class ShipmentsController {
       const id = parseInt(req.params.id);
       const { reason } = req.body;
 
-      if (!reason) {
-        return res
-          .status(400)
-          .json({ error: "Cancellation reason is required" });
+      // Reason is optional for hard delete, but can be logged
+      const deleteReason = reason || (req.user.role === "admin" 
+        ? "Deleted by admin" 
+        : "Deleted by user");
+
+      await this.service.cancel(id, deleteReason, req.user);
+      res.json({ message: "Shipment deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  };
+
+  deleteMultiple = async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const shipment = await this.service.cancel(id, reason, req.user);
-      res.json({ data: shipment });
+      const { shipment_ids } = req.body;
+
+      if (!Array.isArray(shipment_ids) || shipment_ids.length === 0) {
+        return res.status(400).json({ error: "shipment_ids array is required" });
+      }
+
+      // Limit bulk delete to prevent abuse
+      if (shipment_ids.length > 1000) {
+        return res.status(400).json({ error: "Cannot delete more than 1000 shipments at once" });
+      }
+
+      const result = await this.service.deleteMultiple(shipment_ids, req.user);
+      res.json({ data: result });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

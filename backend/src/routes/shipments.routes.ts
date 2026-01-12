@@ -14,6 +14,7 @@ router.post("/", authenticate, authorize("create_shipment"), controller.create);
 router.post("/delete-and-create", authenticate, authorize("create_shipment"), controller.deleteAndCreate);
 router.patch("/:id/confirm", authenticate, authorize("edit_shipment"), controller.confirm);
 router.patch("/:id", authenticate, authorize("edit_shipment"), controller.update);
+router.delete("/bulk", authenticate, authorize("delete_shipment"), controller.deleteMultiple);
 router.delete("/:id", authenticate, authorize("delete_shipment"), controller.cancel);
 router.get("/:id/waybill", authenticate, authorize("print_waybill"), controller.generateWaybill);
 router.get("/:id/receipt", authenticate, authorize("print_receipt"), controller.generateReceipt);
