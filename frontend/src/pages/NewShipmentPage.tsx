@@ -36,59 +36,58 @@ import {
 } from "@/components/ui/dialog";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useCreateShipment, useDeleteAndCreateShipment } from "@/hooks/use-shipments";
+import {
+  useCreateShipment,
+  useDeleteAndCreateShipment,
+} from "@/hooks/use-shipments";
 import { SHIPMENT_TYPE_LABELS } from "@/services/shipment.service";
 import { ContactAutocomplete } from "@/components/ui/contact-autocomplete";
+import {
+  CAMEROON_PHONE_REGEX,
+  PHONE_VALIDATION_ERROR_MESSAGE,
+} from "@/lib/phone-utils";
 
-const routes = [
-  "Yaoundé → Kribi",
-];
+const routes = ["Yaoundé → Kribi"];
 
 // Form validation schema
-const shipmentSchema = z.object({
-  sender_name: z.string().min(1, "Sender name is required"),
-  sender_phone: z.string().min(1, "Sender phone is required"),
-  receiver_name: z.string().min(1, "Receiver name is required"),
-  receiver_phone: z.string().min(1, "Receiver phone is required"),
-  description: z.string().optional(),
-  weight: z.number().min(0.1, "Weight must be greater than 0").optional(),
-  declared_value: z.number().min(0).optional(),
-  price: z.number().min(0, "Price must be >= 0"),
-  is_free: z.boolean().default(false),
-  route: z.string().min(1, "Route is required"),
-  nature: z.enum(["colis", "courrier"]).default("colis"),
-  type: z.enum(["express", "standard"]).default("standard"),
-  created_at: z.string().optional(),
-  is_manual: z.boolean().optional(),
-}).refine((data) => {
-  // Si gratuit, price doit être 0
-  if (data.is_free && data.price !== 0) {
-    return false;
-  }
-  // Si payant, price doit être > 0
-  if (!data.is_free && data.price <= 0) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Price must be 0 for free shipments and > 0 for paid shipments",
-  path: ["price"],
-}).refine((data) => {
-  // Validate created_at if provided
-  if (data.created_at) {
-    const date = new Date(data.created_at);
-    if (isNaN(date.getTime())) {
-      return false;
+const shipmentSchema = z
+  .object({
+    sender_name: z.string().min(1, "Sender name is required"),
+    sender_phone: z
+      .string()
+      .min(1, "Sender phone is required")
+      .regex(CAMEROON_PHONE_REGEX, PHONE_VALIDATION_ERROR_MESSAGE),
+    receiver_name: z.string().min(1, "Receiver name is required"),
+    receiver_phone: z
+      .string()
+      .min(1, "Receiver phone is required")
+      .regex(CAMEROON_PHONE_REGEX, PHONE_VALIDATION_ERROR_MESSAGE),
+    description: z.string().optional(),
+    weight: z.number().min(0.1, "Weight must be greater than 0").optional(),
+    declared_value: z.number().min(0).optional(),
+    price: z.number().min(0, "Price must be >= 0"),
+    is_free: z.boolean().default(false),
+    route: z.string().min(1, "Route is required"),
+    nature: z.enum(["colis", "courrier"]).default("colis"),
+    type: z.enum(["express", "standard"]).default("standard"),
+  })
+  .refine(
+    (data) => {
+      // Si gratuit, price doit être 0
+      if (data.is_free && data.price !== 0) {
+        return false;
+      }
+      // Si payant, price doit être > 0
+      if (!data.is_free && data.price <= 0) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Price must be 0 for free shipments and > 0 for paid shipments",
+      path: ["price"],
     }
-    if (date > new Date()) {
-      return false;
-    }
-  }
-  return true;
-}, {
-  message: "Date must be valid and not in the future",
-  path: ["created_at"],
-});
+  );
 
 type ShipmentFormValues = z.infer<typeof shipmentSchema>;
 
@@ -102,13 +101,12 @@ export default function NewShipmentPage() {
   // États pour le dialog de colis similaire
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [existingShipment, setExistingShipment] = useState<any>(null);
-  const [pendingFormData, setPendingFormData] = useState<ShipmentFormValues | null>(null);
-  
-  // State for manual registration toggle
-  const [isManualRegistration, setIsManualRegistration] = useState(false);
+  const [pendingFormData, setPendingFormData] =
+    useState<ShipmentFormValues | null>(null);
 
   // Récupérer la nature depuis le state de navigation si disponible
-  const defaultNature = (location.state as { nature?: "colis" | "courrier" })?.nature || "colis";
+  const defaultNature =
+    (location.state as { nature?: "colis" | "courrier" })?.nature || "colis";
 
   const form = useForm<ShipmentFormValues>({
     resolver: zodResolver(shipmentSchema),
@@ -125,13 +123,12 @@ export default function NewShipmentPage() {
       route: "Yaoundé → Kribi",
       nature: defaultNature,
       type: "standard",
-      created_at: undefined,
-      is_manual: false,
     },
   });
 
   const navigateToSuccess = (shipment: any) => {
-    const fromNature = (location.state as { nature?: "colis" | "courrier" })?.nature;
+    const fromNature = (location.state as { nature?: "colis" | "courrier" })
+      ?.nature;
     if (fromNature) {
       navigate(`/shipments/${fromNature}`);
     } else {
@@ -145,13 +142,14 @@ export default function NewShipmentPage() {
       const shipment = await createShipment.mutateAsync({
         ...data,
         declared_value: data.declared_value || 0,
-        created_at: data.created_at || undefined,
-        is_manual: data.is_manual || false,
       });
       navigateToSuccess(shipment);
     } catch (error: any) {
       // Gérer l'erreur de colis similaire
-      if (error.response?.status === 409 && error.response?.data?.existingShipment) {
+      if (
+        error.response?.status === 409 &&
+        error.response?.data?.existingShipment
+      ) {
         setExistingShipment(error.response.data.existingShipment);
         setDuplicateDialogOpen(true);
       }
@@ -160,15 +158,13 @@ export default function NewShipmentPage() {
 
   const handleDeleteExisting = async () => {
     if (!existingShipment || !pendingFormData) return;
-    
+
     try {
       const shipment = await deleteAndCreateShipment.mutateAsync({
         existingId: existingShipment.id,
         data: {
           ...pendingFormData,
           declared_value: pendingFormData.declared_value || 0,
-          created_at: pendingFormData.created_at || undefined,
-          is_manual: pendingFormData.is_manual || false,
         },
       });
       setDuplicateDialogOpen(false);
@@ -220,7 +216,11 @@ export default function NewShipmentPage() {
                             form.setValue("sender_phone", phone);
                           }}
                           type="sender"
-                          placeholder={language === "fr" ? "Nom de l'expéditeur" : "Sender name"}
+                          placeholder={
+                            language === "fr"
+                              ? "Nom de l'expéditeur"
+                              : "Sender name"
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -234,7 +234,7 @@ export default function NewShipmentPage() {
                     <FormItem>
                       <FormLabel>{t("shipment.senderPhone")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="+237 6XX XXX XXX" {...field} />
+                        <Input placeholder="6XX XXX XXX" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -265,7 +265,11 @@ export default function NewShipmentPage() {
                             form.setValue("receiver_phone", phone);
                           }}
                           type="receiver"
-                          placeholder={language === "fr" ? "Nom du destinataire" : "Receiver name"}
+                          placeholder={
+                            language === "fr"
+                              ? "Nom du destinataire"
+                              : "Receiver name"
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -279,7 +283,7 @@ export default function NewShipmentPage() {
                     <FormItem>
                       <FormLabel>{t("shipment.receiverPhone")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="+237 6XX XXX XXX" {...field} />
+                        <Input placeholder="6XX XXX XXX" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -301,9 +305,9 @@ export default function NewShipmentPage() {
                     <FormItem>
                       <FormLabel>{t("shipment.route")}</FormLabel>
                       <FormControl>
-                        <Input 
-                          value={field.value || "Yaoundé → Kribi"} 
-                          disabled 
+                        <Input
+                          value={field.value || "Yaoundé → Kribi"}
+                          disabled
                           readOnly
                           className="bg-muted cursor-not-allowed"
                         />
@@ -425,7 +429,11 @@ export default function NewShipmentPage() {
                             onChange={(e) => {
                               const value = e.target.value;
                               if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                                field.onChange(value === "" ? undefined : (parseFloat(value) || undefined));
+                                field.onChange(
+                                  value === ""
+                                    ? undefined
+                                    : parseFloat(value) || undefined
+                                );
                               }
                             }}
                             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -453,7 +461,9 @@ export default function NewShipmentPage() {
                             onChange={(e) => {
                               const value = e.target.value;
                               if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                                field.onChange(value === "" ? 0 : parseFloat(value) || 0);
+                                field.onChange(
+                                  value === "" ? 0 : parseFloat(value) || 0
+                                );
                               }
                             }}
                             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -468,9 +478,7 @@ export default function NewShipmentPage() {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>
-                          {t("shipment.price")} (FCFA) *
-                        </FormLabel>
+                        <FormLabel>{t("shipment.price")} (FCFA) *</FormLabel>
                         <FormControl>
                           <Input
                             type="text"
@@ -482,7 +490,9 @@ export default function NewShipmentPage() {
                             onChange={(e) => {
                               const value = e.target.value;
                               if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                                field.onChange(value === "" ? 0 : parseFloat(value) || 0);
+                                field.onChange(
+                                  value === "" ? 0 : parseFloat(value) || 0
+                                );
                               }
                             }}
                             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -511,11 +521,13 @@ export default function NewShipmentPage() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>
-                            {language === "fr" ? "Envoi gratuit" : "Free shipment"}
+                            {language === "fr"
+                              ? "Envoi gratuit"
+                              : "Free shipment"}
                           </FormLabel>
                           <FormDescription>
-                            {language === "fr" 
-                              ? "Cocher si l'envoi est gratuit (prix = 0)" 
+                            {language === "fr"
+                              ? "Cocher si l'envoi est gratuit (prix = 0)"
                               : "Check if the shipment is free (price = 0)"}
                           </FormDescription>
                         </div>
@@ -523,87 +535,6 @@ export default function NewShipmentPage() {
                     )}
                   />
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Manual Registration Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {language === "fr" 
-                    ? "Enregistrement manuel/historique" 
-                    : "Manual/Historical Registration"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="is_manual"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value || false}
-                          onCheckedChange={(checked) => {
-                            field.onChange(checked);
-                            setIsManualRegistration(!!checked);
-                            // Reset created_at when disabling manual mode
-                            if (!checked) {
-                              form.setValue("created_at", undefined);
-                            }
-                          }}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          {language === "fr" 
-                            ? "Enregistrement manuel/historique" 
-                            : "Manual/Historical Registration"}
-                        </FormLabel>
-                        <FormDescription>
-                          {language === "fr"
-                            ? "Activez pour enregistrer des envois datés d'une période où le système était hors service"
-                            : "Enable to register shipments from when the system was down"}
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                {isManualRegistration && (
-                  <FormField
-                    control={form.control}
-                    name="created_at"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          {language === "fr" ? "Date de l'envoi" : "Shipment Date"}
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="datetime-local"
-                            max={new Date().toISOString().slice(0, 16)}
-                            value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                const date = new Date(e.target.value);
-                                field.onChange(date.toISOString());
-                              } else {
-                                field.onChange(undefined);
-                              }
-                            }}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          {language === "fr"
-                            ? "Sélectionnez la date et l'heure de l'envoi (du 1er janvier jusqu'à aujourd'hui)"
-                            : "Select the date and time of the shipment (from January 1st until today)"}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
               </CardContent>
             </Card>
 
@@ -636,14 +567,34 @@ export default function NewShipmentPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {language === "fr" ? "Envoi similaire détecté" : "Similar shipment detected"}
+              {language === "fr"
+                ? "Envoi similaire détecté"
+                : "Similar shipment detected"}
             </DialogTitle>
             <DialogDescription>
               {existingShipment && (
                 <>
-                  {language === "fr" 
-                    ? `Un colis similaire a déjà été créé le ${new Date(existingShipment.created_at).toLocaleDateString('fr-FR')} à ${new Date(existingShipment.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} avec le bordereau ${existingShipment.waybill_number}. Voulez-vous supprimer l'ancien et créer un nouveau ?`
-                    : `A similar shipment was already created on ${new Date(existingShipment.created_at).toLocaleDateString()} at ${new Date(existingShipment.created_at).toLocaleTimeString({ hour: '2-digit', minute: '2-digit' })} with waybill ${existingShipment.waybill_number}. Do you want to delete the old one and create a new one?`}
+                  {language === "fr"
+                    ? `Un colis similaire a déjà été créé le ${new Date(
+                        existingShipment.created_at
+                      ).toLocaleDateString("fr-FR")} à ${new Date(
+                        existingShipment.created_at
+                      ).toLocaleTimeString("fr-FR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })} avec le bordereau ${
+                        existingShipment.waybill_number
+                      }. Voulez-vous supprimer l'ancien et créer un nouveau ?`
+                    : `A similar shipment was already created on ${new Date(
+                        existingShipment.created_at
+                      ).toLocaleDateString()} at ${new Date(
+                        existingShipment.created_at
+                      ).toLocaleTimeString({
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })} with waybill ${
+                        existingShipment.waybill_number
+                      }. Do you want to delete the old one and create a new one?`}
                 </>
               )}
             </DialogDescription>
@@ -651,7 +602,7 @@ export default function NewShipmentPage() {
           {existingShipment && (
             <div className="py-4">
               <p className="text-sm text-muted-foreground">
-                {language === "fr" 
+                {language === "fr"
                   ? `Expéditeur: ${existingShipment.sender_name} - Destinataire: ${existingShipment.receiver_name}`
                   : `Sender: ${existingShipment.sender_name} - Receiver: ${existingShipment.receiver_name}`}
               </p>
