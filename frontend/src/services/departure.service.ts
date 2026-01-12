@@ -185,25 +185,79 @@ export const departureService = {
       const blob = new Blob([arrayBuffer], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       
-      // Open PDF in new window
-      const printWindow = window.open(url, '_blank');
+      // Fonction pour créer un wrapper HTML avec CSS @page pour forcer le format A4
+      const createPrintWindow = (pdfUrl: string): Window | null => {
+        const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+        if (!printWindow) return null;
+        
+        // Créer le HTML avec CSS @page pour forcer le format A4
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>Bordereau Général - Impression</title>
+              <style>
+                @page {
+                  size: A4;
+                  margin: 0;
+                }
+                * {
+                  margin: 0;
+                  padding: 0;
+                  box-sizing: border-box;
+                }
+                html, body {
+                  width: 100%;
+                  height: 100%;
+                  overflow: hidden;
+                }
+                iframe {
+                  width: 100%;
+                  height: 100%;
+                  border: none;
+                  display: block;
+                }
+              </style>
+            </head>
+            <body>
+              <iframe src="${pdfUrl}" type="application/pdf"></iframe>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        
+        return printWindow;
+      };
+      
+      // Fonction de nettoyage
+      const cleanup = () => {
+        window.URL.revokeObjectURL(url);
+      };
+      
+      // Essayer d'ouvrir dans une nouvelle fenêtre avec wrapper HTML
+      const printWindow = createPrintWindow(url);
       
       if (printWindow) {
-        // Wait for PDF to load, then trigger print dialog
+        // Attendre que le PDF soit chargé
         setTimeout(() => {
           try {
-            if (printWindow && !printWindow.closed) {
-              printWindow.focus();
-              printWindow.print();
-              window.URL.revokeObjectURL(url);
-            }
+            printWindow.focus();
+            printWindow.print();
+            
+            // Nettoyer après l'impression
+            setTimeout(() => {
+              printWindow.close();
+              cleanup();
+            }, 1000);
           } catch (error) {
             console.error("Error printing:", error);
-            window.URL.revokeObjectURL(url);
+            printWindow.close();
+            cleanup();
           }
-        }, 1000);
+        }, 2000);
       } else {
-        // Popup blocked - use iframe fallback
+        // Fallback: utiliser iframe si popup bloquée
         const iframe = document.createElement("iframe");
         iframe.style.position = "fixed";
         iframe.style.right = "0";
@@ -212,43 +266,51 @@ export const departureService = {
         iframe.style.height = "0";
         iframe.style.border = "none";
         iframe.style.opacity = "0";
+        iframe.style.pointerEvents = "none";
         iframe.src = url;
         document.body.appendChild(iframe);
+        
+        const cleanupIframe = () => {
+          setTimeout(() => {
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+            cleanup();
+          }, 3000);
+        };
         
         iframe.onload = () => {
           setTimeout(() => {
             try {
               iframe.contentWindow?.focus();
               iframe.contentWindow?.print();
+              cleanupIframe();
             } catch (error) {
               console.error("Error printing via iframe:", error);
+              cleanupIframe();
             }
-            setTimeout(() => {
-              if (document.body.contains(iframe)) {
-                document.body.removeChild(iframe);
-              }
-              window.URL.revokeObjectURL(url);
-            }, 2000);
-          }, 1000);
+          }, 1500);
         };
         
-        // Fallback timeout in case onload doesn't fire
         setTimeout(() => {
           if (document.body.contains(iframe)) {
             try {
               iframe.contentWindow?.print();
+              cleanupIframe();
             } catch (error) {
               console.error("Error printing via iframe timeout:", error);
+              cleanupIframe();
             }
-            setTimeout(() => {
-              if (document.body.contains(iframe)) {
-                document.body.removeChild(iframe);
-              }
-              window.URL.revokeObjectURL(url);
-            }, 2000);
           }
-        }, 2000);
+        }, 3000);
+        
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            cleanupIframe();
+          }
+        }, 10000);
       }
+      
     } catch (error) {
       console.error("Error downloading waybill:", error);
       throw error;
