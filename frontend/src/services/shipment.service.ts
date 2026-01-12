@@ -238,22 +238,32 @@ export const shipmentService = {
     };
 
     try {
+      // IMPORTANT: Utiliser arraybuffer au lieu de blob pour éviter la conversion en string
+      // Axios avec responseType: "blob" peut convertir en string, corrompant les données binaires
       const response = await httpService.get(`/shipments/${id}/receipt`, {
-        responseType: "blob",
+        responseType: "arraybuffer", // Changé de "blob" à "arraybuffer" pour éviter la corruption
       } as any);
       
       // Vérification du blob reçu côté frontend
       console.log("📄 [Frontend] Response data type:", typeof response.data);
-      console.log("📄 [Frontend] Response data size:", response.data?.size || response.data?.byteLength || "unknown");
+      console.log("📄 [Frontend] Response data is ArrayBuffer:", response.data instanceof ArrayBuffer);
+      console.log("📄 [Frontend] ArrayBuffer byteLength:", response.data?.byteLength || "unknown");
       console.log("📄 [Frontend] Content-Type:", response.headers["content-type"]);
       console.log("📄 [Frontend] Content-Length:", response.headers["content-length"]);
       
+      // Créer le blob depuis l'ArrayBuffer directement
       const blob = new Blob([response.data], { type: "application/pdf" });
       
       // Vérification que le blob n'est pas vide
       if (blob.size === 0) {
         console.error("❌ [Frontend] Blob PDF vide!");
         throw new Error("Le PDF reçu est vide");
+      }
+      
+      // Vérifier que la taille correspond au Content-Length
+      const expectedSize = parseInt(response.headers["content-length"] || "0", 10);
+      if (expectedSize > 0 && blob.size !== expectedSize) {
+        console.warn(`⚠️ [Frontend] Taille blob (${blob.size}) != Content-Length (${expectedSize})`);
       }
       
       console.log("📄 [Frontend] Blob créé, taille:", blob.size, "bytes");
