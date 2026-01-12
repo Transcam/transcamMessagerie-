@@ -162,8 +162,17 @@ export const shipmentService = {
 
   // Search contacts (senders/receivers)
   searchContacts: async (query: string, type: 'sender' | 'receiver'): Promise<Array<{ name: string; phone: string; count: number }>> => {
+    // Validation avant l'appel
+    if (!query || query.trim().length < 2) {
+      return [];
+    }
+    
+    if (type !== 'sender' && type !== 'receiver') {
+      return [];
+    }
+    
     const response = await httpService.get("/shipments/contacts/search", {
-      params: { q: query, type },
+      params: { q: query.trim(), type },
     });
     return response.data.data;
   },

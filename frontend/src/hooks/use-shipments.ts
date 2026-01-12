@@ -277,11 +277,15 @@ export function useShipmentStatistics(
 
 // Search contacts hook
 export function useSearchContacts(query: string, type: 'sender' | 'receiver', enabled: boolean = true) {
+  const isValidQuery = query && typeof query === 'string' && query.trim().length >= 2;
+  const isValidType = type === 'sender' || type === 'receiver';
+  
   return useQuery({
     queryKey: ['contacts', query, type],
-    queryFn: () => shipmentService.searchContacts(query, type),
-    enabled: enabled && query.length >= 2, // Rechercher seulement si au moins 2 caractères
+    queryFn: () => shipmentService.searchContacts(query.trim(), type),
+    enabled: enabled && isValidQuery && isValidType, // Vérifications supplémentaires
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false, // Ne pas réessayer en cas d'erreur 400
   });
 }
 
