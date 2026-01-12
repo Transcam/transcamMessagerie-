@@ -52,7 +52,7 @@ const isDevelopment =
 // General rate limiter - tracks by user ID for authenticated requests, IP for unauthenticated
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX || (isDevelopment ? "1000" : "100")),
+  max: parseInt(process.env.RATE_LIMIT_MAX || "1000"),
   message: {
     error: "Too many requests, please try again later.",
   },
