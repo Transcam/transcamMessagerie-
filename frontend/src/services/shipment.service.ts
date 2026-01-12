@@ -183,6 +183,60 @@ export const shipmentService = {
 
   // Generate receipt and print directly
   downloadReceipt: async (id: number, waybillNumber?: string): Promise<void> => {
+    // Fallback method using iframe (for popup blockers)
+    const fallbackPrintMethod = (url: string, receiptId: number, receiptWaybillNumber?: string) => {
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "none";
+      iframe.style.opacity = "0";
+      iframe.src = url;
+      document.body.appendChild(iframe);
+      
+      const cleanup = () => {
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+          window.URL.revokeObjectURL(url);
+        }, 2000);
+      };
+      
+      iframe.onload = () => {
+        setTimeout(() => {
+          try {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+            cleanup();
+          } catch (error) {
+            console.error("Error printing via iframe:", error);
+            // Last resort: open download link
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `recu-${receiptWaybillNumber || receiptId}.pdf`;
+            link.click();
+            cleanup();
+          }
+        }, 1000);
+      };
+      
+      // Fallback timeout in case onload doesn't fire
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          try {
+            iframe.contentWindow?.print();
+            cleanup();
+          } catch (error) {
+            console.error("Error printing via iframe timeout:", error);
+            cleanup();
+          }
+        }
+      }, 2000);
+    };
+
     try {
       const response = await httpService.get(`/shipments/${id}/receipt`, {
         responseType: "blob",
@@ -191,52 +245,45 @@ export const shipmentService = {
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       
-      // Open PDF in new window
-      const printWindow = window.open(url, '_blank');
+      // Improved print handling for production environments
+      // Method 1: Try opening in new window with print dialog
+      const printWindow = window.open(url, '_blank', 'noopener,noreferrer');
       
       if (printWindow) {
         // Wait for PDF to load, then trigger print dialog
-        // Note: PDFs in new windows may not fire 'load' events reliably,
-        // so we use a timeout approach
-        setTimeout(() => {
+        // Increased timeout for production environments where PDFs may take longer to load
+        const printTimeout = setTimeout(() => {
           try {
             if (printWindow && !printWindow.closed) {
+              printWindow.focus();
               printWindow.print();
               // Clean up URL after print dialog opens
-              window.URL.revokeObjectURL(url);
+              setTimeout(() => {
+                window.URL.revokeObjectURL(url);
+              }, 1000);
             }
           } catch (error) {
             console.error("Error printing:", error);
+            window.URL.revokeObjectURL(url);
+            // Fallback: close window and try iframe method
+            if (printWindow && !printWindow.closed) {
+              printWindow.close();
+            }
+            fallbackPrintMethod(url, id, waybillNumber);
+          }
+        }, 1000); // Increased timeout for production
+        
+        // Also listen for window close to clean up
+        const checkClosed = setInterval(() => {
+          if (printWindow.closed) {
+            clearInterval(checkClosed);
+            clearTimeout(printTimeout);
             window.URL.revokeObjectURL(url);
           }
         }, 500);
       } else {
         // Popup blocked - use iframe fallback
-        const iframe = document.createElement("iframe");
-        iframe.style.position = "fixed";
-        iframe.style.right = "0";
-        iframe.style.bottom = "0";
-        iframe.style.width = "0";
-        iframe.style.height = "0";
-        iframe.style.border = "none";
-        iframe.src = url;
-        document.body.appendChild(iframe);
-        
-        iframe.onload = () => {
-          setTimeout(() => {
-            try {
-              iframe.contentWindow?.print();
-            } catch (error) {
-              console.error("Error printing via iframe:", error);
-            }
-            setTimeout(() => {
-              if (document.body.contains(iframe)) {
-                document.body.removeChild(iframe);
-              }
-              window.URL.revokeObjectURL(url);
-            }, 1000);
-          }, 500);
-        };
+        fallbackPrintMethod(url, id, waybillNumber);
       }
     } catch (error) {
       console.error("Error downloading receipt:", error);
