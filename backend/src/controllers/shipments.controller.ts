@@ -290,9 +290,16 @@ export class ShipmentsController {
       const id = parseInt(req.params.id);
       const pdfBuffer = await this.service.generateReceiptPDF(id);
 
+      // Log important pour analyser les PDFs blancs en production
+      console.log(
+        "📄 [PDF] Receipt buffer length:",
+        pdfBuffer?.length,
+        "bytes for shipment",
+        id
+      );
+
       res.setHeader("Content-Type", "application/pdf");
       // Use 'inline' instead of 'attachment' to allow browser to open PDF for printing
-      // This is crucial for print functionality in production
       res.setHeader(
         "Content-Disposition",
         `inline; filename="recu-${id}.pdf"`
