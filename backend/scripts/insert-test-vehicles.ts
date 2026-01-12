@@ -1,10 +1,6 @@
 import "reflect-metadata";
 import { AppDataSource, initializeDatabase } from "../db";
-import {
-  Vehicle,
-  VehicleType,
-  VehicleStatus,
-} from "../src/entities/vehicle.entity";
+import { Vehicle, VehicleType, VehicleStatus } from "../src/entities/vehicle.entity";
 import { User } from "../src/entities/user.entity";
 
 async function insertTestVehicles() {
@@ -101,12 +97,8 @@ async function insertTestVehicles() {
     // Check if vehicles already exist
     const existingVehicles = await vehicleRepo.find();
     if (existingVehicles.length > 0) {
-      console.log(
-        `⚠️  ${existingVehicles.length} véhicule(s) existent déjà dans la base de données`
-      );
-      console.log(
-        "Voulez-vous continuer ? Les véhicules avec les mêmes immatriculations seront ignorés."
-      );
+      console.log(`⚠️  ${existingVehicles.length} véhicule(s) existent déjà dans la base de données`);
+      console.log("Voulez-vous continuer ? Les véhicules avec les mêmes immatriculations seront ignorés.");
     }
 
     let created = 0;
@@ -120,9 +112,7 @@ async function insertTestVehicles() {
         });
 
         if (existing) {
-          console.log(
-            `⏭️  Véhicule ${vehicleData.registration_number} existe déjà, ignoré`
-          );
+          console.log(`⏭️  Véhicule ${vehicleData.registration_number} existe déjà, ignoré`);
           skipped++;
           continue;
         }
@@ -137,15 +127,10 @@ async function insertTestVehicles() {
         });
 
         await vehicleRepo.save(vehicle);
-        console.log(
-          `✅ Véhicule créé: ${vehicle.name} (${vehicle.registration_number})`
-        );
+        console.log(`✅ Véhicule créé: ${vehicle.name} (${vehicle.registration_number})`);
         created++;
       } catch (error: any) {
-        console.error(
-          `❌ Erreur lors de la création du véhicule ${vehicleData.registration_number}:`,
-          error.message
-        );
+        console.error(`❌ Erreur lors de la création du véhicule ${vehicleData.registration_number}:`, error.message);
       }
     }
 
@@ -163,3 +148,5 @@ async function insertTestVehicles() {
 
 // Run the script
 insertTestVehicles();
+
+

@@ -1,25 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Plus,
-  Search,
-  Filter,
-  Eye,
-  Lock,
-  LockOpen,
-  Download,
-  Printer,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-} from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Plus, Search, Filter, Eye, Lock, LockOpen, Download, Printer, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -57,12 +39,7 @@ import {
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  useDepartures,
-  useSealDeparture,
-  useCloseDeparture,
-  useDeleteDeparture,
-} from "@/hooks/use-departures";
+import { useDepartures, useSealDeparture, useCloseDeparture, useDeleteDeparture } from "@/hooks/use-departures";
 import { departureService } from "@/services/departure.service";
 import { DepartureStatusBadge } from "@/components/departures/DepartureStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -86,15 +63,9 @@ export default function DepartureListPage() {
   const [sealDialogOpen, setSealDialogOpen] = useState(false);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [departureToSeal, setDepartureToSeal] = useState<Departure | null>(
-    null
-  );
-  const [departureToClose, setDepartureToClose] = useState<Departure | null>(
-    null
-  );
-  const [departureToDelete, setDepartureToDelete] = useState<Departure | null>(
-    null
-  );
+  const [departureToSeal, setDepartureToSeal] = useState<Departure | null>(null);
+  const [departureToClose, setDepartureToClose] = useState<Departure | null>(null);
+  const [departureToDelete, setDepartureToDelete] = useState<Departure | null>(null);
 
   const { data, isLoading, error } = useDepartures({
     ...filters,
@@ -106,9 +77,7 @@ export default function DepartureListPage() {
   const deleteDeparture = useDeleteDeparture();
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(
-      amount
-    );
+    return new Intl.NumberFormat(language === "fr" ? "fr-FR" : "en-US").format(amount);
   };
 
   const formatDate = (dateString: string) => {
@@ -138,7 +107,7 @@ export default function DepartureListPage() {
 
   const confirmSeal = async () => {
     if (!departureToSeal) return;
-
+    
     try {
       await sealDeparture.mutateAsync(departureToSeal.id);
       setSealDialogOpen(false);
@@ -155,7 +124,7 @@ export default function DepartureListPage() {
 
   const confirmClose = async () => {
     if (!departureToClose) return;
-
+    
     try {
       await closeDeparture.mutateAsync(departureToClose.id);
       setCloseDialogOpen(false);
@@ -172,7 +141,7 @@ export default function DepartureListPage() {
 
   const confirmDelete = async () => {
     if (!departureToDelete) return;
-
+    
     try {
       await deleteDeparture.mutateAsync(departureToDelete.id);
       setDeleteDialogOpen(false);
@@ -198,12 +167,9 @@ export default function DepartureListPage() {
     }
   };
 
-  const canSeal = (departure: Departure) =>
-    hasPermission("validate_departure") && departure.status === "open";
-  const canClose = (departure: Departure) =>
-    hasPermission("validate_departure") && departure.status === "sealed";
-  const canEdit = (departure: Departure) =>
-    hasPermission("create_departure") && departure.status === "open";
+  const canSeal = (departure: Departure) => hasPermission("validate_departure") && departure.status === "open";
+  const canClose = (departure: Departure) => hasPermission("validate_departure") && departure.status === "sealed";
+  const canEdit = (departure: Departure) => hasPermission("create_departure") && departure.status === "open";
   const canDelete = (departure: Departure) => {
     if (!hasPermission("delete_departure")) return false;
     // ADMIN and SUPERVISOR can delete even closed departures
@@ -213,9 +179,7 @@ export default function DepartureListPage() {
     // Others can only delete OPEN departures
     return departure.status === "open";
   };
-  const canDownloadPDF = (departure: Departure) =>
-    hasPermission("print_waybill") &&
-    (departure.status === "sealed" || departure.status === "closed");
+  const canDownloadPDF = (departure: Departure) => hasPermission("print_waybill") && (departure.status === "sealed" || departure.status === "closed");
 
   // Calculate totals for a departure
   const getDepartureTotals = (departure: Departure) => {
@@ -228,8 +192,7 @@ export default function DepartureListPage() {
       return { count, total: null };
     }
     const total = departure.shipments.reduce((sum: number, s: any) => {
-      const price =
-        s.price !== null && s.price !== undefined ? Number(s.price) : 0;
+      const price = s.price !== null && s.price !== undefined ? Number(s.price) : 0;
       return sum + price;
     }, 0);
     return { count, total };
@@ -288,28 +251,16 @@ export default function DepartureListPage() {
                 </label>
                 <Select
                   value={filters.status || "all"}
-                  onValueChange={(value) =>
-                    handleFilterChange("status", value === "all" ? "" : value)
-                  }
+                  onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
                 >
                   <SelectTrigger>
-                    <SelectValue
-                      placeholder={language === "fr" ? "Tous" : "All"}
-                    />
+                    <SelectValue placeholder={language === "fr" ? "Tous" : "All"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">
-                      {language === "fr" ? "Tous" : "All"}
-                    </SelectItem>
-                    <SelectItem value="open">
-                      {language === "fr" ? "Ouvert" : "Open"}
-                    </SelectItem>
-                    <SelectItem value="sealed">
-                      {language === "fr" ? "Scellé" : "Sealed"}
-                    </SelectItem>
-                    <SelectItem value="closed">
-                      {language === "fr" ? "Fermé" : "Closed"}
-                    </SelectItem>
+                    <SelectItem value="all">{language === "fr" ? "Tous" : "All"}</SelectItem>
+                    <SelectItem value="open">{language === "fr" ? "Ouvert" : "Open"}</SelectItem>
+                    <SelectItem value="sealed">{language === "fr" ? "Scellé" : "Sealed"}</SelectItem>
+                    <SelectItem value="closed">{language === "fr" ? "Fermé" : "Closed"}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -318,27 +269,19 @@ export default function DepartureListPage() {
                   {language === "fr" ? "Route" : "Route"}
                 </label>
                 <Input
-                  placeholder={
-                    language === "fr"
-                      ? "Filtrer par route..."
-                      : "Filter by route..."
-                  }
+                  placeholder={language === "fr" ? "Filtrer par route..." : "Filter by route..."}
                   value={filters.route}
                   onChange={(e) => handleFilterChange("route", e.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">
-                  {language === "fr"
-                    ? "N° Bordereau Général"
-                    : "General Waybill Number"}
+                  {language === "fr" ? "N° Bordereau Général" : "General Waybill Number"}
                 </label>
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder={
-                      language === "fr" ? "Rechercher..." : "Search..."
-                    }
+                    placeholder={language === "fr" ? "Rechercher..." : "Search..."}
                     value={filters.generalWaybillNumber}
                     onChange={(e) =>
                       handleFilterChange("generalWaybillNumber", e.target.value)
@@ -372,9 +315,7 @@ export default function DepartureListPage() {
         {/* Departures Table */}
         <Card>
           <CardHeader>
-            <CardTitle>
-              {language === "fr" ? "Liste des départs" : "Departures List"}
-            </CardTitle>
+            <CardTitle>{language === "fr" ? "Liste des départs" : "Departures List"}</CardTitle>
             <CardDescription>
               {data?.pagination.total || 0}{" "}
               {language === "fr" ? "départs trouvés" : "departures found"}
@@ -409,30 +350,14 @@ export default function DepartureListPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>ID</TableHead>
-                      <TableHead>
-                        {language === "fr" ? "N° Bordereau" : "Waybill #"}
-                      </TableHead>
-                      <TableHead>
-                        {language === "fr" ? "Route" : "Route"}
-                      </TableHead>
-                      <TableHead>
-                        {language === "fr" ? "Véhicule" : "Vehicle"}
-                      </TableHead>
-                      <TableHead>
-                        {language === "fr" ? "Chauffeur" : "Driver"}
-                      </TableHead>
-                      <TableHead>
-                        {language === "fr" ? "Colis" : "Shipments"}
-                      </TableHead>
-                      <TableHead className="text-right">
-                        {language === "fr" ? "Montant" : "Amount"}
-                      </TableHead>
-                      <TableHead>
-                        {language === "fr" ? "Statut" : "Status"}
-                      </TableHead>
-                      <TableHead>
-                        {language === "fr" ? "Date" : "Date"}
-                      </TableHead>
+                      <TableHead>{language === "fr" ? "N° Bordereau" : "Waybill #"}</TableHead>
+                      <TableHead>{language === "fr" ? "Route" : "Route"}</TableHead>
+                      <TableHead>{language === "fr" ? "Véhicule" : "Vehicle"}</TableHead>
+                      <TableHead>{language === "fr" ? "Chauffeur" : "Driver"}</TableHead>
+                      <TableHead>{language === "fr" ? "Colis" : "Shipments"}</TableHead>
+                      <TableHead className="text-right">{language === "fr" ? "Montant" : "Amount"}</TableHead>
+                      <TableHead>{language === "fr" ? "Statut" : "Status"}</TableHead>
+                      <TableHead>{language === "fr" ? "Date" : "Date"}</TableHead>
                       <TableHead className="w-12 text-right">
                         {language === "fr" ? "Actions" : "Actions"}
                       </TableHead>
@@ -445,9 +370,7 @@ export default function DepartureListPage() {
                         <TableRow
                           key={departure.id}
                           className="cursor-pointer hover:bg-muted/50"
-                          onClick={() =>
-                            navigate(`/departures/${departure.id}`)
-                          }
+                          onClick={() => navigate(`/departures/${departure.id}`)}
                         >
                           <TableCell className="font-medium">
                             #{departure.id}
@@ -468,9 +391,7 @@ export default function DepartureListPage() {
                           </TableCell>
                           <TableCell>{totals.count}</TableCell>
                           <TableCell className="text-right font-medium">
-                            {totals.total !== null &&
-                            totals.total !== undefined &&
-                            totals.total > 0
+                            {totals.total !== null && totals.total !== undefined && totals.total > 0
                               ? `${formatCurrency(totals.total)} FCFA`
                               : "-"}
                           </TableCell>
@@ -480,43 +401,30 @@ export default function DepartureListPage() {
                           <TableCell className="text-muted-foreground">
                             {formatDate(departure.created_at)}
                           </TableCell>
-                          <TableCell
-                            className="text-right"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                >
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem
-                                  onClick={() =>
-                                    navigate(`/departures/${departure.id}`)
-                                  }
+                                  onClick={() => navigate(`/departures/${departure.id}`)}
                                 >
                                   <Eye className="mr-2 h-4 w-4" />
                                   {language === "fr" ? "Voir" : "View"}
                                 </DropdownMenuItem>
-
+                                
                                 {canEdit(departure) && (
                                   <DropdownMenuItem
-                                    onClick={() =>
-                                      navigate(
-                                        `/departures/${departure.id}/edit`
-                                      )
-                                    }
+                                    onClick={() => navigate(`/departures/${departure.id}/edit`)}
                                   >
                                     <Edit className="mr-2 h-4 w-4" />
                                     {language === "fr" ? "Modifier" : "Edit"}
                                   </DropdownMenuItem>
                                 )}
-
+                                
                                 {canSeal(departure) && (
                                   <DropdownMenuItem
                                     onClick={() => handleSeal(departure)}
@@ -525,7 +433,7 @@ export default function DepartureListPage() {
                                     {language === "fr" ? "Sceller" : "Seal"}
                                   </DropdownMenuItem>
                                 )}
-
+                                
                                 {canClose(departure) && (
                                   <DropdownMenuItem
                                     onClick={() => handleClose(departure)}
@@ -534,7 +442,7 @@ export default function DepartureListPage() {
                                     {language === "fr" ? "Fermer" : "Close"}
                                   </DropdownMenuItem>
                                 )}
-
+                                
                                 {canDelete(departure) && (
                                   <>
                                     <DropdownMenuSeparator />
@@ -543,35 +451,25 @@ export default function DepartureListPage() {
                                       className="text-destructive focus:text-destructive"
                                     >
                                       <Trash2 className="mr-2 h-4 w-4" />
-                                      {language === "fr"
-                                        ? "Supprimer"
-                                        : "Delete"}
+                                      {language === "fr" ? "Supprimer" : "Delete"}
                                     </DropdownMenuItem>
                                   </>
                                 )}
-
+                                
                                 {canDownloadPDF(departure) && (
                                   <>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
-                                      onClick={() =>
-                                        handleDownloadPDF(departure.id)
-                                      }
+                                      onClick={() => handleDownloadPDF(departure.id)}
                                     >
                                       <Download className="mr-2 h-4 w-4" />
-                                      {language === "fr"
-                                        ? "Télécharger PDF"
-                                        : "Download PDF"}
+                                      {language === "fr" ? "Télécharger PDF" : "Download PDF"}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                      onClick={() =>
-                                        handlePrintPDF(departure.id)
-                                      }
+                                      onClick={() => handlePrintPDF(departure.id)}
                                     >
                                       <Printer className="mr-2 h-4 w-4" />
-                                      {language === "fr"
-                                        ? "Imprimer Bordereau"
-                                        : "Print Waybill"}
+                                      {language === "fr" ? "Imprimer Bordereau" : "Print Waybill"}
                                     </DropdownMenuItem>
                                   </>
                                 )}
@@ -644,12 +542,8 @@ export default function DepartureListPage() {
               disabled={sealDeparture.isPending}
             >
               {sealDeparture.isPending
-                ? language === "fr"
-                  ? "Scellage..."
-                  : "Sealing..."
-                : language === "fr"
-                ? "Sceller"
-                : "Seal"}
+                ? (language === "fr" ? "Scellage..." : "Sealing...")
+                : (language === "fr" ? "Sceller" : "Seal")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -677,12 +571,8 @@ export default function DepartureListPage() {
               disabled={closeDeparture.isPending}
             >
               {closeDeparture.isPending
-                ? language === "fr"
-                  ? "Fermeture..."
-                  : "Closing..."
-                : language === "fr"
-                ? "Fermer"
-                : "Close"}
+                ? (language === "fr" ? "Fermeture..." : "Closing...")
+                : (language === "fr" ? "Fermer" : "Close")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -693,9 +583,7 @@ export default function DepartureListPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {language === "fr"
-                ? "Confirmer la suppression"
-                : "Confirm Deletion"}
+              {language === "fr" ? "Confirmer la suppression" : "Confirm Deletion"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {language === "fr"
@@ -713,12 +601,8 @@ export default function DepartureListPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteDeparture.isPending
-                ? language === "fr"
-                  ? "Suppression..."
-                  : "Deleting..."
-                : language === "fr"
-                ? "Supprimer"
-                : "Delete"}
+                ? (language === "fr" ? "Suppression..." : "Deleting...")
+                : (language === "fr" ? "Supprimer" : "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -726,3 +610,4 @@ export default function DepartureListPage() {
     </DashboardLayout>
   );
 }
+
