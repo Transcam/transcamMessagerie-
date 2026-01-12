@@ -240,10 +240,11 @@ export const shipmentService = {
     try {
       // IMPORTANT: Utiliser fetch au lieu d'Axios pour les PDFs
       // fetch gère mieux les données binaires cross-origin et ne convertit pas en string
-      const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+      // Utiliser la même logique que getBaseURL() pour construire l'URL correctement
+      const apiBaseURL = `${import.meta.env.VITE_API_URL || "http://localhost:3000"}/api`;
       const token = localStorage.getItem("auth_token");
       
-      const response = await fetch(`${baseURL}/shipments/${id}/receipt`, {
+      const response = await fetch(`${apiBaseURL}/shipments/${id}/receipt`, {
         method: "GET",
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
