@@ -134,10 +134,25 @@ export const departureService = {
 
   // Download General Waybill PDF
   downloadPDF: async (id: number): Promise<void> => {
-    const response = await httpService.get(`/departures/${id}/general-waybill`, {
-      responseType: "blob",
+    // IMPORTANT: Utiliser fetch au lieu d'Axios pour les PDFs
+    // fetch gère mieux les données binaires cross-origin et ne convertit pas en string
+    const apiBaseURL = `${import.meta.env.VITE_API_URL || "http://localhost:3000"}/api`;
+    const token = localStorage.getItem("auth_token");
+    
+    const response = await fetch(`${apiBaseURL}/departures/${id}/general-waybill`, {
+      method: "GET",
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+      },
     });
-    const url = window.URL.createObjectURL(new Blob([response.data]));
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
     link.setAttribute("download", `general-waybill-${id}.pdf`);
@@ -150,11 +165,24 @@ export const departureService = {
   // Print General Waybill PDF directly (ouvre le dialogue d'impression)
   printPDF: async (id: number): Promise<void> => {
     try {
-      const response = await httpService.get(`/departures/${id}/general-waybill`, {
-        responseType: "blob",
+      // IMPORTANT: Utiliser fetch au lieu d'Axios pour les PDFs
+      // fetch gère mieux les données binaires cross-origin et ne convertit pas en string
+      const apiBaseURL = `${import.meta.env.VITE_API_URL || "http://localhost:3000"}/api`;
+      const token = localStorage.getItem("auth_token");
+      
+      const response = await fetch(`${apiBaseURL}/departures/${id}/general-waybill`, {
+        method: "GET",
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
       });
       
-      const blob = new Blob([response.data], { type: "application/pdf" });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const arrayBuffer = await response.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       
       // Open PDF in new window
@@ -165,6 +193,7 @@ export const departureService = {
         setTimeout(() => {
           try {
             if (printWindow && !printWindow.closed) {
+              printWindow.focus();
               printWindow.print();
               window.URL.revokeObjectURL(url);
             }
@@ -172,7 +201,7 @@ export const departureService = {
             console.error("Error printing:", error);
             window.URL.revokeObjectURL(url);
           }
-        }, 500);
+        }, 1000);
       } else {
         // Popup blocked - use iframe fallback
         const iframe = document.createElement("iframe");
@@ -182,12 +211,14 @@ export const departureService = {
         iframe.style.width = "0";
         iframe.style.height = "0";
         iframe.style.border = "none";
+        iframe.style.opacity = "0";
         iframe.src = url;
         document.body.appendChild(iframe);
         
         iframe.onload = () => {
           setTimeout(() => {
             try {
+              iframe.contentWindow?.focus();
               iframe.contentWindow?.print();
             } catch (error) {
               console.error("Error printing via iframe:", error);
@@ -197,9 +228,26 @@ export const departureService = {
                 document.body.removeChild(iframe);
               }
               window.URL.revokeObjectURL(url);
-            }, 1000);
-          }, 500);
+            }, 2000);
+          }, 1000);
         };
+        
+        // Fallback timeout in case onload doesn't fire
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            try {
+              iframe.contentWindow?.print();
+            } catch (error) {
+              console.error("Error printing via iframe timeout:", error);
+            }
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+              window.URL.revokeObjectURL(url);
+            }, 2000);
+          }
+        }, 2000);
       }
     } catch (error) {
       console.error("Error downloading waybill:", error);
