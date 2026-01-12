@@ -199,6 +199,8 @@ export const shipmentService = {
   // Generate receipt and print directly
   downloadReceipt: async (id: number, waybillNumber?: string): Promise<void> => {
     // Fallback method using iframe (for popup blockers)
+    // Note: Les PDFs dans les iframes héritent du format du PDF lui-même
+    // mais le navigateur peut utiliser ses paramètres par défaut
     const fallbackPrintMethod = (url: string, receiptId: number, receiptWaybillNumber?: string) => {
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
@@ -208,6 +210,7 @@ export const shipmentService = {
       iframe.style.height = "0";
       iframe.style.border = "none";
       iframe.style.opacity = "0";
+      iframe.style.pointerEvents = "none";
       iframe.src = url;
       document.body.appendChild(iframe);
       
@@ -217,10 +220,11 @@ export const shipmentService = {
             document.body.removeChild(iframe);
           }
           window.URL.revokeObjectURL(url);
-        }, 2000);
+        }, 3000);
       };
       
       iframe.onload = () => {
+        // Délai augmenté pour s'assurer que le PDF est complètement chargé
         setTimeout(() => {
           try {
             iframe.contentWindow?.focus();
@@ -235,7 +239,7 @@ export const shipmentService = {
             link.click();
             cleanup();
           }
-        }, 1000);
+        }, 1500);
       };
       
       // Fallback timeout in case onload doesn't fire
@@ -249,7 +253,14 @@ export const shipmentService = {
             cleanup();
           }
         }
-      }, 2000);
+      }, 3000);
+      
+      // Timeout final pour nettoyer
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          cleanup();
+        }
+      }, 10000);
     };
 
     try {
@@ -299,44 +310,80 @@ export const shipmentService = {
       
       const url = window.URL.createObjectURL(blob);
       
-      // Improved print handling for production environments
-      // Method 1: Try opening in new window with print dialog
-      const printWindow = window.open(url, '_blank', 'noopener,noreferrer');
+      // Fonction pour créer un wrapper HTML avec CSS @page pour forcer le format 80mm (ticket)
+      const createPrintWindow = (pdfUrl: string): Window | null => {
+        const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+        if (!printWindow) return null;
+        
+        // Créer le HTML avec CSS @page pour forcer le format ticket 80mm
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>Reçu - Impression</title>
+              <style>
+                @page {
+                  size: 80mm auto;
+                  margin: 0;
+                }
+                * {
+                  margin: 0;
+                  padding: 0;
+                  box-sizing: border-box;
+                }
+                html, body {
+                  width: 100%;
+                  height: 100%;
+                  overflow: hidden;
+                }
+                iframe {
+                  width: 100%;
+                  height: 100%;
+                  border: none;
+                  display: block;
+                }
+              </style>
+            </head>
+            <body>
+              <iframe src="${pdfUrl}" type="application/pdf"></iframe>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        
+        return printWindow;
+      };
+      
+      // Fonction de nettoyage
+      const cleanup = () => {
+        window.URL.revokeObjectURL(url);
+      };
+      
+      // Essayer d'ouvrir dans une nouvelle fenêtre avec wrapper HTML
+      const printWindow = createPrintWindow(url);
       
       if (printWindow) {
-        // Wait for PDF to load, then trigger print dialog
-        // Increased timeout for production environments where PDFs may take longer to load
-        const printTimeout = setTimeout(() => {
+        // Attendre que le PDF soit chargé
+        setTimeout(() => {
           try {
-            if (printWindow && !printWindow.closed) {
-              printWindow.focus();
-              printWindow.print();
-              // Clean up URL after print dialog opens
-              setTimeout(() => {
-                window.URL.revokeObjectURL(url);
-              }, 1000);
-            }
+            printWindow.focus();
+            printWindow.print();
+            
+            // Nettoyer après l'impression
+            setTimeout(() => {
+              printWindow.close();
+              cleanup();
+            }, 1000);
           } catch (error) {
             console.error("Error printing:", error);
-            window.URL.revokeObjectURL(url);
-            // Fallback: close window and try iframe method
-            if (printWindow && !printWindow.closed) {
-              printWindow.close();
-            }
+            printWindow.close();
+            // Fallback: utiliser la méthode fallback existante
             fallbackPrintMethod(url, id, waybillNumber);
           }
-        }, 1000); // Increased timeout for production
-        
-        // Also listen for window close to clean up
-        const checkClosed = setInterval(() => {
-          if (printWindow.closed) {
-            clearInterval(checkClosed);
-            clearTimeout(printTimeout);
-            window.URL.revokeObjectURL(url);
-          }
-        }, 500);
+        }, 2000);
       } else {
-        // Popup blocked - use iframe fallback
+        // Popup bloquée: utiliser la méthode fallback existante
         fallbackPrintMethod(url, id, waybillNumber);
       }
     } catch (error) {
