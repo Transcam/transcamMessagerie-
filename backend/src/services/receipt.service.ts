@@ -75,53 +75,63 @@ export class ReceiptService {
    * Generate Receipt PDF for a shipment (Ticket 80mm format)
    */
   async generatePDF(shipment: Shipment): Promise<Buffer> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // Récupérer les settings pour le logo
-        let settings = await this.settingsRepo.findOne({
-          where: { id: "company" },
-        });
-        const logoUrl =
-          settings?.company_logo_url || "/assets/images/LogoTranscam.jpg";
+    try {
+      // Récupérer les settings pour le logo (moved outside Promise constructor)
+      let settings = await this.settingsRepo.findOne({
+        where: { id: "company" },
+      });
+      const logoUrl =
+        settings?.company_logo_url || "/assets/images/LogoTranscam.jpg";
 
-        // Retirer le "/" initial du logoUrl pour éviter les problèmes avec path.join
-        const logoUrlClean = logoUrl.startsWith("/") ? logoUrl.substring(1) : logoUrl;
+      // Retirer le "/" initial du logoUrl pour éviter les problèmes avec path.join
+      const logoUrlClean = logoUrl.startsWith("/") ? logoUrl.substring(1) : logoUrl;
 
-        // Chemin physique du logo
-        const logoPath = path.join(
-          process.cwd(),
-          "..",
-          "frontend",
-          "public",
-          logoUrlClean
-        );
-        const logoExists = fs.existsSync(logoPath);
+      // Chemin physique du logo
+      const logoPath = path.join(
+        process.cwd(),
+        "..",
+        "frontend",
+        "public",
+        logoUrlClean
+      );
+      const logoExists = fs.existsSync(logoPath);
 
-        if (!logoExists) {
-          console.warn(`⚠️ [PDF] Logo non trouvé à: ${logoPath}`);
-        }
+      if (!logoExists) {
+        console.warn(`⚠️ [PDF] Logo non trouvé à: ${logoPath}`);
+      }
 
-        // Ticket 80mm format: 80mm width = 226.77 points
-        const ticketWidth = 226.77; // 80mm in points
-        const margin = 10; // Smaller margin for ticket
-        const pageWidth = ticketWidth - margin * 2; // 206.77 points usable width
+      // Ticket 80mm format: 80mm width = 226.77 points
+      const ticketWidth = 226.77; // 80mm in points
+      const margin = 10; // Smaller margin for ticket
+      const pageWidth = ticketWidth - margin * 2; // 206.77 points usable width
 
-        // Calculate dynamic height (ajusté pour logo si présent)
-        const calculatedHeight = this.calculateTotalHeight(
-          shipment,
-          logoExists
-        );
+      // Calculate dynamic height (ajusté pour logo si présent)
+      const calculatedHeight = this.calculateTotalHeight(
+        shipment,
+        logoExists
+      );
 
+      return new Promise<Buffer>((resolve, reject) => {
         const doc = new PDFDocument({
           margin: margin,
           size: [ticketWidth, calculatedHeight], // Width: 80mm, Height: calculated
         });
         const chunks: Buffer[] = [];
 
-        // Collect PDF data
+        // Collect PDF data with buffer validation
         doc.on("data", (chunk) => chunks.push(chunk));
-        doc.on("end", () => resolve(Buffer.concat(chunks)));
-        doc.on("error", reject);
+        doc.on("end", () => {
+          const buffer = Buffer.concat(chunks);
+          if (buffer.length === 0) {
+            reject(new Error("Generated PDF is empty - no content was written"));
+            return;
+          }
+          resolve(buffer);
+        });
+        doc.on("error", (error) => {
+          console.error("⚠️ [PDF] Erreur lors de la génération du PDF:", error);
+          reject(error);
+        });
 
         let yPos = 10;
 
@@ -191,7 +201,7 @@ export class ReceiptService {
         yPos += 15;
 
         doc.fontSize(11).font("Helvetica-Bold").fillColor("#000000");
-        doc.text(shipment.waybill_number, margin, yPos, {
+        doc.text(shipment.waybill_number || "N/A", margin, yPos, {
           align: "center",
           width: pageWidth,
         });
@@ -213,11 +223,11 @@ export class ReceiptService {
         yPos += 12;
 
         doc.fontSize(7).font("Helvetica").fillColor("#000000");
-        doc.text(`Nom: ${shipment.sender_name}`, margin, yPos);
+        doc.text(`Nom: ${shipment.sender_name || "N/A"}`, margin, yPos);
         yPos += 11;
 
         doc.fontSize(7).font("Helvetica").fillColor("#000000");
-        doc.text(`Tel: ${shipment.sender_phone}`, margin, yPos);
+        doc.text(`Tel: ${shipment.sender_phone || "N/A"}`, margin, yPos);
         yPos += 12;
 
         // Horizontal line
@@ -236,11 +246,11 @@ export class ReceiptService {
         yPos += 12;
 
         doc.fontSize(7).font("Helvetica").fillColor("#000000");
-        doc.text(`Nom: ${shipment.receiver_name}`, margin, yPos);
+        doc.text(`Nom: ${shipment.receiver_name || "N/A"}`, margin, yPos);
         yPos += 11;
 
         doc.fontSize(7).font("Helvetica").fillColor("#000000");
-        doc.text(`Tel: ${shipment.receiver_phone}`, margin, yPos);
+        doc.text(`Tel: ${shipment.receiver_phone || "N/A"}`, margin, yPos);
         yPos += 12;
 
         // Horizontal line
@@ -255,7 +265,7 @@ export class ReceiptService {
         // ============================================
 
         doc.fontSize(7).font("Helvetica").fillColor("#000000");
-        doc.text(`DESTINATION: Kribi`, margin, yPos);
+        doc.text(`DESTINATION: ${shipment.route || "N/A"}`, margin, yPos);
         yPos += 11;
 
         const natureLabel = shipment.nature === "colis" ? "Colis" : "Courrier";
@@ -273,7 +283,7 @@ export class ReceiptService {
         doc.fontSize(7).font("Helvetica").fillColor("#000000");
         doc.text(
           `VALEUR DECLAREE: ${parseFloat(
-            shipment.declared_value.toString()
+            (shipment.declared_value || 0).toString()
           ).toFixed(2)} FCFA`,
           margin,
           yPos
@@ -282,7 +292,7 @@ export class ReceiptService {
 
         doc.fontSize(7).font("Helvetica-Bold").fillColor("#000000");
         doc.text(
-          `MONTANT: ${parseFloat(shipment.price.toString()).toFixed(2)} FCFA`,
+          `MONTANT: ${parseFloat((shipment.price || 0).toString()).toFixed(2)} FCFA`,
           margin,
           yPos
         );
@@ -376,9 +386,10 @@ export class ReceiptService {
 
         // Finalize PDF
         doc.end();
-      } catch (error) {
-        reject(error);
-      }
-    });
+      });
+    } catch (error) {
+      console.error("⚠️ [PDF] Erreur lors de la génération du reçu:", error);
+      throw error;
+    }
   }
 }

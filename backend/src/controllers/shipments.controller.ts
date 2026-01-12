@@ -291,9 +291,11 @@ export class ShipmentsController {
       const pdfBuffer = await this.service.generateReceiptPDF(id);
 
       res.setHeader("Content-Type", "application/pdf");
+      // Use 'inline' instead of 'attachment' to allow browser to open PDF for printing
+      // This is crucial for print functionality in production
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="recu-${id}.pdf"`
+        `inline; filename="recu-${id}.pdf"`
       );
       res.send(pdfBuffer);
     } catch (error: any) {
