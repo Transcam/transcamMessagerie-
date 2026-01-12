@@ -6,21 +6,9 @@ export interface Departure {
   pdf_path: string | null;
   status: "open" | "sealed" | "closed";
   route: string | null;
-  vehicle: {
-    id: number;
-    registration_number: string;
-    name: string;
-    type: string;
-    status: string;
-  } | null;
+  vehicle: { id: number; registration_number: string; name: string; type: string; status: string } | null;
   vehicle_id: number | null;
-  driver: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    phone: string;
-    license_number: string;
-  } | null;
+  driver: { id: number; first_name: string; last_name: string; phone: string; license_number: string } | null;
   driver_id: number | null;
   notes: string | null;
   sealed_at: string | null;
@@ -83,8 +71,7 @@ export const departureService = {
     if (filters?.route) params.append("route", filters.route);
     if (filters?.dateFrom) params.append("dateFrom", filters.dateFrom);
     if (filters?.dateTo) params.append("dateTo", filters.dateTo);
-    if (filters?.generalWaybillNumber)
-      params.append("generalWaybillNumber", filters.generalWaybillNumber);
+    if (filters?.generalWaybillNumber) params.append("generalWaybillNumber", filters.generalWaybillNumber);
     if (filters?.page) params.append("page", filters.page.toString());
     if (filters?.limit) params.append("limit", filters.limit.toString());
 
@@ -111,35 +98,19 @@ export const departureService = {
   },
 
   // Assign shipments to departure
-  assignShipments: async (
-    id: number,
-    shipmentIds: number[]
-  ): Promise<{ departure: Departure; assigned_count: number }> => {
-    const response = await httpService.post(`/departures/${id}/shipments`, {
-      shipment_ids: shipmentIds,
-    });
+  assignShipments: async (id: number, shipmentIds: number[]): Promise<{ departure: Departure; assigned_count: number }> => {
+    const response = await httpService.post(`/departures/${id}/shipments`, { shipment_ids: shipmentIds });
     return response.data.data;
   },
 
   // Remove shipment from departure
-  removeShipment: async (
-    id: number,
-    shipmentId: number
-  ): Promise<Departure> => {
-    const response = await httpService.delete(
-      `/departures/${id}/shipments/${shipmentId}`
-    );
+  removeShipment: async (id: number, shipmentId: number): Promise<Departure> => {
+    const response = await httpService.delete(`/departures/${id}/shipments/${shipmentId}`);
     return response.data.data;
   },
 
   // Seal departure and generate General Waybill
-  seal: async (
-    id: number
-  ): Promise<{
-    departure: Departure;
-    general_waybill_number: string;
-    pdf_url: string;
-  }> => {
+  seal: async (id: number): Promise<{ departure: Departure; general_waybill_number: string; pdf_url: string }> => {
     const response = await httpService.post(`/departures/${id}/seal`);
     return response.data;
   },
@@ -163,12 +134,9 @@ export const departureService = {
 
   // Download General Waybill PDF
   downloadPDF: async (id: number): Promise<void> => {
-    const response = await httpService.get(
-      `/departures/${id}/general-waybill`,
-      {
-        responseType: "blob",
-      }
-    );
+    const response = await httpService.get(`/departures/${id}/general-waybill`, {
+      responseType: "blob",
+    });
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement("a");
     link.href = url;
@@ -182,19 +150,16 @@ export const departureService = {
   // Print General Waybill PDF directly (ouvre le dialogue d'impression)
   printPDF: async (id: number): Promise<void> => {
     try {
-      const response = await httpService.get(
-        `/departures/${id}/general-waybill`,
-        {
-          responseType: "blob",
-        }
-      );
-
+      const response = await httpService.get(`/departures/${id}/general-waybill`, {
+        responseType: "blob",
+      });
+      
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
-
+      
       // Open PDF in new window
-      const printWindow = window.open(url, "_blank");
-
+      const printWindow = window.open(url, '_blank');
+      
       if (printWindow) {
         // Wait for PDF to load, then trigger print dialog
         setTimeout(() => {
@@ -219,7 +184,7 @@ export const departureService = {
         iframe.style.border = "none";
         iframe.src = url;
         document.body.appendChild(iframe);
-
+        
         iframe.onload = () => {
           setTimeout(() => {
             try {
@@ -242,3 +207,4 @@ export const departureService = {
     }
   },
 };
+

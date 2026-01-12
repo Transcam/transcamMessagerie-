@@ -351,9 +351,8 @@ export class DistributionService {
     );
 
     // Get ministry distribution
-    const ministryDistribution = await this.calculateMinistryDistribution(
-      filters
-    );
+    const ministryDistribution =
+      await this.calculateMinistryDistribution(filters);
 
     // Get agency distribution
     const agencyDistribution = await this.calculateAgencyDistribution(filters);

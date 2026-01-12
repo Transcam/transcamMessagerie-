@@ -25,23 +25,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
-import {
-  useDriver,
-  useUpdateDriver,
-  DriverStatus,
-  DRIVER_STATUS_LABELS,
-} from "@/hooks/use-drivers";
+import { useDriver, useUpdateDriver, DriverStatus, DRIVER_STATUS_LABELS } from "@/hooks/use-drivers";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PHONE_REGEX, PHONE_VALIDATION_MESSAGE } from "@/lib/phone-regex";
 
 // Form validation schema
 const driverSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().min(1, "Last name is required"),
-  phone: z
-    .string()
-    .min(1, "Phone is required")
-    .regex(PHONE_REGEX, PHONE_VALIDATION_MESSAGE),
+  phone: z.string().min(1, "Phone is required"),
   license_number: z.string().min(1, "License number is required"),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
   address: z.string().optional(),
@@ -139,11 +130,7 @@ export default function EditDriverPage() {
     <DashboardLayout>
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(`/drivers/${driver.id}`)}
-          >
+          <Button variant="ghost" size="icon" onClick={() => navigate(`/drivers/${driver.id}`)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-2xl font-bold">
@@ -156,9 +143,7 @@ export default function EditDriverPage() {
             <Card>
               <CardHeader>
                 <CardTitle>
-                  {language === "fr"
-                    ? "Informations du chauffeur"
-                    : "Driver Information"}
+                  {language === "fr" ? "Informations du chauffeur" : "Driver Information"}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -192,9 +177,7 @@ export default function EditDriverPage() {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder={
-                              language === "fr" ? "Dupont" : "Dupont"
-                            }
+                            placeholder={language === "fr" ? "Dupont" : "Dupont"}
                             {...field}
                           />
                         </FormControl>
@@ -214,9 +197,7 @@ export default function EditDriverPage() {
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder={
-                            language === "fr" ? "678901234" : "678901234"
-                          }
+                          placeholder={language === "fr" ? "+237 6XX XXX XXX" : "+237 6XX XXX XXX"}
                           {...field}
                         />
                       </FormControl>
@@ -231,16 +212,11 @@ export default function EditDriverPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        {language === "fr"
-                          ? "Numéro de permis"
-                          : "License Number"}{" "}
-                        *
+                        {language === "fr" ? "Numéro de permis" : "License Number"} *
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder={
-                            language === "fr" ? "1234567890" : "1234567890"
-                          }
+                          placeholder={language === "fr" ? "1234567890" : "1234567890"}
                           {...field}
                         />
                       </FormControl>
@@ -260,11 +236,7 @@ export default function EditDriverPage() {
                       <FormControl>
                         <Input
                           type="email"
-                          placeholder={
-                            language === "fr"
-                              ? "jean.dupont@example.com"
-                              : "jean.dupont@example.com"
-                          }
+                          placeholder={language === "fr" ? "jean.dupont@example.com" : "jean.dupont@example.com"}
                           {...field}
                         />
                       </FormControl>
@@ -283,11 +255,7 @@ export default function EditDriverPage() {
                       </FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder={
-                            language === "fr"
-                              ? "Adresse complète..."
-                              : "Full address..."
-                          }
+                          placeholder={language === "fr" ? "Adresse complète..." : "Full address..."}
                           rows={3}
                           {...field}
                         />
@@ -313,9 +281,7 @@ export default function EditDriverPage() {
                           <SelectTrigger>
                             <SelectValue
                               placeholder={
-                                language === "fr"
-                                  ? "Sélectionner un statut"
-                                  : "Select a status"
+                                language === "fr" ? "Sélectionner un statut" : "Select a status"
                               }
                             />
                           </SelectTrigger>
@@ -325,11 +291,7 @@ export default function EditDriverPage() {
                             {DRIVER_STATUS_LABELS[DriverStatus.ACTIF][language]}
                           </SelectItem>
                           <SelectItem value={DriverStatus.INACTIF}>
-                            {
-                              DRIVER_STATUS_LABELS[DriverStatus.INACTIF][
-                                language
-                              ]
-                            }
+                            {DRIVER_STATUS_LABELS[DriverStatus.INACTIF][language]}
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -368,3 +330,4 @@ export default function EditDriverPage() {
     </DashboardLayout>
   );
 }
+

@@ -50,8 +50,6 @@ async function generateTestExpenses() {
       "superviseur@transcam.cm",
       "comptable@transcam.cm",
       "staff1@transcam.cm",
-      "staff@transcam.cm",
-      "admin@transcam.cm",
     ];
 
     const users: User[] = [];
@@ -89,9 +87,7 @@ async function generateTestExpenses() {
     }
 
     if (users.length === 0) {
-      console.error(
-        "❌ No users found! Please ensure the users exist in the database."
-      );
+      console.error("❌ No users found! Please ensure the users exist in the database.");
       console.log("💡 Tip: Users should have usernames matching one of these:");
       console.log("   - superviseur@transcam.cm or superviseur");
       console.log("   - comptable@transcam.cm or comptable");
@@ -103,7 +99,7 @@ async function generateTestExpenses() {
     const categories = Object.values(ExpenseCategory);
 
     // Generate 10 expenses
-    const expenses: Expense[] = [];
+    const expenses = [];
     const expenseCount = 10;
 
     console.log(`\n💰 Generating ${expenseCount} test expenses...`);
@@ -189,18 +185,16 @@ async function generateTestExpenses() {
 
     // Show sample of created expenses
     console.log("\n📋 Sample expenses (first 5):");
-    expensesWithRelations
-      .slice(0, 5)
-      .forEach((expense: Expense, index: number) => {
-        console.log(
-          `   ${index + 1}. [${expense.category}] ${expense.description}`
-        );
-        console.log(
-          `      Amount: ${expense.amount} FCFA | Created by: ${
-            expense.created_by?.username || "Unknown"
-          } | Date: ${new Date(expense.created_at).toLocaleDateString()}`
-        );
-      });
+    expensesWithRelations.slice(0, 5).forEach((expense: Expense, index: number) => {
+      console.log(
+        `   ${index + 1}. [${expense.category}] ${expense.description}`
+      );
+      console.log(
+        `      Amount: ${expense.amount} FCFA | Created by: ${
+          expense.created_by?.username || "Unknown"
+        } | Date: ${new Date(expense.created_at).toLocaleDateString()}`
+      );
+    });
 
     // Calculate total
     const totalAmount = savedExpenses.reduce(
@@ -219,3 +213,4 @@ async function generateTestExpenses() {
 
 // Run the script
 generateTestExpenses();
+
