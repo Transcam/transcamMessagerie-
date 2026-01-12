@@ -408,15 +408,16 @@ export class ShipmentsController {
     try {
       const { q, type } = req.query;
       
-      if (!q || typeof q !== 'string') {
-        return res.status(400).json({ error: "Query parameter 'q' is required" });
+      // Si q est vide ou manquant, retourner un tableau vide au lieu d'une erreur
+      if (!q || typeof q !== 'string' || q.trim().length === 0) {
+        return res.json({ data: [] });
       }
       
       if (type !== 'sender' && type !== 'receiver') {
         return res.status(400).json({ error: "Type must be 'sender' or 'receiver'" });
       }
       
-      const contacts = await this.service.searchContacts(q, type as 'sender' | 'receiver');
+      const contacts = await this.service.searchContacts(q.trim(), type as 'sender' | 'receiver');
       res.json({ data: contacts });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
