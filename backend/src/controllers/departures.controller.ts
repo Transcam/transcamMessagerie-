@@ -178,8 +178,18 @@ export class DeparturesController {
       const filename = path.basename(pdfPath);
       console.log(`📤 [CONTROLLER] Envoi du fichier: ${filename}`);
       
+      // Headers pour empêcher la compression et garantir l'intégrité du PDF
       res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Encoding", "identity"); // Empêche la compression proxy
+      res.setHeader("Cache-Control", "no-transform"); // Empêche toute transformation
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      
+      // Log des headers envoyés pour debug
+      console.log("📄 [PDF] Headers sent:", {
+        "Content-Type": res.getHeader("Content-Type"),
+        "Content-Encoding": res.getHeader("Content-Encoding"),
+        "Content-Disposition": res.getHeader("Content-Disposition"),
+      });
 
       const fileStream = fs.createReadStream(pdfPath);
       

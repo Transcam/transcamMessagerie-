@@ -274,11 +274,32 @@ export class ShipmentsController {
       const id = parseInt(req.params.id);
       const pdfBuffer = await this.service.generateWaybillPDF(id);
 
+      // Log important pour analyser les PDFs blancs en production
+      console.log(
+        "📄 [PDF] Waybill buffer length:",
+        pdfBuffer?.length,
+        "bytes for shipment",
+        id
+      );
+
+      // Headers pour empêcher la compression et garantir l'intégrité du PDF
       res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Length", pdfBuffer.length.toString());
+      res.setHeader("Content-Encoding", "identity"); // Empêche la compression proxy
+      res.setHeader("Cache-Control", "no-transform"); // Empêche toute transformation
       res.setHeader(
         "Content-Disposition",
         `attachment; filename="bordereau-${id}.pdf"`
       );
+
+      // Log des headers envoyés pour debug
+      console.log("📄 [PDF] Headers sent:", {
+        "Content-Type": res.getHeader("Content-Type"),
+        "Content-Length": res.getHeader("Content-Length"),
+        "Content-Encoding": res.getHeader("Content-Encoding"),
+        "Content-Disposition": res.getHeader("Content-Disposition"),
+      });
+
       res.send(pdfBuffer);
     } catch (error: any) {
       res.status(404).json({ error: error.message });

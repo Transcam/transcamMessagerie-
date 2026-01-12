@@ -168,10 +168,25 @@ export const shipmentService = {
 
   // Generate waybill (download PDF)
   generateWaybill: async (id: number, waybillNumber?: string): Promise<void> => {
-    const response = await httpService.get(`/shipments/${id}/waybill`, {
-      responseType: "blob",
-    } as any);
-    const url = window.URL.createObjectURL(new Blob([response.data]));
+    // IMPORTANT: Utiliser fetch au lieu d'Axios pour les PDFs
+    // fetch gère mieux les données binaires cross-origin et ne convertit pas en string
+    const apiBaseURL = `${import.meta.env.VITE_API_URL || "http://localhost:3000"}/api`;
+    const token = localStorage.getItem("auth_token");
+    
+    const response = await fetch(`${apiBaseURL}/shipments/${id}/waybill`, {
+      method: "GET",
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
     link.setAttribute("download", `bordereau-${waybillNumber || id}.pdf`);
