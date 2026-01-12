@@ -242,7 +242,22 @@ export const shipmentService = {
         responseType: "blob",
       } as any);
       
+      // Vérification du blob reçu côté frontend
+      console.log("📄 [Frontend] Response data type:", typeof response.data);
+      console.log("📄 [Frontend] Response data size:", response.data?.size || response.data?.byteLength || "unknown");
+      console.log("📄 [Frontend] Content-Type:", response.headers["content-type"]);
+      console.log("📄 [Frontend] Content-Length:", response.headers["content-length"]);
+      
       const blob = new Blob([response.data], { type: "application/pdf" });
+      
+      // Vérification que le blob n'est pas vide
+      if (blob.size === 0) {
+        console.error("❌ [Frontend] Blob PDF vide!");
+        throw new Error("Le PDF reçu est vide");
+      }
+      
+      console.log("📄 [Frontend] Blob créé, taille:", blob.size, "bytes");
+      
       const url = window.URL.createObjectURL(blob);
       
       // Improved print handling for production environments

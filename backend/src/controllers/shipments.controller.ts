@@ -298,12 +298,24 @@ export class ShipmentsController {
         id
       );
 
+      // Headers pour empêcher la compression et garantir l'intégrité du PDF
       res.setHeader("Content-Type", "application/pdf");
-      // Use 'inline' instead of 'attachment' to allow browser to open PDF for printing
+      res.setHeader("Content-Length", pdfBuffer.length.toString());
+      res.setHeader("Content-Encoding", "identity"); // Empêche la compression proxy
+      res.setHeader("Cache-Control", "no-transform"); // Empêche toute transformation
       res.setHeader(
         "Content-Disposition",
         `inline; filename="recu-${id}.pdf"`
       );
+
+      // Log des headers envoyés pour debug
+      console.log("📄 [PDF] Headers sent:", {
+        "Content-Type": res.getHeader("Content-Type"),
+        "Content-Length": res.getHeader("Content-Length"),
+        "Content-Encoding": res.getHeader("Content-Encoding"),
+        "Content-Disposition": res.getHeader("Content-Disposition"),
+      });
+
       res.send(pdfBuffer);
     } catch (error: any) {
       res.status(404).json({ error: error.message });
