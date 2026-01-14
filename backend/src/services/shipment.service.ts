@@ -156,12 +156,7 @@ export class ShipmentService {
         throw new Error("Cannot create shipment with future date");
       }
       
-      // Allow dates from reasonable past (max 1 year to prevent errors)
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-      if (createdAt < oneYearAgo) {
-        throw new Error("Cannot create shipment with date more than 1 year in the past");
-      }
+      // Pas de limite de date minimum - permet n'importe quelle date passée
     }
 
     const shipment = this.shipmentRepo.create({
@@ -220,12 +215,7 @@ export class ShipmentService {
         throw new Error("Cannot create shipment with future date");
       }
       
-      // Allow dates from reasonable past (max 1 year to prevent errors)
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-      if (createdAt < oneYearAgo) {
-        throw new Error("Cannot create shipment with date more than 1 year in the past");
-      }
+      // Pas de limite de date minimum - permet n'importe quelle date passée
     }
 
     // Créer le nouveau colis (sans vérification de doublon car on vient de supprimer l'ancien)
